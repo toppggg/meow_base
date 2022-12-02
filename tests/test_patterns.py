@@ -1,7 +1,7 @@
 
 import unittest
 
-from patterns.FileEventPattern import FileEventPattern
+from patterns.file_event_pattern import FileEventPattern
 
 
 class CorrectnessTests(unittest.TestCase):

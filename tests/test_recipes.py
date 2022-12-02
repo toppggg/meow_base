@@ -2,7 +2,7 @@
 import jsonschema
 import unittest
 
-from recipes.JupyterNotebookRecipe import JupyterNotebookRecipe
+from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
 
 BAREBONES_NOTEBOOK = {
     "cells": [],
