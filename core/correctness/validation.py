@@ -1,5 +1,8 @@
 
-def check_input(variable, expected_type, or_none=False):
+from typing import Any, _SpecialForm
+
+def check_input(variable:Any, expected_type:type, alt_types:list[type]=[], 
+        or_none:bool=False)->None:
     """
     Checks if a given variable is of the expected type. Raises TypeError or
     ValueError as appropriate if any issues are encountered.
@@ -8,27 +11,35 @@ def check_input(variable, expected_type, or_none=False):
 
     :param expected_type: (type) expected type of the provided variable
 
+    :param alt_types: (optional)(list) additional types that are also 
+    acceptable
+
     :param or_none: (optional) boolean of if the variable can be unset.
     Default value is False.
 
     :return: No return.
     """
 
+    type_list = [expected_type]
+    type_list = type_list + alt_types
+
     if not or_none:
-        if not isinstance(variable, expected_type):
+        if expected_type != Any \
+                and type(variable) not in type_list:
             raise TypeError(
                 'Expected type was %s, got %s'
                 % (expected_type, type(variable))
             )
     else:
-        if not isinstance(variable, expected_type) \
+        if expected_type != Any \
+                and not type(variable) not in type_list \
                 and not isinstance(variable, type(None)):
             raise TypeError(
                 'Expected type was %s or None, got %s'
                 % (expected_type, type(variable))
             )
 
-def valid_string(variable, valid_chars):
+def valid_string(variable:str, valid_chars:str, min_length:int=1)->None:
     """
     Checks that all characters in a given string are present in a provided
     list of characters. Will raise an ValueError if unexpected character is
@@ -38,10 +49,17 @@ def valid_string(variable, valid_chars):
 
     :param valid_chars: (str) collection of valid characters.
 
+    :param min_length: (int) minimum length of variable.
+
     :return: No return.
     """
     check_input(variable, str)
     check_input(valid_chars, str)
+
+    if len(variable) < min_length:
+        raise ValueError (
+            f"String '{variable}' is too short. Minimum length is {min_length}"
+        )
 
     for char in variable:
         if char not in valid_chars:
@@ -49,3 +67,32 @@ def valid_string(variable, valid_chars):
                 "Invalid character '%s'. Only valid characters are: "
                 "%s" % (char, valid_chars)
             )
+
+def valid_dict(variable:dict[Any, Any], key_type:type, value_type:type, 
+        required_keys:list[Any]=[], optional_keys:list[Any]=[], 
+        strict:bool=True)->None:
+    check_input(variable, dict)
+    check_input(key_type, type, alt_types=[_SpecialForm])
+    check_input(value_type, type, alt_types=[_SpecialForm])
+    check_input(required_keys, list)
+    check_input(optional_keys, list)
+    check_input(strict, bool)
+
+    for k, v in variable.items():
+        if key_type != Any and not isinstance(k, key_type):
+            raise TypeError(f"Key {k} had unexpected type '{type(k)}' "
+                f"rather than expected '{key_type}' in dict '{variable}'")
+        if value_type != Any and not isinstance(v, value_type):
+            raise TypeError(f"Value {v} had unexpected type '{type(v)}' "
+                f"rather than expected '{value_type}' in dict '{variable}'")
+
+    for rk in required_keys:
+        if rk not in variable.keys():
+            raise KeyError(f"Missing required key '{rk}' from dict "
+                f"'{variable}'")
+    
+    if strict:
+        for k in variable.keys():
+            if k not in required_keys and k not in optional_keys:
+                raise ValueError(f"Unexpected key '{k}' should not be present "
+                    f"in dict '{variable}'")
