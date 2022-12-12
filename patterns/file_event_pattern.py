@@ -34,11 +34,11 @@ class FileEventPattern(BasePattern):
         valid_string(triggering_file, VALID_VARIABLE_NAME_CHARS)
 
     def _is_valid_parameters(self, parameters:dict[str,Any])->None:
-        valid_dict(parameters, str, Any, strict=False)
+        valid_dict(parameters, str, Any, strict=False, min_length=0)
         for k in parameters.keys():
             valid_string(k, VALID_VARIABLE_NAME_CHARS)
 
     def _is_valid_output(self, outputs:dict[str,str])->None:
-        valid_dict(outputs, str, str, strict=False)
+        valid_dict(outputs, str, str, strict=False, min_length=0)
         for k in outputs.keys():
             valid_string(k, VALID_VARIABLE_NAME_CHARS)

@@ -5,6 +5,8 @@ from patterns.file_event_pattern import FileEventPattern
 from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
 
 class FileEventJupyterNotebookRule(BaseRule):
+    pattern_type = "FileEventPattern"
+    recipe_type = "JupyterNotebookRecipe" 
     def __init__(self, name: str, pattern:FileEventPattern, 
             recipe:JupyterNotebookRecipe):
         super().__init__(name, pattern, recipe)
@@ -18,3 +20,6 @@ class FileEventJupyterNotebookRule(BaseRule):
 
     def _is_valid_recipe(self, recipe:JupyterNotebookRecipe) -> None:
         check_input(recipe, JupyterNotebookRecipe)
+
+    def _set_pattern_type(self)->None:
+        self.pattern_type

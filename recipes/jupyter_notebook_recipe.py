@@ -36,11 +36,11 @@ class JupyterNotebookRecipe(BaseRecipe):
         nbformat.validate(recipe)
 
     def _is_valid_parameters(self, parameters:dict[str,Any])->None:
-        valid_dict(parameters, str, Any, strict=False)
+        valid_dict(parameters, str, Any, strict=False, min_length=0)
         for k in parameters.keys():
             valid_string(k, VALID_VARIABLE_NAME_CHARS)
 
     def _is_valid_requirements(self, requirements:dict[str,Any])->None:
-        valid_dict(requirements, str, Any, strict=False)
+        valid_dict(requirements, str, Any, strict=False, min_length=0)
         for k in requirements.keys():
             valid_string(k, VALID_VARIABLE_NAME_CHARS)

@@ -76,3 +76,4 @@ class CorrectnessTests(unittest.TestCase):
         fejnr = FileEventJupyterNotebookRule("name", fep, jnr)
 
         self.assertEqual(fejnr.recipe, jnr)
+

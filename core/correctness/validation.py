@@ -1,4 +1,5 @@
 
+from abc import ABCMeta
 from typing import Any, _SpecialForm
 
 def check_input(variable:Any, expected_type:type, alt_types:list[type]=[], 
@@ -70,13 +71,17 @@ def valid_string(variable:str, valid_chars:str, min_length:int=1)->None:
 
 def valid_dict(variable:dict[Any, Any], key_type:type, value_type:type, 
         required_keys:list[Any]=[], optional_keys:list[Any]=[], 
-        strict:bool=True)->None:
+        strict:bool=True, min_length:int=1)->None:
     check_input(variable, dict)
-    check_input(key_type, type, alt_types=[_SpecialForm])
-    check_input(value_type, type, alt_types=[_SpecialForm])
+    check_input(key_type, type, alt_types=[_SpecialForm, ABCMeta])
+    check_input(value_type, type, alt_types=[_SpecialForm, ABCMeta])
     check_input(required_keys, list)
     check_input(optional_keys, list)
     check_input(strict, bool)
+
+    if len(variable) < min_length:
+        raise ValueError(f"Dictionary '{variable}' is below minimum length of "
+            f"{min_length}")
 
     for k, v in variable.items():
         if key_type != Any and not isinstance(k, key_type):
@@ -96,3 +101,12 @@ def valid_dict(variable:dict[Any, Any], key_type:type, value_type:type,
             if k not in required_keys and k not in optional_keys:
                 raise ValueError(f"Unexpected key '{k}' should not be present "
                     f"in dict '{variable}'")
+
+def valid_list(variable:list[Any], entry_type:type,
+        alt_types:list[type]=[], min_length:int=1)->None:
+    check_input(variable, list)
+    if len(variable) < min_length:
+        raise ValueError(f"List '{variable}' is too short. Should be at least "
+            f"of length {min_length}")
+    for entry in variable:
+        check_input(entry, entry_type, alt_types=alt_types)

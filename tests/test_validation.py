@@ -3,7 +3,8 @@ import unittest
 
 from typing import Any
 
-from core.correctness.validation import check_input, valid_string, valid_dict
+from core.correctness.validation import check_input, valid_string, \
+    valid_dict, valid_list
 from core.correctness.vars import VALID_NAME_CHARS
 
 
@@ -85,3 +86,23 @@ class CorrectnessTests(unittest.TestCase):
     def testValidDictOverlyStrict(self)->None:
         with self.assertRaises(ValueError):
             valid_dict({"a": 0, "b": 1}, str, int)
+
+    def testValidListMinimum(self)->None:
+        valid_list([1, 2, 3], int)
+        valid_list(["1", "2", "3"], str)
+        valid_list([1], int)
+
+    def testValidListAltTypes(self)->None:
+        valid_list([1, "2", 3], int, alt_types=[str])
+
+    def testValidListMismatchedNotList(self)->None:
+        with self.assertRaises(TypeError):
+            valid_list((1, 2, 3), int)
+
+    def testValidListMismatchedType(self)->None:
+        with self.assertRaises(TypeError):
+            valid_list([1, 2, 3], str)
+
+    def testValidListMinLength(self)->None:
+        with self.assertRaises(ValueError):
+            valid_list([1, 2, 3], str, min_length=10)
