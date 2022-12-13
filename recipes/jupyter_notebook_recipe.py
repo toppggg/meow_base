@@ -3,7 +3,8 @@ import nbformat
 
 from typing import Any
 
-from core.correctness.validation import check_input, valid_string, valid_dict
+from core.correctness.validation import check_input, valid_string, \
+    valid_dict, valid_path
 from core.correctness.vars import VALID_JUPYTER_NOTEBOOK_FILENAME_CHARS, \
     VALID_JUPYTER_NOTEBOOK_EXTENSIONS, VALID_VARIABLE_NAME_CHARS
 from core.meow import BaseRecipe
@@ -17,8 +18,7 @@ class JupyterNotebookRecipe(BaseRecipe):
         self.source = source
 
     def _is_valid_source(self, source:str)->None:
-        valid_string(
-            source, VALID_JUPYTER_NOTEBOOK_FILENAME_CHARS, min_length=0)
+        valid_path(source, extension=".ipynb", min_length=0)
 
         if not source:
             return

@@ -1,18 +1,12 @@
 
 import unittest
 
-from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE
+from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
+    BAREBONES_NOTEBOOK
 from core.functionality import create_rules, generate_id
 from core.meow import BaseRule
 from patterns.file_event_pattern import FileEventPattern
 from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
-
-BAREBONES_NOTEBOOK = {
-    "cells": [],
-    "metadata": {},
-    "nbformat": 4,
-    "nbformat_minor": 4
-}
 
 valid_pattern_one = FileEventPattern(
     "pattern_one", "path_one", "recipe_one", "file_one")

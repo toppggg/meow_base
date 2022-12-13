@@ -1,6 +1,8 @@
 
-from abc import ABCMeta
+from os.path import sep
 from typing import Any, _SpecialForm
+
+from core.correctness.vars import VALID_PATH_CHARS
 
 def check_input(variable:Any, expected_type:type, alt_types:list[type]=[], 
         or_none:bool=False)->None:
@@ -73,8 +75,8 @@ def valid_dict(variable:dict[Any, Any], key_type:type, value_type:type,
         required_keys:list[Any]=[], optional_keys:list[Any]=[], 
         strict:bool=True, min_length:int=1)->None:
     check_input(variable, dict)
-    check_input(key_type, type, alt_types=[_SpecialForm, ABCMeta])
-    check_input(value_type, type, alt_types=[_SpecialForm, ABCMeta])
+    check_input(key_type, type, alt_types=[_SpecialForm])
+    check_input(value_type, type, alt_types=[_SpecialForm])
     check_input(required_keys, list)
     check_input(optional_keys, list)
     check_input(strict, bool)
@@ -110,3 +112,12 @@ def valid_list(variable:list[Any], entry_type:type,
             f"of length {min_length}")
     for entry in variable:
         check_input(entry, entry_type, alt_types=alt_types)
+
+def valid_path(variable:str, allow_base=False, extension:str="", min_length=1):
+    valid_string(variable, VALID_PATH_CHARS, min_length=min_length)
+    if not allow_base and variable.startswith(sep):
+        raise ValueError(f"Cannot accept path '{variable}'. Must be relative.")
+    if min_length > 0 and extension and not variable.endswith(extension):
+        raise ValueError(f"Path '{variable}' does not have required "
+            f"extension '{extension}'.")
+        

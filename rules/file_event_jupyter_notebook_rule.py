@@ -20,6 +20,3 @@ class FileEventJupyterNotebookRule(BaseRule):
 
     def _is_valid_recipe(self, recipe:JupyterNotebookRecipe) -> None:
         check_input(recipe, JupyterNotebookRecipe)
-
-    def _set_pattern_type(self)->None:
-        self.pattern_type

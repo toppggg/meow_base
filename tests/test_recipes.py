@@ -3,13 +3,7 @@ import jsonschema
 import unittest
 
 from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
-
-BAREBONES_NOTEBOOK = {
-    "cells": [],
-    "metadata": {},
-    "nbformat": 4,
-    "nbformat_minor": 4
-}
+from core.correctness.vars import BAREBONES_NOTEBOOK
 
 class CorrectnessTests(unittest.TestCase):
     def setUp(self)->None:
