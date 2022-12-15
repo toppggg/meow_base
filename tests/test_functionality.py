@@ -1,9 +1,13 @@
 
 import unittest
 
+from multiprocessing import Pipe, Queue
+from time import sleep
+
 from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
     BAREBONES_NOTEBOOK
-from core.functionality import create_rules, generate_id
+from core.functionality import create_rules, generate_id, wait, \
+    check_pattern_dict, check_recipe_dict
 from core.meow import BaseRule
 from patterns.file_event_pattern import FileEventPattern
 from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
@@ -87,3 +91,199 @@ class CorrectnessTests(unittest.TestCase):
         }
         with self.assertRaises(KeyError):
             create_rules({}, recipes)
+
+    def testCheckPatternDictValid(self)->None:
+        fep1 = FileEventPattern("name_one", "path", "recipe", "file")
+        fep2 = FileEventPattern("name_two", "path", "recipe", "file")
+
+        patterns = {
+            fep1.name: fep1,
+            fep2.name: fep2
+        }
+
+        check_pattern_dict(patterns=patterns)
+
+    def testCheckPatternDictNoEntries(self)->None:
+        with self.assertRaises(ValueError):
+            check_pattern_dict(patterns={})
+
+        check_pattern_dict(patterns={}, min_length=0)
+
+    def testCheckPatternDictMissmatchedName(self)->None:
+        fep1 = FileEventPattern("name_one", "path", "recipe", "file")
+        fep2 = FileEventPattern("name_two", "path", "recipe", "file")
+
+        patterns = {
+            fep2.name: fep1,
+            fep1.name: fep2
+        }
+        
+        with self.assertRaises(KeyError):
+            check_pattern_dict(patterns=patterns)
+
+    def testCheckRecipeDictValid(self)->None:
+        jnr1 = JupyterNotebookRecipe("recipe_one", BAREBONES_NOTEBOOK)
+        jnr2 = JupyterNotebookRecipe("recipe_two", BAREBONES_NOTEBOOK)
+
+        recipes = {
+            jnr1.name: jnr1,
+            jnr2.name: jnr2
+        }
+
+        check_recipe_dict(recipes=recipes)
+
+    def testCheckRecipeDictNoEntires(self)->None:
+        with self.assertRaises(ValueError):
+            check_recipe_dict(recipes={})
+
+        check_recipe_dict(recipes={}, min_length=0)
+
+    def testCheckRecipeDictMismatchedName(self)->None:
+        jnr1 = JupyterNotebookRecipe("recipe_one", BAREBONES_NOTEBOOK)
+        jnr2 = JupyterNotebookRecipe("recipe_two", BAREBONES_NOTEBOOK)
+
+        recipes = {
+            jnr2.name: jnr1,
+            jnr1.name: jnr2
+        }
+
+        with self.assertRaises(KeyError):
+            check_recipe_dict(recipes=recipes)
+    
+    def testWaitPipes(self)->None:
+        pipe_one_reader, pipe_one_writer = Pipe()
+        pipe_two_reader, pipe_two_writer = Pipe()
+        
+        inputs = [
+            pipe_one_reader, pipe_two_reader
+        ]
+
+        pipe_one_writer.send(1)
+        readables = wait(inputs)
+
+        self.assertIn(pipe_one_reader, readables)
+        self.assertEqual(len(readables), 1)
+        msg = readables[0].recv()
+        self.assertEqual(msg, 1)
+
+        pipe_one_writer.send(1)
+        pipe_two_writer.send(2)
+        readables = wait(inputs)
+
+        self.assertIn(pipe_one_reader, readables)
+        self.assertIn(pipe_two_reader, readables)
+        self.assertEqual(len(readables), 2)
+        for readable in readables:
+            if readable == pipe_one_reader:
+                msg = readable.recv()        
+                self.assertEqual(msg, 1)
+            elif readable == pipe_two_reader:
+                msg = readable.recv()        
+                self.assertEqual(msg, 2)
+
+    def testWaitQueues(self)->None:
+        queue_one = Queue()
+        queue_two = Queue()
+
+        inputs = [
+            queue_one, queue_two
+        ]
+
+        queue_one.put(1)
+        readables = wait(inputs)
+
+        self.assertIn(queue_one, readables)
+        self.assertEqual(len(readables), 1)
+        msg = readables[0].get()
+        self.assertEqual(msg, 1)
+
+        queue_one.put(1)
+        queue_two.put(2)
+        sleep(0.1)
+        readables = wait(inputs)
+
+        self.assertIn(queue_one, readables)
+        self.assertIn(queue_two, readables)
+        self.assertEqual(len(readables), 2)
+        for readable in readables:
+            if readable == queue_one:
+                msg = readable.get()
+                self.assertEqual(msg, 1)
+            elif readable == queue_two:
+                msg = readable.get()
+                self.assertEqual(msg, 2)
+
+    
+    def testWaitPipesAndQueues(self)->None:
+        pipe_one_reader, pipe_one_writer = Pipe()
+        pipe_two_reader, pipe_two_writer = Pipe()
+        queue_one = Queue()
+        queue_two = Queue()
+
+        inputs = [
+            pipe_one_reader, pipe_two_reader, queue_one, queue_two
+        ]
+
+        pipe_one_writer.send(1)
+        readables = wait(inputs)
+
+        self.assertIn(pipe_one_reader, readables)
+        self.assertEqual(len(readables), 1)
+        msg = readables[0].recv()
+        self.assertEqual(msg, 1)
+
+        pipe_one_writer.send(1)
+        pipe_two_writer.send(2)
+        readables = wait(inputs)
+
+        self.assertIn(pipe_one_reader, readables)
+        self.assertIn(pipe_two_reader, readables)
+        self.assertEqual(len(readables), 2)
+        for readable in readables:
+            if readable == pipe_one_reader:
+                msg = readable.recv()        
+                self.assertEqual(msg, 1)
+            if readable == pipe_two_reader:
+                msg = readable.recv()        
+                self.assertEqual(msg, 2)
+
+        queue_one.put(1)
+        readables = wait(inputs)
+
+        self.assertIn(queue_one, readables)
+        self.assertEqual(len(readables), 1)
+        msg = readables[0].get()
+        self.assertEqual(msg, 1)
+
+        queue_one.put(1)
+        queue_two.put(2)
+        sleep(0.1)
+        readables = wait(inputs)
+
+        self.assertIn(queue_one, readables)
+        self.assertIn(queue_two, readables)
+        self.assertEqual(len(readables), 2)
+        for readable in readables:
+            if readable == queue_one:
+                msg = readable.get()
+                self.assertEqual(msg, 1)
+            elif readable == queue_two:
+                msg = readable.get()
+                self.assertEqual(msg, 2)
+
+        queue_one.put(1)
+        pipe_one_writer.send(1)
+        sleep(0.1)
+        readables = wait(inputs)
+
+        self.assertIn(queue_one, readables)
+        self.assertIn(pipe_one_reader, readables)
+        self.assertEqual(len(readables), 2)
+        for readable in readables:
+            if readable == queue_one:
+                msg = readable.get()
+                self.assertEqual(msg, 1)
+            elif readable == pipe_one_reader:
+                msg = readable.recv()
+                self.assertEqual(msg, 1)
+

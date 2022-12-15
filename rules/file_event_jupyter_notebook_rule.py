@@ -1,5 +1,5 @@
 
-from core.correctness.validation import check_input
+from core.correctness.validation import check_type
 from core.meow import BaseRule
 from patterns.file_event_pattern import FileEventPattern
 from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
@@ -16,7 +16,7 @@ class FileEventJupyterNotebookRule(BaseRule):
                 f"uses {pattern.recipe}")
 
     def _is_valid_pattern(self, pattern:FileEventPattern) -> None:
-        check_input(pattern, FileEventPattern)
+        check_type(pattern, FileEventPattern)
 
     def _is_valid_recipe(self, recipe:JupyterNotebookRecipe) -> None:
-        check_input(recipe, JupyterNotebookRecipe)
+        check_type(recipe, JupyterNotebookRecipe)

@@ -112,14 +112,11 @@ class CorrectnessTests(unittest.TestCase):
         self.assertEqual(fep.event_mask, FILE_EVENTS)
 
     def testWatchdogMonitorMinimum(self)->None:
-        to_monitor = Pipe()
         from_monitor = Pipe()
-        WatchdogMonitor(TEST_BASE, {}, from_monitor[PIPE_WRITE], 
-            to_monitor[PIPE_READ])
+        WatchdogMonitor(TEST_BASE, {}, from_monitor[PIPE_WRITE])
 
     def testWatchdogMonitorEventIdentificaion(self)->None:
-        to_monitor = Pipe()
-        from_monitor = Pipe()
+        from_monitor_reader, from_monitor_writer = Pipe()
 
         pattern_one = FileEventPattern(
             "pattern_one", "A", "recipe_one", "file_one")
@@ -134,14 +131,13 @@ class CorrectnessTests(unittest.TestCase):
         }
         rules = create_rules(patterns, recipes)
 
-        wm = WatchdogMonitor(TEST_BASE, rules, from_monitor[PIPE_WRITE], 
-            to_monitor[PIPE_READ])
+        wm = WatchdogMonitor(TEST_BASE, rules, from_monitor_writer)
 
         wm.start()
 
         open(os.path.join(TEST_BASE, "A"), "w")
-        if from_monitor[PIPE_READ].poll(3):
-            message = from_monitor[PIPE_READ].recv()
+        if from_monitor_reader.poll(3):
+            message = from_monitor_reader.recv()
 
         self.assertIsNotNone(message)
         event, rule = message
@@ -150,8 +146,8 @@ class CorrectnessTests(unittest.TestCase):
         self.assertEqual(event.src_path, os.path.join(TEST_BASE, "A"))
 
         open(os.path.join(TEST_BASE, "B"), "w")
-        if from_monitor[PIPE_READ].poll(3):
-            new_message = from_monitor[PIPE_READ].recv()
+        if from_monitor_reader.poll(3):
+            new_message = from_monitor_reader.recv()
         else:
             new_message = None
         self.assertIsNone(new_message)

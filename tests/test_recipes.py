@@ -2,7 +2,10 @@
 import jsonschema
 import unittest
 
-from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
+from multiprocessing import Pipe
+
+from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe, \
+    PapermillHandler
 from core.correctness.vars import BAREBONES_NOTEBOOK
 
 class CorrectnessTests(unittest.TestCase):
@@ -73,3 +76,36 @@ class CorrectnessTests(unittest.TestCase):
         jnr = JupyterNotebookRecipe(
             "name", BAREBONES_NOTEBOOK, source=source)
         self.assertEqual(jnr.source, source)
+
+    def testPapermillHanderMinimum(self)->None:
+        monitor_to_handler_reader, _ = Pipe()
+
+        PapermillHandler([monitor_to_handler_reader])
+
+    def testPapermillHanderStartStop(self)->None:
+        monitor_to_handler_reader, _ = Pipe()
+
+        ph = PapermillHandler([monitor_to_handler_reader])
+ 
+        ph.start()
+        ph.stop()
+
+    def testPapermillHanderRepeatedStarts(self)->None:
+        monitor_to_handler_reader, _ = Pipe()
+
+        ph = PapermillHandler([monitor_to_handler_reader])
+
+        ph.start()
+        with self.assertRaises(RuntimeWarning):
+            ph.start()
+        ph.stop()
+
+    def testPapermillHanderStopBeforeStart(self)->None:
+        monitor_to_handler_reader, _ = Pipe()
+
+        ph = PapermillHandler([monitor_to_handler_reader])
+
+        with self.assertRaises(RuntimeWarning):
+            ph.stop()
+
+

@@ -3,7 +3,6 @@ import threading
 import os
 
 from fnmatch import translate
-from multiprocessing.connection import Connection
 from re import match
 from time import time, sleep
 from typing import Any
@@ -12,13 +11,13 @@ from watchdog.events import PatternMatchingEventHandler, FileCreatedEvent, \
     FileModifiedEvent, FileMovedEvent, FileClosedEvent, FileDeletedEvent, \
     DirCreatedEvent, DirDeletedEvent, DirModifiedEvent, DirMovedEvent
 
-from core.correctness.validation import check_input, valid_string, \
+from core.correctness.validation import check_type, valid_string, \
     valid_dict, valid_list, valid_path
 from core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
     VALID_VARIABLE_NAME_CHARS, FILE_EVENTS, FILE_CREATE_EVENT, \
     FILE_MODIFY_EVENT, FILE_MOVED_EVENT, FILE_CLOSED_EVENT, \
     FILE_DELETED_EVENT, DIR_CREATE_EVENT, DIR_DELETED_EVENT, \
-    DIR_MODIFY_EVENT, DIR_MOVED_EVENT
+    DIR_MODIFY_EVENT, DIR_MOVED_EVENT, VALID_CHANNELS
 from core.meow import BasePattern, BaseMonitor, BaseRule
 
 _EVENT_TRANSLATIONS = {
@@ -88,14 +87,14 @@ class WatchdogMonitor(BaseMonitor):
     _rules_lock:threading.Lock
 
     def __init__(self, base_dir:str, rules:dict[str, BaseRule], 
-            report:Connection, listen:Connection, autostart=False, 
+            report:VALID_CHANNELS, autostart=False, 
             settletime:int=1)->None:
-        super().__init__(rules, report, listen)
+        super().__init__(rules, report)
         self._is_valid_base_dir(base_dir)
         self.base_dir = base_dir
-        check_input(settletime, int)
+        check_type(settletime, int)
         self._rules_lock = threading.Lock()
-        self.event_handler = MEOWEventHandler(self, settletime=settletime)
+        self.event_handler = WatchdogEventHandler(self, settletime=settletime)
         self.monitor = Observer()
         self.monitor.schedule(
             self.event_handler,
@@ -147,17 +146,14 @@ class WatchdogMonitor(BaseMonitor):
     def _is_valid_base_dir(self, base_dir:str)->None:
         valid_path(base_dir)
 
-    def _is_valid_report(self, report:Connection)->None:
-        check_input(report, Connection)
-
-    def _is_valid_listen(self, listen:Connection)->None:
-        check_input(listen, Connection)
+    def _is_valid_report(self, report:VALID_CHANNELS)->None:
+        check_type(report, VALID_CHANNELS)
 
     def _is_valid_rules(self, rules:dict[str, BaseRule])->None:
         valid_dict(rules, str, BaseRule, min_length=0, strict=False)
 
 
-class MEOWEventHandler(PatternMatchingEventHandler):
+class WatchdogEventHandler(PatternMatchingEventHandler):
     monitor:WatchdogMonitor
     _settletime:int
     _recent_jobs:dict[str, Any]

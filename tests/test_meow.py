@@ -71,13 +71,13 @@ class MeowTests(unittest.TestCase):
 
     def testBaseMonitor(self)->None:
         with self.assertRaises(TypeError):
-            BaseMonitor("", "", "")
+            BaseMonitor("", "")
 
         class TestMonitor(BaseMonitor):
             pass
 
         with self.assertRaises(NotImplementedError):
-            TestMonitor("", "", "")
+            TestMonitor("", "")
 
         class FullTestMonitor(BaseMonitor):
             def start(self):
@@ -86,11 +86,9 @@ class MeowTests(unittest.TestCase):
                 pass
             def _is_valid_report(self, report:Any)->None:
                 pass
-            def _is_valid_listen(self, listen:Any)->None:
-                pass
             def _is_valid_rules(self, rules:Any)->None:
                 pass
-        FullTestMonitor("", "", "")
+        FullTestMonitor("", "")
 
     def testBaseHandler(self)->None:
         with self.assertRaises(TypeError):
@@ -103,11 +101,13 @@ class MeowTests(unittest.TestCase):
             TestHandler("")
 
         class FullTestHandler(BaseHandler):
-            def handle(self):
+            def handle(self, event, rule):
+                pass
+            def start(self):
+                pass
+            def stop(self):
                 pass
             def _is_valid_inputs(self, inputs:Any)->None:
                 pass
         FullTestHandler("")
-
-
 

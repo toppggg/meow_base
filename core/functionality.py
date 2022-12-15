@@ -2,15 +2,15 @@
 import sys
 import inspect
 
+from multiprocessing.connection import Connection, wait as multi_wait
+from multiprocessing.queues import Queue
 from typing import Union
 from random import SystemRandom
 
 from core.meow import BasePattern, BaseRecipe, BaseRule
-from core.correctness.validation import check_input, valid_dict, valid_list
-from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE
-from patterns import *
-from recipes import *
-from rules import *
+from core.correctness.validation import check_type, valid_dict, valid_list
+from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
+    VALID_CHANNELS
 
 def check_pattern_dict(patterns, min_length=1):
     valid_dict(patterns, str, BasePattern, strict=False, min_length=min_length)
@@ -42,8 +42,8 @@ def generate_id(prefix:str="", length:int=16, existing_ids:list[str]=[],
 def create_rules(patterns:Union[dict[str,BasePattern],list[BasePattern]], 
         recipes:Union[dict[str,BaseRecipe],list[BaseRecipe]],
         new_rules:list[BaseRule]=[])->dict[str,BaseRule]:
-    check_input(patterns, dict, alt_types=[list])
-    check_input(recipes, dict, alt_types=[list])
+    check_type(patterns, dict, alt_types=[list])
+    check_type(recipes, dict, alt_types=[list])
     valid_list(new_rules, BaseRule, min_length=0)
 
     if isinstance(patterns, list):
@@ -58,8 +58,9 @@ def create_rules(patterns:Union[dict[str,BasePattern],list[BasePattern]],
     else:
         check_recipe_dict(recipes, min_length=0)
 
+    # Imported here to avoid circular imports at top of file
+    import rules
     rules = {}
-
     all_rules ={(r.pattern_type, r.recipe_type):r for r in [r[1] \
         for r in inspect.getmembers(sys.modules["rules"], inspect.isclass) \
         if (issubclass(r[1], BaseRule))]}
@@ -76,3 +77,13 @@ def create_rules(patterns:Union[dict[str,BasePattern],list[BasePattern]],
                 )
                 rules[rule.name] = rule
     return rules
+
+def wait(inputs:list[VALID_CHANNELS])->list[VALID_CHANNELS]:
+    all_connections = [i for i in inputs if type(i) is Connection] \
+        + [i._reader for i in inputs if type(i) is Queue]
+
+    ready = multi_wait(all_connections)
+    ready_inputs = [i for i in inputs if \
+        (type(i) is Connection and i in ready) \
+        or (type(i) is Queue and i._reader in ready)]
+    return ready_inputs

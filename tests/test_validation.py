@@ -1,10 +1,10 @@
 
 import unittest
 
-from typing import Any
+from typing import Any, Union
 
-from core.correctness.validation import check_input, valid_string, \
-    valid_dict, valid_list
+from core.correctness.validation import check_type, check_implementation, \
+    valid_string, valid_dict, valid_list
 from core.correctness.vars import VALID_NAME_CHARS
 
 
@@ -15,21 +15,28 @@ class CorrectnessTests(unittest.TestCase):
     def tearDown(self)->None:
         return super().tearDown()
 
-    def testCheckInputValid(self)->None:
-        check_input(1, int)
-        check_input(0, int)
-        check_input(False, bool)
-        check_input(True, bool)
-        check_input(1, Any)
-        
-    def testCheckInputMistyped(self)->None:
-        with self.assertRaises(TypeError):
-            check_input(1, str)
+    def testCheckTypeValid(self)->None:
+        check_type(1, int)
+        check_type(0, int)
+        check_type(False, bool)
+        check_type(True, bool)
 
-    def testCheckInputOrNone(self)->None:
-        check_input(None, int, or_none=True)
+    def testCheckTypeValidAny(self)->None:
+        check_type(1, Any)
+
+    def testCheckTypeValidUnion(self)->None:
+        check_type(1, Union[int,str])
         with self.assertRaises(TypeError):
-            check_input(None, int, or_none=False)
+            check_type(Union[int, str], Union[int,str])
+        
+    def testCheckTypeMistyped(self)->None:
+        with self.assertRaises(TypeError):
+            check_type(1, str)
+
+    def testCheckTypeOrNone(self)->None:
+        check_type(None, int, or_none=True)
+        with self.assertRaises(TypeError):
+            check_type(None, int, or_none=False)
 
     def testValidStringValid(self)->None:
         valid_string("David_Marchant", VALID_NAME_CHARS)
@@ -106,3 +113,48 @@ class CorrectnessTests(unittest.TestCase):
     def testValidListMinLength(self)->None:
         with self.assertRaises(ValueError):
             valid_list([1, 2, 3], str, min_length=10)
+
+    def testCheckImplementationMinimum(self)->None:
+        class Parent:
+            def func():
+                pass
+
+        class Child(Parent):
+            def func():
+                pass
+
+        check_implementation(Child.func, Parent)
+
+    def testCheckImplementationUnaltered(self)->None:
+        class Parent:
+            def func():
+                pass
+
+        class Child(Parent):
+            pass
+        
+        with self.assertRaises(NotImplementedError):
+            check_implementation(Child.func, Parent)
+
+    def testCheckImplementationDifferingSig(self)->None:
+        class Parent:
+            def func():
+                pass
+
+        class Child(Parent):
+            def func(var):
+                pass
+        
+        with self.assertRaises(NotImplementedError):
+            check_implementation(Child.func, Parent)
+
+    def testCheckImplementationAnyType(self)->None:
+        class Parent:
+            def func(var:Any):
+                pass
+
+        class Child(Parent):
+            def func(var:str):
+                pass
+        
+        check_implementation(Child.func, Parent)

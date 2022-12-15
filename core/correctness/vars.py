@@ -1,7 +1,11 @@
 
 import os
 
+from multiprocessing import Queue
+from multiprocessing.connection import Connection
 from inspect import signature
+
+from typing import Union
 
 CHAR_LOWERCASE = 'abcdefghijklmnopqrstuvwxyz'
 CHAR_UPPERCASE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -19,6 +23,8 @@ VALID_JUPYTER_NOTEBOOK_EXTENSIONS = [".ipynb"]
 
 VALID_PATH_CHARS = VALID_NAME_CHARS + "." + os.path.sep
 VALID_TRIGGERING_PATH_CHARS = VALID_NAME_CHARS + ".*" + os.path.sep
+
+VALID_CHANNELS = Union[Connection,Queue]
 
 BAREBONES_NOTEBOOK = {
     "cells": [],
