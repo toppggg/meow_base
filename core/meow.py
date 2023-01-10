@@ -187,7 +187,6 @@ class BaseHandler:
         pass
 
 
-# TODO test me
 class MeowRunner:
     monitor:BaseMonitor
     handler:BaseHandler
@@ -199,9 +198,13 @@ class MeowRunner:
 
     def start(self)->None:
         self.monitor.start()
+        if hasattr(self.handler, "start"):
+            self.handler.start()
 
     def stop(self)->None:
         self.monitor.stop()
+        if hasattr(self.handler, "stop"):
+            self.handler.stop()
 
     def _is_valid_monitor(self, monitor:BaseMonitor)->None:
         check_type(monitor, BaseMonitor)

@@ -1,7 +1,7 @@
 
 from inspect import signature
-from os.path import sep
-from typing import Any, _SpecialForm, Union, get_origin, get_args
+from os.path import sep, exists, isfile, isdir, dirname
+from typing import Any, _SpecialForm, Union, Tuple, get_origin, get_args
 
 from core.correctness.vars import VALID_PATH_CHARS, get_not_imp_msg
 
@@ -129,10 +129,52 @@ def valid_list(variable:list[Any], entry_type:type,
     for entry in variable:
         check_type(entry, entry_type, alt_types=alt_types)
 
-def valid_path(variable:str, allow_base=False, extension:str="", min_length=1):
+def valid_path(variable:str, allow_base:bool=False, extension:str="", 
+        min_length:int=1):
     valid_string(variable, VALID_PATH_CHARS, min_length=min_length)
     if not allow_base and variable.startswith(sep):
         raise ValueError(f"Cannot accept path '{variable}'. Must be relative.")
     if extension and not variable.endswith(extension):
         raise ValueError(f"Path '{variable}' does not have required "
             f"extension '{extension}'.")
+
+def valid_existing_file_path(variable:str, allow_base:bool=False, 
+        extension:str=""):
+    valid_path(variable, allow_base=allow_base, extension=extension)
+    if not exists(variable):
+        raise FileNotFoundError(
+            f"Requested file path '{variable}' does not exist.")
+    if not isfile(variable):
+        raise ValueError(
+            f"Requested file '{variable}' is not a file.")
+
+def valid_existing_dir_path(variable:str, allow_base:bool=False):
+    valid_path(variable, allow_base=allow_base, extension="")
+    if not exists(variable):
+        raise FileNotFoundError(
+            f"Requested dir path '{variable}' does not exist.")
+    if not isdir(variable):
+        raise ValueError(
+            f"Requested dir '{variable}' is not a directory.")
+
+def valid_non_existing_path(variable:str, allow_base:bool=False):
+    valid_path(variable, allow_base=allow_base, extension="")
+    if exists(variable):
+        raise ValueError(f"Requested path '{variable}' already exists.")
+    if dirname(variable) and not exists(dirname(variable)):
+        raise ValueError(
+            f"Route to requested path '{variable}' does not exist.")
+
+def setup_debugging(print:Any=None, logging:int=0)->Tuple[Any,int]:
+    check_type(logging, int)
+    if print is None:
+        return None, 0
+    else:
+        if not isinstance(print, object):
+            raise TypeError(f"Invalid print location provided")
+        writeable = getattr(print, "write", None)
+        if not writeable or not callable(writeable):
+            raise TypeError(f"Print object does not implement required "
+                "'write' function")
+
+    return print, logging

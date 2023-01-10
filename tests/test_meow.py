@@ -271,7 +271,7 @@ class MeowTests(unittest.TestCase):
 
         loops = 0
         job_ids = []
-        while len(job_ids) < 2 or loops < 30:
+        while len(job_ids) < 2 and loops < 15:
             sleep(1)
             handler_debug_stream.seek(0)
             messages = handler_debug_stream.readlines()

@@ -8,7 +8,7 @@ from core.correctness.vars import FILE_EVENTS, FILE_CREATE_EVENT, \
     BAREBONES_NOTEBOOK, TEST_MONITOR_BASE
 from core.functionality import create_rules, rmtree, make_dir
 from patterns.file_event_pattern import FileEventPattern, WatchdogMonitor, \
-    _DEFAULT_MASK
+    _DEFAULT_MASK, SWEEP_START, SWEEP_STOP, SWEEP_JUMP
 from recipes import JupyterNotebookRecipe
 
 class CorrectnessTests(unittest.TestCase):
@@ -104,6 +104,45 @@ class CorrectnessTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             fep = FileEventPattern("name", "path", "recipe", "file", 
                 event_mask=[FILE_CREATE_EVENT, "nope"])
+
+    def testFileEventPatternSweep(self)->None:
+        sweeps = {
+            'first':{
+                SWEEP_START: 0,
+                SWEEP_STOP: 3,
+                SWEEP_JUMP: 1
+            },
+            'second':{
+                SWEEP_START: 10,
+                SWEEP_STOP: 0,
+                SWEEP_JUMP: -2
+            }
+        }
+        fep = FileEventPattern("name", "path", "recipe", "file", sweep=sweeps)
+        self.assertEqual(fep.sweep, sweeps)
+
+        bad_sweep = {
+            'first':{
+                SWEEP_START: 0,
+                SWEEP_STOP: 3,
+                SWEEP_JUMP: -1
+            },
+        }
+        with self.assertRaises(ValueError):
+            fep = FileEventPattern("name", "path", "recipe", "file", 
+                sweep=bad_sweep)
+
+        bad_sweep = {
+            'second':{
+                SWEEP_START: 10,
+                SWEEP_STOP: 0,
+                SWEEP_JUMP: 1
+            }
+        }
+        with self.assertRaises(ValueError):
+            fep = FileEventPattern("name", "path", "recipe", "file", 
+                sweep=bad_sweep)
+
 
     def testWatchdogMonitorMinimum(self)->None:
         from_monitor = Pipe()
