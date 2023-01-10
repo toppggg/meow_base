@@ -1,28 +1,24 @@
 
-import shutil
 import os
 import unittest
 
 from multiprocessing import Pipe
 
-from core.correctness.vars import FILE_EVENTS, FILE_CREATE_EVENT, PIPE_READ, \
-    PIPE_WRITE, BAREBONES_NOTEBOOK
-from core.functionality import create_rules
-from patterns.file_event_pattern import FileEventPattern, WatchdogMonitor
+from core.correctness.vars import FILE_EVENTS, FILE_CREATE_EVENT, \
+    BAREBONES_NOTEBOOK, TEST_MONITOR_BASE
+from core.functionality import create_rules, rmtree, make_dir
+from patterns.file_event_pattern import FileEventPattern, WatchdogMonitor, \
+    _DEFAULT_MASK
 from recipes import JupyterNotebookRecipe
-
-TEST_BASE = "test_base"
 
 class CorrectnessTests(unittest.TestCase):
     def setUp(self) -> None:
         super().setUp()
-        if not os.path.exists(TEST_BASE):
-            os.mkdir(TEST_BASE)
+        make_dir(TEST_MONITOR_BASE, ensure_clean=True)
 
     def tearDown(self) -> None:
         super().tearDown()
-        if os.path.exists(TEST_BASE):
-            shutil.rmtree(TEST_BASE)
+        rmtree(TEST_MONITOR_BASE)
 
     def testFileEventPatternCreationMinimum(self)->None:
         FileEventPattern("name", "path", "recipe", "file")
@@ -95,7 +91,7 @@ class CorrectnessTests(unittest.TestCase):
 
     def testFileEventPatternEventMask(self)->None:
         fep = FileEventPattern("name", "path", "recipe", "file")
-        self.assertEqual(fep.event_mask, FILE_EVENTS)
+        self.assertEqual(fep.event_mask, _DEFAULT_MASK)
 
         with self.assertRaises(TypeError):
             fep = FileEventPattern("name", "path", "recipe", "file", 
@@ -109,11 +105,9 @@ class CorrectnessTests(unittest.TestCase):
             fep = FileEventPattern("name", "path", "recipe", "file", 
                 event_mask=[FILE_CREATE_EVENT, "nope"])
 
-        self.assertEqual(fep.event_mask, FILE_EVENTS)
-
     def testWatchdogMonitorMinimum(self)->None:
         from_monitor = Pipe()
-        WatchdogMonitor(TEST_BASE, {}, from_monitor[PIPE_WRITE])
+        WatchdogMonitor(TEST_MONITOR_BASE, {}, from_monitor[1])
 
     def testWatchdogMonitorEventIdentificaion(self)->None:
         from_monitor_reader, from_monitor_writer = Pipe()
@@ -131,11 +125,11 @@ class CorrectnessTests(unittest.TestCase):
         }
         rules = create_rules(patterns, recipes)
 
-        wm = WatchdogMonitor(TEST_BASE, rules, from_monitor_writer)
+        wm = WatchdogMonitor(TEST_MONITOR_BASE, rules, from_monitor_writer)
 
         wm.start()
 
-        open(os.path.join(TEST_BASE, "A"), "w")
+        open(os.path.join(TEST_MONITOR_BASE, "A"), "w")
         if from_monitor_reader.poll(3):
             message = from_monitor_reader.recv()
 
@@ -143,9 +137,9 @@ class CorrectnessTests(unittest.TestCase):
         event, rule = message
         self.assertIsNotNone(event)
         self.assertIsNotNone(rule)
-        self.assertEqual(event.src_path, os.path.join(TEST_BASE, "A"))
+        self.assertEqual(event.src_path, os.path.join(TEST_MONITOR_BASE, "A"))
 
-        open(os.path.join(TEST_BASE, "B"), "w")
+        open(os.path.join(TEST_MONITOR_BASE, "B"), "w")
         if from_monitor_reader.poll(3):
             new_message = from_monitor_reader.recv()
         else:

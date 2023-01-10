@@ -13,7 +13,7 @@ for entry in "$search_dir"/*
 do
   if  [[ $entry == ./test* ]] && [[ $entry != ./$script_name ]];
   then
-    pytest $entry
+    pytest $entry "-W ignore::DeprecationWarning"
   fi
 done
 

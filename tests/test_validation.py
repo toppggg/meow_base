@@ -1,19 +1,23 @@
 
 import unittest
+import os
 
 from typing import Any, Union
 
 from core.correctness.validation import check_type, check_implementation, \
-    valid_string, valid_dict, valid_list
-from core.correctness.vars import VALID_NAME_CHARS
-
+    valid_string, valid_dict, valid_list, valid_existing_file_path, \
+    valid_existing_dir_path, valid_non_existing_path
+from core.correctness.vars import VALID_NAME_CHARS, TEST_MONITOR_BASE, SHA256
+from core.functionality import rmtree, make_dir
 
 class CorrectnessTests(unittest.TestCase):
-    def setUp(self)->None:
-        return super().setUp()
+    def setUp(self) -> None:
+        super().setUp()
+        make_dir(TEST_MONITOR_BASE, ensure_clean=True)
 
-    def tearDown(self)->None:
-        return super().tearDown()
+    def tearDown(self) -> None:
+        super().tearDown()
+        rmtree(TEST_MONITOR_BASE)
 
     def testCheckTypeValid(self)->None:
         check_type(1, int)
@@ -158,3 +162,45 @@ class CorrectnessTests(unittest.TestCase):
                 pass
         
         check_implementation(Child.func, Parent)
+
+    def testValidExistingFilePath(self)->None:
+        file_path = os.path.join(TEST_MONITOR_BASE, "file.txt")
+        with open(file_path, 'w') as hashed_file:
+            hashed_file.write("Some data\n")
+
+        valid_existing_file_path(file_path)
+
+        with self.assertRaises(FileNotFoundError):        
+            valid_existing_file_path("not_existing_"+file_path, SHA256)
+
+        dir_path = os.path.join(TEST_MONITOR_BASE, "dir")
+        make_dir(dir_path)
+
+        with self.assertRaises(ValueError):        
+            valid_existing_file_path(dir_path, SHA256)
+    
+    def testValidExistingDirPath(self)->None:
+        valid_existing_dir_path(TEST_MONITOR_BASE)
+
+        dir_path = os.path.join(TEST_MONITOR_BASE, "dir")
+
+        with self.assertRaises(FileNotFoundError):        
+            valid_existing_dir_path("not_existing_"+dir_path, SHA256)
+
+        file_path = os.path.join(TEST_MONITOR_BASE, "file.txt")
+        with open(file_path, 'w') as hashed_file:
+            hashed_file.write("Some data\n")
+
+        with self.assertRaises(ValueError):        
+            valid_existing_dir_path(file_path, SHA256)
+
+    def testValidNonExistingPath(self)->None:
+        valid_non_existing_path("does_not_exist")
+
+        make_dir("first")
+        with self.assertRaises(ValueError):
+            valid_non_existing_path("first")
+
+        make_dir("first/second")
+        with self.assertRaises(ValueError):
+            valid_non_existing_path("first/second")

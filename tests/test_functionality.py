@@ -1,13 +1,15 @@
 
 import unittest
+import os
 
 from multiprocessing import Pipe, Queue
 from time import sleep
 
 from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
-    BAREBONES_NOTEBOOK
+    BAREBONES_NOTEBOOK, SHA256, TEST_MONITOR_BASE, COMPLETE_NOTEBOOK
 from core.functionality import create_rules, generate_id, wait, \
-    check_pattern_dict, check_recipe_dict
+    check_pattern_dict, check_recipe_dict, get_file_hash, rmtree, make_dir, \
+    parameterize_jupyter_notebook
 from core.meow import BaseRule
 from patterns.file_event_pattern import FileEventPattern
 from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
@@ -22,12 +24,16 @@ valid_recipe_one = JupyterNotebookRecipe(
 valid_recipe_two = JupyterNotebookRecipe(
     "recipe_two", BAREBONES_NOTEBOOK)
 
+
+
 class CorrectnessTests(unittest.TestCase):
     def setUp(self) -> None:
-        return super().setUp()
+        super().setUp()
+        make_dir(TEST_MONITOR_BASE, ensure_clean=True)
 
     def tearDown(self) -> None:
-        return super().tearDown()
+        super().tearDown()
+        rmtree(TEST_MONITOR_BASE)
 
     def testCreateRulesMinimum(self)->None:
         create_rules({}, {})
@@ -213,7 +219,6 @@ class CorrectnessTests(unittest.TestCase):
                 msg = readable.get()
                 self.assertEqual(msg, 2)
 
-    
     def testWaitPipesAndQueues(self)->None:
         pipe_one_reader, pipe_one_writer = Pipe()
         pipe_two_reader, pipe_two_writer = Pipe()
@@ -287,3 +292,37 @@ class CorrectnessTests(unittest.TestCase):
                 msg = readable.recv()
                 self.assertEqual(msg, 1)
 
+    def testGetFileHashSha256(self)->None:
+        file_path = os.path.join(TEST_MONITOR_BASE, "hased_file.txt")
+        with open(file_path, 'w') as hashed_file:
+            hashed_file.write("Some data\n")
+        expected_hash = \
+            "8557122088c994ba8aa5540ccbb9a3d2d8ae2887046c2db23d65f40ae63abade"
+        
+        hash = get_file_hash(file_path, SHA256)
+        self.assertEqual(hash, expected_hash)
+    
+    def testGetFileHashSha256NoFile(self)->None:
+        file_path = os.path.join(TEST_MONITOR_BASE, "file.txt")
+
+        with self.assertRaises(FileNotFoundError):        
+            get_file_hash(file_path, SHA256)
+
+    def testParameteriseNotebook(self)->None:
+        pn = parameterize_jupyter_notebook(
+            COMPLETE_NOTEBOOK, {})
+        
+        self.assertEqual(pn, COMPLETE_NOTEBOOK)
+
+        pn = parameterize_jupyter_notebook(
+            COMPLETE_NOTEBOOK, {"a": 4})
+        
+        self.assertEqual(pn, COMPLETE_NOTEBOOK)
+
+        pn = parameterize_jupyter_notebook(
+            COMPLETE_NOTEBOOK, {"s": 4})
+
+        self.assertNotEqual(pn, COMPLETE_NOTEBOOK)
+        self.assertEqual(
+            pn["cells"][0]["source"], 
+            "# The first cell\n\ns = 4\nnum = 1000")
