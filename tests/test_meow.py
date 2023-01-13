@@ -2,8 +2,7 @@
 import io
 import os
 import unittest
-
-from multiprocessing import Pipe  
+ 
 from time import sleep
 from typing import Any
 
@@ -175,8 +174,6 @@ class MeowTests(unittest.TestCase):
         FullTestHandler()
 
     def testMeowRunner(self)->None:
-        #monitor_to_handler_reader, monitor_to_handler_writer = Pipe()
-
         pattern_one = FileEventPattern(
             "pattern_one", "start/A.txt", "recipe_one", "infile", 
             parameters={
@@ -260,8 +257,6 @@ class MeowTests(unittest.TestCase):
         self.assertEqual(data, "Initial Data\nA line from a test Pattern")
 
     def testMeowRunnerLinkeExecution(self)->None:
-        #monitor_to_handler_reader, monitor_to_handler_writer = Pipe()
-
         pattern_one = FileEventPattern(
             "pattern_one", "start/A.txt", "recipe_one", "infile", 
             parameters={

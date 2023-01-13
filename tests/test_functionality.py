@@ -6,14 +6,10 @@ from multiprocessing import Pipe, Queue
 from time import sleep
 
 from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
-    BAREBONES_NOTEBOOK, SHA256, TEST_MONITOR_BASE, COMPLETE_NOTEBOOK, \
-    EVENT_TYPE
+    SHA256, TEST_MONITOR_BASE, COMPLETE_NOTEBOOK, EVENT_TYPE
 from core.functionality import generate_id, wait, get_file_hash, rmtree, \
     make_dir, parameterize_jupyter_notebook, create_event
-from core.meow import BaseRule
-from patterns.file_event_pattern import FileEventPattern
-from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
-
+    
 
 class CorrectnessTests(unittest.TestCase):
     def setUp(self) -> None:

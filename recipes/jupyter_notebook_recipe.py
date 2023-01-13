@@ -114,47 +114,6 @@ class PapermillHandler(BaseHandler):
         print_debug(self._print_target, self.debug_level, 
             "Created new PapermillHandler instance", DEBUG_INFO)
 
-#    def run(self)->None:
-#        all_inputs = self.inputs + [self._stop_pipe[0]]
-#        while True:
-#            ready = wait(all_inputs)
-#
-#            if self._stop_pipe[0] in ready:
-#                return
-#            else:
-#                for input in self.inputs:
-#                    if input in ready:
-#                        message = input.recv()
-#                        event = message
-#                        self.handle(event)
-#
-#    def start(self)->None:
-#        if self._worker is None:
-#            self._worker = threading.Thread(
-#                target=self.run,
-#                args=[])
-#            self._worker.daemon = True
-#            self._worker.start()
-#            print_debug(self._print_target, self.debug_level, 
-#                "Starting PapermillHandler run...", DEBUG_INFO)
-#        else:
-#            msg = "Repeated calls to start have no effect."
-#            print_debug(self._print_target, self.debug_level, 
-#                msg, DEBUG_WARNING)
-#            raise RuntimeWarning(msg)
-#
-#    def stop(self)->None:
-#        if self._worker is None:
-#            msg = "Cannot stop thread that is not started."
-#            print_debug(self._print_target, self.debug_level, 
-#                msg, DEBUG_WARNING)
-#            raise RuntimeWarning(msg)
-#        else:
-#            self._stop_pipe[1].send(1)
-#            self._worker.join()
-#        print_debug(self._print_target, self.debug_level, 
-#            "Worker thread stopped", DEBUG_INFO)
-
     def handle(self, event:dict[Any,Any])->None:
         # TODO finish implementation and test
 

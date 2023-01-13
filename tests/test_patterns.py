@@ -4,9 +4,9 @@ import unittest
 
 from multiprocessing import Pipe
 
-from core.correctness.vars import FILE_EVENTS, FILE_CREATE_EVENT, \
-    BAREBONES_NOTEBOOK, TEST_MONITOR_BASE, EVENT_TYPE, WATCHDOG_RULE, \
-    WATCHDOG_BASE, WATCHDOG_SRC, WATCHDOG_TYPE
+from core.correctness.vars import FILE_CREATE_EVENT, BAREBONES_NOTEBOOK, \
+    TEST_MONITOR_BASE, EVENT_TYPE, WATCHDOG_RULE, WATCHDOG_BASE, \
+    WATCHDOG_SRC, WATCHDOG_TYPE
 from core.functionality import rmtree, make_dir
 from core.meow import create_rules
 from patterns.file_event_pattern import FileEventPattern, WatchdogMonitor, \
@@ -171,7 +171,6 @@ class CorrectnessTests(unittest.TestCase):
         self.assertEqual(len(rules), 1)
         rule = rules[list(rules.keys())[0]]
         
-        # TODO fix this test
         wm.start()
 
         open(os.path.join(TEST_MONITOR_BASE, "A"), "w")

@@ -8,7 +8,7 @@ from typing import Any, Union
 
 from core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
     VALID_PATTERN_NAME_CHARS, VALID_RULE_NAME_CHARS, VALID_CHANNELS, \
-    get_drt_imp_msg, DEBUG_WARNING, DEBUG_INFO, DEBUG_ERROR
+    get_drt_imp_msg, DEBUG_WARNING, DEBUG_INFO
 from core.correctness.validation import valid_string, check_type, \
     check_implementation, valid_list, valid_dict, setup_debugging
 from core.functionality import print_debug, wait, generate_id
@@ -208,8 +208,8 @@ class MeowRunner:
 
     def start(self)->None:
         self.monitor.start()
-        #if hasattr(self.handler, "start"):
-        #    self.handler.start()
+        if hasattr(self.handler, "start"):
+            self.handler.start()
 
         if self._worker is None:
             self._worker = threading.Thread(
@@ -228,8 +228,8 @@ class MeowRunner:
 
     def stop(self)->None:
         self.monitor.stop()
-        #if hasattr(self.handler, "stop"):
-        #    self.handler.stop()
+        if hasattr(self.handler, "stop"):
+            self.handler.stop()
 
         if self._worker is None:
             msg = "Cannot stop thread that is not started."

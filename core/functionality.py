@@ -1,25 +1,22 @@
 
 import copy
 import hashlib
-import inspect
 import json
 import nbformat
 import os
-import sys
 import yaml
 
 from multiprocessing.connection import Connection, wait as multi_wait
 from multiprocessing.queues import Queue
 from papermill.translators import papermill_translators
-from typing import Any, Union
+from typing import Any
 from random import SystemRandom
 
-#from core.meow import BasePattern, BaseRecipe, BaseRule
-from core.correctness.validation import check_type, valid_dict, valid_list, \
-    valid_existing_file_path, valid_path
+from core.correctness.validation import check_type, valid_existing_file_path, \
+    valid_path
 from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
-    VALID_CHANNELS, HASH_BUFFER_SIZE, SHA256, DEBUG_WARNING, DEBUG_ERROR, \
-    DEBUG_INFO, EVENT_TYPE
+    VALID_CHANNELS, HASH_BUFFER_SIZE, SHA256, DEBUG_WARNING, DEBUG_INFO, \
+    EVENT_TYPE
 
 def generate_id(prefix:str="", length:int=16, existing_ids:list[str]=[], 
         charset:str=CHAR_UPPERCASE+CHAR_LOWERCASE, attempts:int=24):

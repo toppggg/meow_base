@@ -4,9 +4,7 @@ import jsonschema
 import os
 import unittest
 
-from multiprocessing import Pipe
 from time import sleep
-from watchdog.events import FileCreatedEvent
 
 from patterns.file_event_pattern import FileEventPattern
 from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe, \
