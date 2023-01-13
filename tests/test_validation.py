@@ -6,8 +6,9 @@ from typing import Any, Union
 
 from core.correctness.validation import check_type, check_implementation, \
     valid_string, valid_dict, valid_list, valid_existing_file_path, \
-    valid_existing_dir_path, valid_non_existing_path
-from core.correctness.vars import VALID_NAME_CHARS, TEST_MONITOR_BASE, SHA256
+    valid_existing_dir_path, valid_non_existing_path, valid_event
+from core.correctness.vars import VALID_NAME_CHARS, TEST_MONITOR_BASE, \
+    SHA256, EVENT_TYPE
 from core.functionality import rmtree, make_dir
 
 class CorrectnessTests(unittest.TestCase):
@@ -18,6 +19,7 @@ class CorrectnessTests(unittest.TestCase):
     def tearDown(self) -> None:
         super().tearDown()
         rmtree(TEST_MONITOR_BASE)
+        rmtree("first")
 
     def testCheckTypeValid(self)->None:
         check_type(1, int)
@@ -204,3 +206,15 @@ class CorrectnessTests(unittest.TestCase):
         make_dir("first/second")
         with self.assertRaises(ValueError):
             valid_non_existing_path("first/second")
+
+    def testEventValidation(self)->None:
+        valid_event({EVENT_TYPE: "test"})
+        valid_event({EVENT_TYPE: "another"})
+        valid_event({EVENT_TYPE: "anything", "a": 1})
+        valid_event({EVENT_TYPE: "something", 1: 1})
+
+        with self.assertRaises(KeyError):
+            valid_event({"EVENT_TYPE": "test"})
+
+        with self.assertRaises(KeyError):
+            valid_event({})

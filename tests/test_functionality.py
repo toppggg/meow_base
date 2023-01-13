@@ -6,24 +6,13 @@ from multiprocessing import Pipe, Queue
 from time import sleep
 
 from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
-    BAREBONES_NOTEBOOK, SHA256, TEST_MONITOR_BASE, COMPLETE_NOTEBOOK
-from core.functionality import create_rules, generate_id, wait, \
-    check_pattern_dict, check_recipe_dict, get_file_hash, rmtree, make_dir, \
-    parameterize_jupyter_notebook
+    BAREBONES_NOTEBOOK, SHA256, TEST_MONITOR_BASE, COMPLETE_NOTEBOOK, \
+    EVENT_TYPE
+from core.functionality import generate_id, wait, get_file_hash, rmtree, \
+    make_dir, parameterize_jupyter_notebook, create_event
 from core.meow import BaseRule
 from patterns.file_event_pattern import FileEventPattern
 from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
-
-valid_pattern_one = FileEventPattern(
-    "pattern_one", "path_one", "recipe_one", "file_one")
-valid_pattern_two = FileEventPattern(
-    "pattern_two", "path_two", "recipe_two", "file_two")
-
-valid_recipe_one = JupyterNotebookRecipe(
-    "recipe_one", BAREBONES_NOTEBOOK)
-valid_recipe_two = JupyterNotebookRecipe(
-    "recipe_two", BAREBONES_NOTEBOOK)
-
 
 
 class CorrectnessTests(unittest.TestCase):
@@ -34,9 +23,6 @@ class CorrectnessTests(unittest.TestCase):
     def tearDown(self) -> None:
         super().tearDown()
         rmtree(TEST_MONITOR_BASE)
-
-    def testCreateRulesMinimum(self)->None:
-        create_rules({}, {})
 
     def testGenerateIDWorking(self)->None:
         id = generate_id()
@@ -64,97 +50,6 @@ class CorrectnessTests(unittest.TestCase):
         prefix_id = generate_id(prefix="Test")
         self.assertEqual(len(prefix_id), 16)
         self.assertTrue(prefix_id.startswith("Test"))
-
-    def testCreateRulesPatternsAndRecipesDicts(self)->None:
-        patterns = {
-            valid_pattern_one.name: valid_pattern_one,
-            valid_pattern_two.name: valid_pattern_two
-        }
-        recipes = {
-            valid_recipe_one.name: valid_recipe_one,
-            valid_recipe_two.name: valid_recipe_two
-        }
-        rules = create_rules(patterns, recipes)
-        self.assertIsInstance(rules, dict)
-        self.assertEqual(len(rules), 2)
-        for k, rule in rules.items():
-            self.assertIsInstance(k, str)
-            self.assertIsInstance(rule, BaseRule)
-            self.assertEqual(k, rule.name)
-
-    def testCreateRulesMisindexedPatterns(self)->None:
-        patterns = {
-            valid_pattern_two.name: valid_pattern_one,
-            valid_pattern_one.name: valid_pattern_two
-        }
-        with self.assertRaises(KeyError):
-            create_rules(patterns, {})
-
-    def testCreateRulesMisindexedRecipes(self)->None:
-        recipes = {
-            valid_recipe_two.name: valid_recipe_one,
-            valid_recipe_one.name: valid_recipe_two
-        }
-        with self.assertRaises(KeyError):
-            create_rules({}, recipes)
-
-    def testCheckPatternDictValid(self)->None:
-        fep1 = FileEventPattern("name_one", "path", "recipe", "file")
-        fep2 = FileEventPattern("name_two", "path", "recipe", "file")
-
-        patterns = {
-            fep1.name: fep1,
-            fep2.name: fep2
-        }
-
-        check_pattern_dict(patterns=patterns)
-
-    def testCheckPatternDictNoEntries(self)->None:
-        with self.assertRaises(ValueError):
-            check_pattern_dict(patterns={})
-
-        check_pattern_dict(patterns={}, min_length=0)
-
-    def testCheckPatternDictMissmatchedName(self)->None:
-        fep1 = FileEventPattern("name_one", "path", "recipe", "file")
-        fep2 = FileEventPattern("name_two", "path", "recipe", "file")
-
-        patterns = {
-            fep2.name: fep1,
-            fep1.name: fep2
-        }
-        
-        with self.assertRaises(KeyError):
-            check_pattern_dict(patterns=patterns)
-
-    def testCheckRecipeDictValid(self)->None:
-        jnr1 = JupyterNotebookRecipe("recipe_one", BAREBONES_NOTEBOOK)
-        jnr2 = JupyterNotebookRecipe("recipe_two", BAREBONES_NOTEBOOK)
-
-        recipes = {
-            jnr1.name: jnr1,
-            jnr2.name: jnr2
-        }
-
-        check_recipe_dict(recipes=recipes)
-
-    def testCheckRecipeDictNoEntires(self)->None:
-        with self.assertRaises(ValueError):
-            check_recipe_dict(recipes={})
-
-        check_recipe_dict(recipes={}, min_length=0)
-
-    def testCheckRecipeDictMismatchedName(self)->None:
-        jnr1 = JupyterNotebookRecipe("recipe_one", BAREBONES_NOTEBOOK)
-        jnr2 = JupyterNotebookRecipe("recipe_two", BAREBONES_NOTEBOOK)
-
-        recipes = {
-            jnr2.name: jnr1,
-            jnr1.name: jnr2
-        }
-
-        with self.assertRaises(KeyError):
-            check_recipe_dict(recipes=recipes)
     
     def testWaitPipes(self)->None:
         pipe_one_reader, pipe_one_writer = Pipe()
@@ -326,3 +221,20 @@ class CorrectnessTests(unittest.TestCase):
         self.assertEqual(
             pn["cells"][0]["source"], 
             "# The first cell\n\ns = 4\nnum = 1000")
+
+    def testCreateEvent(self)->None:
+        event = create_event("test")
+
+        self.assertEqual(type(event), dict)
+        self.assertTrue(EVENT_TYPE in event.keys())
+        self.assertEqual(len(event.keys()), 1)
+        self.assertEqual(event[EVENT_TYPE], "test")
+
+        event2 = create_event("test2", {"a":1})
+
+        self.assertEqual(type(event2), dict)
+        self.assertTrue(EVENT_TYPE in event2.keys())
+        self.assertEqual(len(event2.keys()), 2)
+        self.assertEqual(event2[EVENT_TYPE], "test2")
+        self.assertEqual(event2["a"], 1)
+

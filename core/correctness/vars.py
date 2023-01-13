@@ -187,7 +187,14 @@ APPENDING_NOTEBOOK = {
  "nbformat_minor": 4
 }
 
-# events
+# meow events
+EVENT_TYPE = "meow_event_type"
+WATCHDOG_TYPE = "watchdog"
+WATCHDOG_SRC = "src_path"
+WATCHDOG_BASE = "monitor_base"
+WATCHDOG_RULE = "rule_name"
+
+# inotify events
 FILE_CREATE_EVENT = "file_created"
 FILE_MODIFY_EVENT = "file_modified"
 FILE_MOVED_EVENT = "file_moved"

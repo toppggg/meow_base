@@ -5,8 +5,10 @@ import unittest
 from multiprocessing import Pipe
 
 from core.correctness.vars import FILE_EVENTS, FILE_CREATE_EVENT, \
-    BAREBONES_NOTEBOOK, TEST_MONITOR_BASE
-from core.functionality import create_rules, rmtree, make_dir
+    BAREBONES_NOTEBOOK, TEST_MONITOR_BASE, EVENT_TYPE, WATCHDOG_RULE, \
+    WATCHDOG_BASE, WATCHDOG_SRC, WATCHDOG_TYPE
+from core.functionality import rmtree, make_dir
+from core.meow import create_rules
 from patterns.file_event_pattern import FileEventPattern, WatchdogMonitor, \
     _DEFAULT_MASK, SWEEP_START, SWEEP_STOP, SWEEP_JUMP
 from recipes import JupyterNotebookRecipe
@@ -143,7 +145,6 @@ class CorrectnessTests(unittest.TestCase):
             fep = FileEventPattern("name", "path", "recipe", "file", 
                 sweep=bad_sweep)
 
-
     def testWatchdogMonitorMinimum(self)->None:
         from_monitor = Pipe()
         WatchdogMonitor(TEST_MONITOR_BASE, {}, from_monitor[1])
@@ -164,8 +165,13 @@ class CorrectnessTests(unittest.TestCase):
         }
         rules = create_rules(patterns, recipes)
 
-        wm = WatchdogMonitor(TEST_MONITOR_BASE, rules, from_monitor_writer)
-
+        wm = WatchdogMonitor(TEST_MONITOR_BASE, rules)
+        wm.to_runner = from_monitor_writer
+        
+        self.assertEqual(len(rules), 1)
+        rule = rules[list(rules.keys())[0]]
+        
+        # TODO fix this test
         wm.start()
 
         open(os.path.join(TEST_MONITOR_BASE, "A"), "w")
@@ -173,10 +179,17 @@ class CorrectnessTests(unittest.TestCase):
             message = from_monitor_reader.recv()
 
         self.assertIsNotNone(message)
-        event, rule = message
+        event = message
         self.assertIsNotNone(event)
-        self.assertIsNotNone(rule)
-        self.assertEqual(event.src_path, os.path.join(TEST_MONITOR_BASE, "A"))
+        self.assertEqual(type(event), dict)
+        self.assertTrue(EVENT_TYPE in event.keys())        
+        self.assertTrue(WATCHDOG_SRC in event.keys())        
+        self.assertTrue(WATCHDOG_BASE in event.keys())        
+        self.assertTrue(WATCHDOG_RULE in event.keys())        
+        self.assertEqual(event[EVENT_TYPE], WATCHDOG_TYPE)
+        self.assertEqual(event[WATCHDOG_SRC], os.path.join(TEST_MONITOR_BASE, "A"))
+        self.assertEqual(event[WATCHDOG_BASE], TEST_MONITOR_BASE)
+        self.assertEqual(event[WATCHDOG_RULE].name, rule.name)
 
         open(os.path.join(TEST_MONITOR_BASE, "B"), "w")
         if from_monitor_reader.poll(3):

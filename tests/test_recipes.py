@@ -13,8 +13,10 @@ from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe, \
     PapermillHandler, BASE_FILE, META_FILE, PARAMS_FILE, JOB_FILE, RESULT_FILE
 from rules.file_event_jupyter_notebook_rule import FileEventJupyterNotebookRule
 from core.correctness.vars import BAREBONES_NOTEBOOK, TEST_HANDLER_BASE, \
-    TEST_JOB_OUTPUT, TEST_MONITOR_BASE, COMPLETE_NOTEBOOK
-from core.functionality import rmtree, make_dir, create_rules, read_notebook
+    TEST_JOB_OUTPUT, TEST_MONITOR_BASE, COMPLETE_NOTEBOOK, EVENT_TYPE, \
+    WATCHDOG_BASE, WATCHDOG_RULE, WATCHDOG_SRC, WATCHDOG_TYPE
+from core.functionality import rmtree, make_dir, read_notebook
+from core.meow import create_rules
 
 class CorrectnessTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -92,59 +94,15 @@ class CorrectnessTests(unittest.TestCase):
         self.assertEqual(jnr.source, source)
 
     def testPapermillHanderMinimum(self)->None:
-        monitor_to_handler_reader, _ = Pipe()
-
         PapermillHandler(
-            [monitor_to_handler_reader], 
             TEST_HANDLER_BASE, 
             TEST_JOB_OUTPUT
         )
 
-    def testPapermillHanderStartStop(self)->None:
-        monitor_to_handler_reader, _ = Pipe()
-
-        ph = PapermillHandler(
-            [monitor_to_handler_reader], 
-            TEST_HANDLER_BASE,
-            TEST_JOB_OUTPUT
-        )
- 
-        ph.start()
-        ph.stop()
-
-    def testPapermillHanderRepeatedStarts(self)->None:
-        monitor_to_handler_reader, _ = Pipe()
-
-        ph = PapermillHandler(
-            [monitor_to_handler_reader], 
-            TEST_HANDLER_BASE,
-            TEST_JOB_OUTPUT
-        )
-
-        ph.start()
-        with self.assertRaises(RuntimeWarning):
-            ph.start()
-        ph.stop()
-
-    def testPapermillHanderStopBeforeStart(self)->None:
-        monitor_to_handler_reader, _ = Pipe()
-
-        ph = PapermillHandler(
-            [monitor_to_handler_reader], 
-            TEST_HANDLER_BASE,
-            TEST_JOB_OUTPUT
-        )
-
-        with self.assertRaises(RuntimeWarning):
-            ph.stop()
-
     def testPapermillHandlerHandling(self)->None:
-        monitor_to_handler_reader, to_handler = Pipe()
-
         debug_stream = io.StringIO("")
 
         ph = PapermillHandler(
-            [monitor_to_handler_reader], 
             TEST_HANDLER_BASE,
             TEST_JOB_OUTPUT,
             print=debug_stream,
@@ -153,8 +111,6 @@ class CorrectnessTests(unittest.TestCase):
         
         with open(os.path.join(TEST_MONITOR_BASE, "A"), "w") as f:
             f.write("Data")
-        event = FileCreatedEvent(os.path.join(TEST_MONITOR_BASE, "A"))
-        event.monitor_base = TEST_MONITOR_BASE
 
         pattern_one = FileEventPattern(
             "pattern_one", "A", "recipe_one", "file_one")
@@ -175,8 +131,14 @@ class CorrectnessTests(unittest.TestCase):
 
         self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), 0)
 
-        ph.start()
-        to_handler.send((event, rule))
+        event = {
+            EVENT_TYPE: WATCHDOG_TYPE,
+            WATCHDOG_SRC: os.path.join(TEST_MONITOR_BASE, "A"),
+            WATCHDOG_BASE: TEST_MONITOR_BASE,
+            WATCHDOG_RULE: rule
+        }
+
+        ph.handle(event)
 
         loops = 0
         job_id = None
@@ -211,5 +173,3 @@ class CorrectnessTests(unittest.TestCase):
 
         self.assertEqual("124875.0\n", 
             result["cells"][4]["outputs"][0]["text"][0])
-
-        ph.stop()

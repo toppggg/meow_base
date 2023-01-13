@@ -8,13 +8,23 @@ from time import sleep
 from typing import Any
 
 from core.correctness.vars import TEST_HANDLER_BASE, TEST_JOB_OUTPUT, \
-    TEST_MONITOR_BASE, APPENDING_NOTEBOOK
-from core.functionality import make_dir, rmtree, create_rules, read_notebook
+    TEST_MONITOR_BASE, APPENDING_NOTEBOOK, BAREBONES_NOTEBOOK
+from core.functionality import make_dir, rmtree, read_notebook
 from core.meow import BasePattern, BaseRecipe, BaseRule, BaseMonitor, \
-    BaseHandler, MeowRunner
+    BaseHandler, MeowRunner, create_rules
 from patterns import WatchdogMonitor, FileEventPattern
 from recipes.jupyter_notebook_recipe import PapermillHandler, \
     JupyterNotebookRecipe, RESULT_FILE
+
+valid_pattern_one = FileEventPattern(
+    "pattern_one", "path_one", "recipe_one", "file_one")
+valid_pattern_two = FileEventPattern(
+    "pattern_two", "path_two", "recipe_two", "file_two")
+
+valid_recipe_one = JupyterNotebookRecipe(
+    "recipe_one", BAREBONES_NOTEBOOK)
+valid_recipe_two = JupyterNotebookRecipe(
+    "recipe_two", BAREBONES_NOTEBOOK)
 
 
 class MeowTests(unittest.TestCase):
@@ -84,39 +94,75 @@ class MeowTests(unittest.TestCase):
                 pass
         FullRule("name", "", "")
 
+    def testCreateRulesMinimum(self)->None:
+        create_rules({}, {})
+
+    def testCreateRulesPatternsAndRecipesDicts(self)->None:
+        patterns = {
+            valid_pattern_one.name: valid_pattern_one,
+            valid_pattern_two.name: valid_pattern_two
+        }
+        recipes = {
+            valid_recipe_one.name: valid_recipe_one,
+            valid_recipe_two.name: valid_recipe_two
+        }
+        rules = create_rules(patterns, recipes)
+        self.assertIsInstance(rules, dict)
+        self.assertEqual(len(rules), 2)
+        for k, rule in rules.items():
+            self.assertIsInstance(k, str)
+            self.assertIsInstance(rule, BaseRule)
+            self.assertEqual(k, rule.name)
+
+    def testCreateRulesMisindexedPatterns(self)->None:
+        patterns = {
+            valid_pattern_two.name: valid_pattern_one,
+            valid_pattern_one.name: valid_pattern_two
+        }
+        with self.assertRaises(KeyError):
+            create_rules(patterns, {})
+
+    def testCreateRulesMisindexedRecipes(self)->None:
+        recipes = {
+            valid_recipe_two.name: valid_recipe_one,
+            valid_recipe_one.name: valid_recipe_two
+        }
+        with self.assertRaises(KeyError):
+            create_rules({}, recipes)
+
     def testBaseMonitor(self)->None:
         with self.assertRaises(TypeError):
-            BaseMonitor("", "")
+            BaseMonitor("")
 
         class TestMonitor(BaseMonitor):
             pass
 
         with self.assertRaises(NotImplementedError):
-            TestMonitor("", "")
+            TestMonitor("")
 
         class FullTestMonitor(BaseMonitor):
             def start(self):
                 pass
             def stop(self):
                 pass
-            def _is_valid_report(self, report:Any)->None:
+            def _is_valid_to_runner(self, to_runner:Any)->None:
                 pass
             def _is_valid_rules(self, rules:Any)->None:
                 pass
-        FullTestMonitor("", "")
+        FullTestMonitor("")
 
     def testBaseHandler(self)->None:
         with self.assertRaises(TypeError):
-            BaseHandler("")
+            BaseHandler()
 
         class TestHandler(BaseHandler):
             pass
 
         with self.assertRaises(NotImplementedError):
-            TestHandler("")
+            TestHandler()
 
         class FullTestHandler(BaseHandler):
-            def handle(self, event, rule):
+            def handle(self, event):
                 pass
             def start(self):
                 pass
@@ -124,10 +170,12 @@ class MeowTests(unittest.TestCase):
                 pass
             def _is_valid_inputs(self, inputs:Any)->None:
                 pass
-        FullTestHandler("")
+            def valid_event_types(self)->list[str]:
+                pass
+        FullTestHandler()
 
     def testMeowRunner(self)->None:
-        monitor_to_handler_reader, monitor_to_handler_writer = Pipe()
+        #monitor_to_handler_reader, monitor_to_handler_writer = Pipe()
 
         pattern_one = FileEventPattern(
             "pattern_one", "start/A.txt", "recipe_one", "infile", 
@@ -153,12 +201,11 @@ class MeowTests(unittest.TestCase):
             WatchdogMonitor(
                 TEST_MONITOR_BASE,
                 rules,
-                monitor_to_handler_writer, 
                 print=monitor_debug_stream,
-                logging=3, settletime=1
+                logging=3, 
+                settletime=1
             ), 
             PapermillHandler(
-                [monitor_to_handler_reader], 
                 TEST_HANDLER_BASE,
                 TEST_JOB_OUTPUT,
                 print=handler_debug_stream,
@@ -213,7 +260,7 @@ class MeowTests(unittest.TestCase):
         self.assertEqual(data, "Initial Data\nA line from a test Pattern")
 
     def testMeowRunnerLinkeExecution(self)->None:
-        monitor_to_handler_reader, monitor_to_handler_writer = Pipe()
+        #monitor_to_handler_reader, monitor_to_handler_writer = Pipe()
 
         pattern_one = FileEventPattern(
             "pattern_one", "start/A.txt", "recipe_one", "infile", 
@@ -246,12 +293,11 @@ class MeowTests(unittest.TestCase):
             WatchdogMonitor(
                 TEST_MONITOR_BASE,
                 rules,
-                monitor_to_handler_writer, 
                 print=monitor_debug_stream,
-                logging=3, settletime=1
+                logging=3, 
+                settletime=1
             ), 
             PapermillHandler(
-                [monitor_to_handler_reader], 
                 TEST_HANDLER_BASE,
                 TEST_JOB_OUTPUT,
                 print=handler_debug_stream,

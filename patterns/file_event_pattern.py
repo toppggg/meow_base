@@ -16,8 +16,9 @@ from core.correctness.validation import check_type, valid_string, \
 from core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
     VALID_VARIABLE_NAME_CHARS, FILE_EVENTS, FILE_CREATE_EVENT, \
     FILE_MODIFY_EVENT, FILE_MOVED_EVENT, VALID_CHANNELS, DEBUG_INFO, \
-    DEBUG_ERROR, DEBUG_WARNING
-from core.functionality import print_debug
+    DEBUG_ERROR, DEBUG_WARNING, WATCHDOG_TYPE, WATCHDOG_SRC, WATCHDOG_RULE, \
+    WATCHDOG_BASE
+from core.functionality import print_debug, create_event
 from core.meow import BasePattern, BaseMonitor, BaseRule
 
 _DEFAULT_MASK = [
@@ -125,9 +126,9 @@ class WatchdogMonitor(BaseMonitor):
     _rules_lock:threading.Lock
 
     def __init__(self, base_dir:str, rules:dict[str, BaseRule], 
-            report:VALID_CHANNELS, autostart=False, 
-            settletime:int=1, print:Any=sys.stdout, logging:int=0)->None:
-        super().__init__(rules, report)
+            autostart=False, settletime:int=1, print:Any=sys.stdout, 
+            logging:int=0)->None:
+        super().__init__(rules)
         self._is_valid_base_dir(base_dir)
         self.base_dir = base_dir
         check_type(settletime, int)
@@ -179,11 +180,16 @@ class WatchdogMonitor(BaseMonitor):
                 direct_hit = match(direct_regexp, handle_path)
 
                 if direct_hit or recursive_hit:
+                    meow_event = create_event(
+                        WATCHDOG_TYPE, {
+                            WATCHDOG_SRC: event.src_path,
+                            WATCHDOG_BASE: self.base_dir,
+                            WATCHDOG_RULE: rule
+                    })
                     print_debug(self._print_target, self.debug_level,  
                         f"Event at {src_path} of type {event_type} hit rule "
                         f"{rule.name}", DEBUG_INFO)
-                    event.monitor_base = self.base_dir
-                    self.report.send((event, rule))
+                    self.to_runner.send(meow_event)
 
         except Exception as e:
             self._rules_lock.release()
@@ -191,12 +197,8 @@ class WatchdogMonitor(BaseMonitor):
 
         self._rules_lock.release()
 
-
     def _is_valid_base_dir(self, base_dir:str)->None:
         valid_existing_dir_path(base_dir)
-
-    def _is_valid_report(self, report:VALID_CHANNELS)->None:
-        check_type(report, VALID_CHANNELS)
 
     def _is_valid_rules(self, rules:dict[str, BaseRule])->None:
         valid_dict(rules, str, BaseRule, min_length=0, strict=False)

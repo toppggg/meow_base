@@ -1,11 +1,17 @@
 
-from typing import Any
+import inspect
+import sys
+import threading
+
+from multiprocessing import Pipe
+from typing import Any, Union
 
 from core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
     VALID_PATTERN_NAME_CHARS, VALID_RULE_NAME_CHARS, VALID_CHANNELS, \
-    get_drt_imp_msg
+    get_drt_imp_msg, DEBUG_WARNING, DEBUG_INFO, DEBUG_ERROR
 from core.correctness.validation import valid_string, check_type, \
-    check_implementation
+    check_implementation, valid_list, valid_dict, setup_debugging
+from core.functionality import print_debug, wait, generate_id
 
 
 class BaseRecipe:
@@ -127,15 +133,11 @@ class BaseRule:
 
 class BaseMonitor:
     rules: dict[str, BaseRule]
-    report: VALID_CHANNELS
-    def __init__(self, rules:dict[str,BaseRule], 
-            report:VALID_CHANNELS)->None:
+    to_runner: VALID_CHANNELS
+    def __init__(self, rules:dict[str,BaseRule])->None:
         check_implementation(type(self).start, BaseMonitor)
         check_implementation(type(self).stop, BaseMonitor)
-        check_implementation(type(self)._is_valid_report, BaseMonitor)
         check_implementation(type(self)._is_valid_rules, BaseMonitor)
-        self._is_valid_report(report)
-        self.report = report
         self._is_valid_rules(rules)
         self.rules = rules
         
@@ -144,9 +146,6 @@ class BaseMonitor:
             msg = get_drt_imp_msg(BaseMonitor)
             raise TypeError(msg)
         return object.__new__(cls)
-
-    def _is_valid_report(self, report:VALID_CHANNELS)->None:
-        pass
 
     def _is_valid_rules(self, rules:dict[str,BaseRule])->None:
         pass
@@ -159,14 +158,9 @@ class BaseMonitor:
 
 
 class BaseHandler:
-    inputs:Any
-    def __init__(self, inputs:list[VALID_CHANNELS]) -> None:
-        check_implementation(type(self).start, BaseHandler)
-        check_implementation(type(self).stop, BaseHandler)
+    def __init__(self) -> None:
         check_implementation(type(self).handle, BaseHandler)
-        check_implementation(type(self)._is_valid_inputs, BaseHandler)
-        self._is_valid_inputs(inputs)
-        self.inputs = inputs
+        check_implementation(type(self).valid_event_types, BaseHandler)
 
     def __new__(cls, *args, **kwargs):
         if cls is BaseHandler:
@@ -174,40 +168,134 @@ class BaseHandler:
             raise TypeError(msg)
         return object.__new__(cls)
 
-    def _is_valid_inputs(self, inputs:Any)->None:
+    def valid_event_types(self)->list[str]:
         pass
 
-    def handle(self, event:Any, rule:BaseRule)->None:
-        pass
-
-    def start(self)->None:
-        pass
-
-    def stop(self)->None:
+    def handle(self, event:Any)->None:
         pass
 
 
+# TODO reformat to allow for updated monitor / handler interaction 
+# TODO expand this to allow for lists of monitors / handlers
 class MeowRunner:
     monitor:BaseMonitor
     handler:BaseHandler
-    def __init__(self, monitor:BaseMonitor, handler:BaseHandler) -> None:
+    from_monitor: VALID_CHANNELS
+    def __init__(self, monitor:BaseMonitor, handler:BaseHandler, 
+            print:Any=sys.stdout, logging:int=0) -> None:
         self._is_valid_monitor(monitor)
         self.monitor = monitor
+        monitor_to_runner_reader, monitor_to_runner_writer = Pipe()
+        self.monitor.to_runner = monitor_to_runner_writer
+        self.from_monitor = monitor_to_runner_reader
         self._is_valid_handler(handler)
         self.handler = handler
+        self._stop_pipe = Pipe()
+        self._worker = None
+        self._print_target, self.debug_level = setup_debugging(print, logging)
+
+    def run(self)->None:
+        all_inputs = [self.from_monitor, self._stop_pipe[0]]
+        while True:
+            ready = wait(all_inputs)
+
+            if self._stop_pipe[0] in ready:
+                return
+            else:
+                message = self.from_monitor.recv()
+                event = message
+                self.handler.handle(event)
 
     def start(self)->None:
         self.monitor.start()
-        if hasattr(self.handler, "start"):
-            self.handler.start()
+        #if hasattr(self.handler, "start"):
+        #    self.handler.start()
+
+        if self._worker is None:
+            self._worker = threading.Thread(
+                target=self.run,
+                args=[])
+            self._worker.daemon = True
+            self._worker.start()
+            print_debug(self._print_target, self.debug_level, 
+                "Starting MeowRunner run...", DEBUG_INFO)
+        else:
+            msg = "Repeated calls to start have no effect."
+            print_debug(self._print_target, self.debug_level, 
+                msg, DEBUG_WARNING)
+            raise RuntimeWarning(msg)
+
 
     def stop(self)->None:
         self.monitor.stop()
-        if hasattr(self.handler, "stop"):
-            self.handler.stop()
+        #if hasattr(self.handler, "stop"):
+        #    self.handler.stop()
+
+        if self._worker is None:
+            msg = "Cannot stop thread that is not started."
+            print_debug(self._print_target, self.debug_level, 
+                msg, DEBUG_WARNING)
+            raise RuntimeWarning(msg)
+        else:
+            self._stop_pipe[1].send(1)
+            self._worker.join()
+        print_debug(self._print_target, self.debug_level, 
+            "Worker thread stopped", DEBUG_INFO)
+
 
     def _is_valid_monitor(self, monitor:BaseMonitor)->None:
         check_type(monitor, BaseMonitor)
 
     def _is_valid_handler(self, handler:BaseHandler)->None:
         check_type(handler, BaseHandler)
+
+def create_rules(patterns:Union[dict[str,BasePattern],list[BasePattern]], 
+        recipes:Union[dict[str,BaseRecipe],list[BaseRecipe]],
+        new_rules:list[BaseRule]=[])->dict[str,BaseRule]:
+    check_type(patterns, dict, alt_types=[list])
+    check_type(recipes, dict, alt_types=[list])
+    valid_list(new_rules, BaseRule, min_length=0)
+
+    if isinstance(patterns, list):
+        valid_list(patterns, BasePattern, min_length=0)
+        patterns = {pattern.name:pattern for pattern in patterns}
+    else:
+        valid_dict(patterns, str, BasePattern, strict=False, min_length=0)
+        for k, v in patterns.items():
+            if k != v.name:
+                raise KeyError(
+                    f"Key '{k}' indexes unexpected Pattern '{v.name}' "
+                    "Pattern dictionaries must be keyed with the name of the "
+                    "Pattern.")
+
+    if isinstance(recipes, list):
+        valid_list(recipes, BaseRecipe, min_length=0)
+        recipes = {recipe.name:recipe for recipe in recipes}
+    else:
+        valid_dict(recipes, str, BaseRecipe, strict=False, min_length=0)
+        for k, v in recipes.items():
+            if k != v.name:
+                raise KeyError(
+                    f"Key '{k}' indexes unexpected Recipe '{v.name}' "
+                    "Recipe dictionaries must be keyed with the name of the "
+                    "Recipe.")
+
+    # Imported here to avoid circular imports at top of file
+    import rules
+    rules = {}
+    all_rules ={(r.pattern_type, r.recipe_type):r for r in [r[1] \
+        for r in inspect.getmembers(sys.modules["rules"], inspect.isclass) \
+        if (issubclass(r[1], BaseRule))]}
+
+    for pattern in patterns.values():
+        if pattern.recipe in recipes:
+            key = (type(pattern).__name__, 
+                type(recipes[pattern.recipe]).__name__)
+            if (key) in all_rules:
+                rule = all_rules[key](
+                    generate_id(prefix="Rule_"), 
+                    pattern, 
+                    recipes[pattern.recipe]
+                )
+                rules[rule.name] = rule
+    return rules
