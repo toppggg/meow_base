@@ -219,4 +219,3 @@ class MeowTests(unittest.TestCase):
         
         self.assertEqual(data, 
             "Initial Data\nA line from Pattern 1\nA line from Pattern 2")
-

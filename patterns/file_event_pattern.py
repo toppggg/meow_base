@@ -1,4 +1,5 @@
 
+import glob
 import threading
 import sys
 import os
@@ -15,16 +16,16 @@ from core.correctness.validation import check_type, valid_string, \
     setup_debugging
 from core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
     VALID_VARIABLE_NAME_CHARS, FILE_EVENTS, FILE_CREATE_EVENT, \
-    FILE_MODIFY_EVENT, FILE_MOVED_EVENT, VALID_CHANNELS, DEBUG_INFO, \
-    DEBUG_ERROR, DEBUG_WARNING, WATCHDOG_TYPE, WATCHDOG_SRC, WATCHDOG_RULE, \
-    WATCHDOG_BASE
+    FILE_MODIFY_EVENT, FILE_MOVED_EVENT, DEBUG_INFO, WATCHDOG_TYPE, \
+    WATCHDOG_SRC, WATCHDOG_RULE, WATCHDOG_BASE, FILE_RETROACTIVE_EVENT
 from core.functionality import print_debug, create_event
 from core.meow import BasePattern, BaseMonitor, BaseRule
 
 _DEFAULT_MASK = [
     FILE_CREATE_EVENT,
     FILE_MODIFY_EVENT,
-    FILE_MOVED_EVENT
+    FILE_MOVED_EVENT,
+    FILE_RETROACTIVE_EVENT
 ]
 
 SWEEP_START = "start"
@@ -150,6 +151,7 @@ class WatchdogMonitor(BaseMonitor):
     def start(self)->None:
         print_debug(self._print_target, self.debug_level, 
             "Starting WatchdogMonitor", DEBUG_INFO)
+        self._apply_retroactive_rules()
         self.monitor.start()
 
     def stop(self)->None:
@@ -203,6 +205,36 @@ class WatchdogMonitor(BaseMonitor):
     def _is_valid_rules(self, rules:dict[str, BaseRule])->None:
         valid_dict(rules, str, BaseRule, min_length=0, strict=False)
 
+    def _apply_retroactive_rules(self)->None:
+        for rule in self.rules.values():
+            self._apply_retroactive_rule(rule)
+
+    def _apply_retroactive_rule(self, rule:BaseRule)->None:
+        self._rules_lock.acquire()
+        try:
+            if FILE_RETROACTIVE_EVENT in rule.pattern.event_mask:
+            
+                testing_path = os.path.join(self.base_dir, rule.pattern.triggering_path)
+
+                globbed = glob.glob(testing_path)
+
+                for globble in globbed:
+
+                    meow_event = create_event(
+                        WATCHDOG_TYPE, {
+                            WATCHDOG_SRC: globble,
+                            WATCHDOG_BASE: self.base_dir,
+                            WATCHDOG_RULE: rule
+                    })
+                    print_debug(self._print_target, self.debug_level,  
+                        f"Retroactive event for file at at {globble} hit rule "
+                        f"{rule.name}", DEBUG_INFO)
+                    self.to_runner.send(meow_event)
+
+        except Exception as e:
+            self._rules_lock.release()
+            raise Exception(e)            
+        self._rules_lock.release()
 
 class WatchdogEventHandler(PatternMatchingEventHandler):
     monitor:WatchdogMonitor

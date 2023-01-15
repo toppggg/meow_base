@@ -1,14 +1,18 @@
 
+import io
+import os
 import unittest
  
+from multiprocessing import Pipe
 from typing import Any
 
 from core.correctness.vars import TEST_HANDLER_BASE, TEST_JOB_OUTPUT, \
-    TEST_MONITOR_BASE, BAREBONES_NOTEBOOK
+    TEST_MONITOR_BASE, BAREBONES_NOTEBOOK, WATCHDOG_BASE, WATCHDOG_RULE, \
+    WATCHDOG_SRC, WATCHDOG_TYPE, EVENT_TYPE
 from core.functionality import make_dir, rmtree
 from core.meow import BasePattern, BaseRecipe, BaseRule, BaseMonitor, \
     BaseHandler, create_rules
-from patterns import FileEventPattern
+from patterns import FileEventPattern, WatchdogMonitor
 from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
 
 valid_pattern_one = FileEventPattern(
@@ -146,6 +150,131 @@ class MeowTests(unittest.TestCase):
                 pass
         FullTestMonitor("")
 
+    def testMonitoring(self)->None:
+        pattern_one = FileEventPattern(
+            "pattern_one", "start/A.txt", "recipe_one", "infile", 
+            parameters={})
+        recipe = JupyterNotebookRecipe(
+            "recipe_one", BAREBONES_NOTEBOOK)
+
+        patterns = {
+            pattern_one.name: pattern_one,
+        }
+        recipes = {
+            recipe.name: recipe,
+        }
+        rules = create_rules(patterns, recipes)
+
+        rule = rules[list(rules.keys())[0]]
+
+        monitor_debug_stream = io.StringIO("")
+
+        wm = WatchdogMonitor(
+            TEST_MONITOR_BASE,
+            rules,
+            print=monitor_debug_stream,
+            logging=3, 
+            settletime=1
+        )
+
+        from_monitor_reader, from_monitor_writer = Pipe()
+        wm.to_runner = from_monitor_writer
+   
+        wm.start()
+
+        start_dir = os.path.join(TEST_MONITOR_BASE, "start")
+        make_dir(start_dir)
+        self.assertTrue(start_dir)
+        with open(os.path.join(start_dir, "A.txt"), "w") as f:
+            f.write("Initial Data")
+
+        self.assertTrue(os.path.exists(os.path.join(start_dir, "A.txt")))
+
+        messages = []
+        while True:
+            if from_monitor_reader.poll(3):
+                messages.append(from_monitor_reader.recv())
+            else:
+                break
+        self.assertTrue(len(messages), 1)
+        message = messages[0]
+
+        self.assertEqual(type(message), dict)
+        self.assertIn(EVENT_TYPE, message)
+        self.assertEqual(message[EVENT_TYPE], WATCHDOG_TYPE)
+        self.assertIn(WATCHDOG_BASE, message)
+        self.assertEqual(message[WATCHDOG_BASE], TEST_MONITOR_BASE)
+        self.assertIn(WATCHDOG_SRC, message)
+        self.assertEqual(message[WATCHDOG_SRC], 
+            os.path.join(start_dir, "A.txt"))
+        self.assertIn(WATCHDOG_RULE, message)
+        self.assertEqual(message[WATCHDOG_RULE].name, rule.name)
+
+        wm.stop()
+
+    def testMonitoringRetroActive(self)->None:
+        pattern_one = FileEventPattern(
+            "pattern_one", "start/A.txt", "recipe_one", "infile", 
+            parameters={})
+        recipe = JupyterNotebookRecipe(
+            "recipe_one", BAREBONES_NOTEBOOK)
+
+        patterns = {
+            pattern_one.name: pattern_one,
+        }
+        recipes = {
+            recipe.name: recipe,
+        }
+        rules = create_rules(patterns, recipes)
+
+        rule = rules[list(rules.keys())[0]]
+
+        start_dir = os.path.join(TEST_MONITOR_BASE, "start")
+        make_dir(start_dir)
+        self.assertTrue(start_dir)
+        with open(os.path.join(start_dir, "A.txt"), "w") as f:
+            f.write("Initial Data")
+
+        self.assertTrue(os.path.exists(os.path.join(start_dir, "A.txt")))
+
+        monitor_debug_stream = io.StringIO("")
+
+        wm = WatchdogMonitor(
+            TEST_MONITOR_BASE,
+            rules,
+            print=monitor_debug_stream,
+            logging=3, 
+            settletime=1
+        )
+
+        from_monitor_reader, from_monitor_writer = Pipe()
+        wm.to_runner = from_monitor_writer
+   
+        wm.start()
+
+        messages = []
+        while True:
+            if from_monitor_reader.poll(3):
+                messages.append(from_monitor_reader.recv())
+            else:
+                break
+        self.assertTrue(len(messages), 1)
+        message = messages[0]
+
+        self.assertEqual(type(message), dict)
+        self.assertIn(EVENT_TYPE, message)
+        self.assertEqual(message[EVENT_TYPE], WATCHDOG_TYPE)
+        self.assertIn(WATCHDOG_BASE, message)
+        self.assertEqual(message[WATCHDOG_BASE], TEST_MONITOR_BASE)
+        self.assertIn(WATCHDOG_SRC, message)
+        self.assertEqual(message[WATCHDOG_SRC], 
+            os.path.join(start_dir, "A.txt"))
+        self.assertIn(WATCHDOG_RULE, message)
+        self.assertEqual(message[WATCHDOG_RULE].name, rule.name)
+
+        wm.stop()
+
+
     def testBaseHandler(self)->None:
         with self.assertRaises(TypeError):
             BaseHandler()
@@ -168,3 +297,4 @@ class MeowTests(unittest.TestCase):
             def valid_event_types(self)->list[str]:
                 pass
         FullTestHandler()
+

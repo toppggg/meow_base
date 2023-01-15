@@ -200,23 +200,27 @@ FILE_MODIFY_EVENT = "file_modified"
 FILE_MOVED_EVENT = "file_moved"
 FILE_CLOSED_EVENT = "file_closed"
 FILE_DELETED_EVENT = "file_deleted"
+FILE_RETROACTIVE_EVENT = "retroactive_file_event"
 FILE_EVENTS = [
     FILE_CREATE_EVENT, 
     FILE_MODIFY_EVENT, 
     FILE_MOVED_EVENT, 
     FILE_CLOSED_EVENT, 
-    FILE_DELETED_EVENT
+    FILE_DELETED_EVENT,
+    FILE_RETROACTIVE_EVENT
 ]
 
 DIR_CREATE_EVENT = "dir_created"
 DIR_MODIFY_EVENT = "dir_modified"
 DIR_MOVED_EVENT = "dir_moved"
 DIR_DELETED_EVENT = "dir_deleted"
+DIR_RETROACTIVE_EVENT = "retroactive_dir_event"
 DIR_EVENTS = [
     DIR_CREATE_EVENT,
     DIR_MODIFY_EVENT,
     DIR_MOVED_EVENT,
-    DIR_DELETED_EVENT
+    DIR_DELETED_EVENT,
+    DIR_RETROACTIVE_EVENT
 ]
 
 # debug printing levels
