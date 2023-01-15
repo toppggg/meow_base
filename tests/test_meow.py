@@ -4,7 +4,7 @@ import os
 import unittest
  
 from multiprocessing import Pipe
-from typing import Any
+from typing import Any, Union
 
 from core.correctness.vars import TEST_HANDLER_BASE, TEST_JOB_OUTPUT, \
     TEST_MONITOR_BASE, BAREBONES_NOTEBOOK, WATCHDOG_BASE, WATCHDOG_RULE, \
@@ -131,24 +131,42 @@ class MeowTests(unittest.TestCase):
 
     def testBaseMonitor(self)->None:
         with self.assertRaises(TypeError):
-            BaseMonitor("")
+            BaseMonitor({}, {})
 
         class TestMonitor(BaseMonitor):
             pass
 
         with self.assertRaises(NotImplementedError):
-            TestMonitor("")
+            TestMonitor({}, {})
 
         class FullTestMonitor(BaseMonitor):
             def start(self):
                 pass
             def stop(self):
                 pass
-            def _is_valid_to_runner(self, to_runner:Any)->None:
+            def _is_valid_patterns(self, patterns:dict[str,BasePattern])->None:
                 pass
-            def _is_valid_rules(self, rules:Any)->None:
+            def _is_valid_recipes(self, recipes:dict[str,BaseRecipe])->None:
                 pass
-        FullTestMonitor("")
+            def add_pattern(self, pattern:BasePattern)->None:
+                pass
+            def update_pattern(self, pattern:BasePattern)->None:
+                pass
+            def remove_pattern(self, pattern:Union[str,BasePattern])->None:
+                pass
+            def get_patterns(self)->None:
+                pass
+            def add_recipe(self, recipe:BaseRecipe)->None:
+                pass
+            def update_recipe(self, recipe:BaseRecipe)->None:
+                pass
+            def remove_recipe(self, recipe:Union[str,BaseRecipe])->None:
+                pass
+            def get_recipes(self)->None:
+                pass
+            def get_rules(self)->None:
+                pass
+        FullTestMonitor({}, {})
 
     def testMonitoring(self)->None:
         pattern_one = FileEventPattern(
@@ -163,19 +181,20 @@ class MeowTests(unittest.TestCase):
         recipes = {
             recipe.name: recipe,
         }
-        rules = create_rules(patterns, recipes)
-
-        rule = rules[list(rules.keys())[0]]
 
         monitor_debug_stream = io.StringIO("")
 
         wm = WatchdogMonitor(
             TEST_MONITOR_BASE,
-            rules,
+            patterns,
+            recipes,
             print=monitor_debug_stream,
             logging=3, 
             settletime=1
         )
+
+        rules = wm.get_rules()
+        rule = rules[list(rules.keys())[0]]
 
         from_monitor_reader, from_monitor_writer = Pipe()
         wm.to_runner = from_monitor_writer
@@ -225,9 +244,6 @@ class MeowTests(unittest.TestCase):
         recipes = {
             recipe.name: recipe,
         }
-        rules = create_rules(patterns, recipes)
-
-        rule = rules[list(rules.keys())[0]]
 
         start_dir = os.path.join(TEST_MONITOR_BASE, "start")
         make_dir(start_dir)
@@ -241,11 +257,15 @@ class MeowTests(unittest.TestCase):
 
         wm = WatchdogMonitor(
             TEST_MONITOR_BASE,
-            rules,
+            patterns,
+            recipes,
             print=monitor_debug_stream,
             logging=3, 
             settletime=1
         )
+
+        rules = wm.get_rules()
+        rule = rules[list(rules.keys())[0]]
 
         from_monitor_reader, from_monitor_writer = Pipe()
         wm.to_runner = from_monitor_writer

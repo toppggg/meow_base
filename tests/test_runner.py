@@ -44,7 +44,6 @@ class MeowTests(unittest.TestCase):
         recipes = {
             recipe.name: recipe,
         }
-        rules = create_rules(patterns, recipes)
 
         monitor_debug_stream = io.StringIO("")
         handler_debug_stream = io.StringIO("")
@@ -52,7 +51,8 @@ class MeowTests(unittest.TestCase):
         runner = MeowRunner(
             WatchdogMonitor(
                 TEST_MONITOR_BASE,
-                rules,
+                patterns,
+                recipes,
                 print=monitor_debug_stream,
                 logging=3, 
                 settletime=1
@@ -142,7 +142,8 @@ class MeowTests(unittest.TestCase):
         runner = MeowRunner(
             WatchdogMonitor(
                 TEST_MONITOR_BASE,
-                rules,
+                patterns,
+                recipes,
                 print=monitor_debug_stream,
                 logging=3, 
                 settletime=1

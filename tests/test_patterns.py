@@ -147,7 +147,7 @@ class CorrectnessTests(unittest.TestCase):
 
     def testWatchdogMonitorMinimum(self)->None:
         from_monitor = Pipe()
-        WatchdogMonitor(TEST_MONITOR_BASE, {}, from_monitor[1])
+        WatchdogMonitor(TEST_MONITOR_BASE, {}, {}, from_monitor[1])
 
     def testWatchdogMonitorEventIdentificaion(self)->None:
         from_monitor_reader, from_monitor_writer = Pipe()
@@ -163,11 +163,12 @@ class CorrectnessTests(unittest.TestCase):
         recipes = {
             recipe.name: recipe,
         }
-        rules = create_rules(patterns, recipes)
 
-        wm = WatchdogMonitor(TEST_MONITOR_BASE, rules)
+        wm = WatchdogMonitor(TEST_MONITOR_BASE, patterns, recipes)
         wm.to_runner = from_monitor_writer
-        
+
+        rules = wm.get_rules()
+
         self.assertEqual(len(rules), 1)
         rule = rules[list(rules.keys())[0]]
         

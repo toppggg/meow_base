@@ -4,10 +4,11 @@ import threading
 import sys
 import os
 
+from copy import deepcopy
 from fnmatch import translate
 from re import match
 from time import time, sleep
-from typing import Any
+from typing import Any, Union
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 
@@ -19,7 +20,8 @@ from core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
     FILE_MODIFY_EVENT, FILE_MOVED_EVENT, DEBUG_INFO, WATCHDOG_TYPE, \
     WATCHDOG_SRC, WATCHDOG_RULE, WATCHDOG_BASE, FILE_RETROACTIVE_EVENT
 from core.functionality import print_debug, create_event
-from core.meow import BasePattern, BaseMonitor, BaseRule
+from core.meow import BasePattern, BaseMonitor, BaseRule, BaseRecipe, \
+    create_rule
 
 _DEFAULT_MASK = [
     FILE_CREATE_EVENT,
@@ -124,16 +126,20 @@ class WatchdogMonitor(BaseMonitor):
     base_dir:str
     debug_level:int
     _print_target:Any
+    _patterns_lock:threading.Lock
+    _recipes_lock:threading.Lock
     _rules_lock:threading.Lock
 
-    def __init__(self, base_dir:str, rules:dict[str, BaseRule], 
-            autostart=False, settletime:int=1, print:Any=sys.stdout, 
-            logging:int=0)->None:
-        super().__init__(rules)
+    def __init__(self, base_dir:str, patterns:dict[str,FileEventPattern], 
+            recipes:dict[str,BaseRecipe], autostart=False, settletime:int=1, 
+            print:Any=sys.stdout, logging:int=0)->None:
+        super().__init__(patterns, recipes)
         self._is_valid_base_dir(base_dir)
         self.base_dir = base_dir
         check_type(settletime, int)
         self._print_target, self.debug_level = setup_debugging(print, logging)       
+        self._patterns_lock = threading.Lock()
+        self._recipes_lock = threading.Lock()
         self._rules_lock = threading.Lock()
         self.event_handler = WatchdogEventHandler(self, settletime=settletime)
         self.monitor = Observer()
@@ -170,7 +176,7 @@ class WatchdogMonitor(BaseMonitor):
 
         self._rules_lock.acquire()
         try:
-            for rule in self.rules.values():
+            for rule in self._rules.values():
                 
                 if event_type not in rule.pattern.event_mask:
                     continue
@@ -199,19 +205,210 @@ class WatchdogMonitor(BaseMonitor):
 
         self._rules_lock.release()
 
+    def add_pattern(self, pattern: FileEventPattern) -> None:
+        check_type(pattern, FileEventPattern)
+        self._patterns_lock.acquire()
+        try:
+            if pattern.name in self._patterns:
+                raise KeyError(f"An entry for Pattern '{pattern.name}' already "
+                    "exists. Do you intend to update instead?")
+            self._patterns[pattern.name] = pattern
+        except Exception as e:
+            self._patterns_lock.release()
+            raise Exception(e)            
+        self._patterns_lock.release()
+
+        self._identify_new_rules(new_pattern=pattern)
+
+    def update_pattern(self, pattern: FileEventPattern) -> None:
+        check_type(pattern, FileEventPattern)
+        self.remove_pattern(pattern.name)
+        self.add_pattern(pattern)
+
+    def remove_pattern(self, pattern: Union[str, FileEventPattern]) -> None:
+        check_type(pattern, str, alt_types=[FileEventPattern])
+        lookup_key = pattern
+        if type(lookup_key) is FileEventPattern:
+            lookup_key = pattern.name
+        self._patterns_lock.acquire()
+        try:
+            if lookup_key not in self._patterns:
+                raise KeyError(f"Cannot remote Pattern '{lookup_key}' as it "
+                    "does not already exist")
+            self._patterns.pop(lookup_key)
+        except Exception as e:
+            self._patterns_lock.release()
+            raise Exception(e)            
+        self._patterns_lock.release()
+
+        self._identify_lost_rules(lost_pattern=pattern.name)
+        
+    def get_patterns(self) -> None:
+        to_return = {}
+        self._patterns_lock.acquire()
+        try:
+            to_return = deepcopy(self._patterns)
+        except Exception as e:
+            self._patterns_lock.release()
+            raise Exception(e)            
+        self._patterns_lock.release()
+        return to_return
+
+    def add_recipe(self, recipe: BaseRecipe) -> None:
+        check_type(recipe, BaseRecipe)
+        self._recipes_lock.acquire()
+        try:
+            if recipe.name in self._recipes:
+                raise KeyError(f"An entry for Recipe '{recipe.name}' already "
+                    "exists. Do you intend to update instead?")
+            self._recipes[recipe.name] = recipe
+        except Exception as e:
+            self._recipes_lock.release()
+            raise Exception(e)            
+        self._recipes_lock.release()
+
+        self._identify_new_rules(new_recipe=recipe)
+
+    def update_recipe(self, recipe: BaseRecipe) -> None:
+        check_type(recipe, BaseRecipe)
+        self.remove_recipe(recipe.name)
+        self.add_recipe(recipe)
+    
+    def remove_recipe(self, recipe: Union[str, BaseRecipe]) -> None:
+        check_type(recipe, str, alt_types=[BaseRecipe])
+        lookup_key = recipe
+        if type(lookup_key) is BaseRecipe:
+            lookup_key = recipe.name
+        self._recipes_lock.acquire()
+        try:
+            if lookup_key not in self._recipes:
+                raise KeyError(f"Cannot remote Recipe '{lookup_key}' as it "
+                    "does not already exist")
+            self._recipes.pop(lookup_key)
+        except Exception as e:
+            self._recipes_lock.release()
+            raise Exception(e)            
+        self._recipes_lock.release()
+
+        self._identify_lost_rules(lost_recipe=recipe.name)
+
+    def get_recipes(self) -> None:
+        to_return = {}
+        self._recipes_lock.acquire()
+        try:
+            to_return = deepcopy(self._recipes)
+        except Exception as e:
+            self._recipes_lock.release()
+            raise Exception(e)            
+        self._recipes_lock.release()
+        return to_return
+    
+    def get_rules(self) -> None:
+        to_return = {}
+        self._rules_lock.acquire()
+        try:
+            to_return = deepcopy(self._rules)
+        except Exception as e:
+            self._rules_lock.release()
+            raise Exception(e)            
+        self._rules_lock.release()
+        return to_return
+
+    def _identify_new_rules(self, new_pattern:FileEventPattern=None, 
+            new_recipe:BaseRecipe=None)->None:
+
+        if new_pattern:
+            self._patterns_lock.acquire()
+            self._recipes_lock.acquire()
+            try:
+                if new_pattern.name not in self._patterns:
+                    self._patterns_lock.release()
+                    self._recipes_lock.release()
+                    return
+                if new_pattern.recipe in self._recipes:
+                    self._create_new_rule(
+                        new_pattern,
+                        self._recipes[new_pattern.recipe],
+                    )
+            except Exception as e:
+                self._patterns_lock.release()
+                self._recipes_lock.release()
+                raise Exception(e)            
+            self._patterns_lock.release()
+            self._recipes_lock.release()
+
+        if new_recipe:
+            self._patterns_lock.acquire()
+            self._patterns_lock.acquire()
+            try:
+                if new_recipe.name not in self._recipes:
+                    self._patterns_lock.release()
+                    self._recipes_lock.release()
+                    return
+                for pattern in self._patterns.values():
+                    if pattern.recipe == new_recipe.name:
+                        self._create_new_rule(
+                            pattern,
+                            new_recipe,
+                        )
+            except Exception as e:
+                self._patterns_lock.release()
+                self._recipes_lock.release()
+                raise Exception(e)            
+            self._patterns_lock.release()
+            self._recipes_lock.release()
+
+    def _identify_lost_rules(self, lost_pattern:str, lost_recipe:str)->None:
+        to_delete = []
+        self._rules_lock.acquire()
+        try:
+            for name, rule in self._rules.items():
+                if lost_pattern and rule.pattern.name == lost_pattern:
+                        to_delete.append(name)
+                if lost_recipe and rule.recipe.name == lost_recipe:
+                        to_delete.append(name)
+            for delete in to_delete:
+                if delete in self._rules.keys():
+                    self._rules.pop(delete)
+        except Exception as e:
+            self._rules_lock.release()
+            raise Exception(e)            
+        self._rules_lock.release()
+
+    def _create_new_rule(self, pattern:FileEventPattern, recipe:BaseRecipe)->None:
+        rule = create_rule(pattern, recipe)
+        self._rules_lock.acquire()
+        try:
+            if rule.name in self._rules:
+                raise KeyError("Cannot create Rule with name of "
+                    f"'{rule.name}' as already in use")
+            self._rules[rule.name] = rule
+        except Exception as e:
+            self._rules_lock.release()
+            raise Exception(e)            
+        self._rules_lock.release()
+
+        self._apply_retroactive_rule(rule)
+        
     def _is_valid_base_dir(self, base_dir:str)->None:
         valid_existing_dir_path(base_dir)
 
-    def _is_valid_rules(self, rules:dict[str, BaseRule])->None:
-        valid_dict(rules, str, BaseRule, min_length=0, strict=False)
+    def _is_valid_patterns(self, patterns:dict[str,FileEventPattern])->None:
+        valid_dict(patterns, str, FileEventPattern, min_length=0, strict=False)
+
+    def _is_valid_recipes(self, recipes:dict[str,BaseRecipe])->None:
+        valid_dict(recipes, str, BaseRecipe, min_length=0, strict=False)
 
     def _apply_retroactive_rules(self)->None:
-        for rule in self.rules.values():
+        for rule in self._rules.values():
             self._apply_retroactive_rule(rule)
 
     def _apply_retroactive_rule(self, rule:BaseRule)->None:
         self._rules_lock.acquire()
         try:
+            if rule.name not in self._rules:
+                self._rules_lock.release()
+                return
             if FILE_RETROACTIVE_EVENT in rule.pattern.event_mask:
             
                 testing_path = os.path.join(self.base_dir, rule.pattern.triggering_path)

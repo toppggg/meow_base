@@ -130,14 +130,29 @@ class BaseRule:
 
 
 class BaseMonitor:
-    rules: dict[str, BaseRule]
+    _patterns: dict[str, BasePattern]
+    _recipes: dict[str, BaseRecipe]
+    _rules: dict[str, BaseRule]
     to_runner: VALID_CHANNELS
-    def __init__(self, rules:dict[str,BaseRule])->None:
+    def __init__(self, patterns:dict[str,BasePattern], recipes:dict[str,BaseRecipe])->None:
         check_implementation(type(self).start, BaseMonitor)
         check_implementation(type(self).stop, BaseMonitor)
-        check_implementation(type(self)._is_valid_rules, BaseMonitor)
-        self._is_valid_rules(rules)
-        self.rules = rules
+        check_implementation(type(self)._is_valid_patterns, BaseMonitor)
+        self._is_valid_patterns(patterns)
+        check_implementation(type(self)._is_valid_recipes, BaseMonitor)
+        self._is_valid_recipes(recipes)
+        check_implementation(type(self).add_pattern, BaseMonitor)
+        check_implementation(type(self).update_pattern, BaseMonitor)
+        check_implementation(type(self).remove_pattern, BaseMonitor)
+        check_implementation(type(self).get_patterns, BaseMonitor)
+        check_implementation(type(self).add_recipe, BaseMonitor)
+        check_implementation(type(self).update_recipe, BaseMonitor)
+        check_implementation(type(self).remove_recipe, BaseMonitor)
+        check_implementation(type(self).get_recipes, BaseMonitor)
+        check_implementation(type(self).get_rules, BaseMonitor)
+        self._patterns = patterns
+        self._recipes = recipes
+        self._rules = create_rules(patterns, recipes)
         
     def __new__(cls, *args, **kwargs):
         if cls is BaseMonitor:
@@ -145,13 +160,43 @@ class BaseMonitor:
             raise TypeError(msg)
         return object.__new__(cls)
 
-    def _is_valid_rules(self, rules:dict[str,BaseRule])->None:
+    def _is_valid_patterns(self, patterns:dict[str,BasePattern])->None:
+        pass
+
+    def _is_valid_recipes(self, recipes:dict[str,BaseRecipe])->None:
         pass
 
     def start(self)->None:
         pass
 
     def stop(self)->None:
+        pass
+
+    def add_pattern(self, pattern:BasePattern)->None:
+        pass
+
+    def update_pattern(self, pattern:BasePattern)->None:
+        pass
+
+    def remove_pattern(self, pattern:Union[str,BasePattern])->None:
+        pass
+
+    def get_patterns(self)->None:
+        pass
+
+    def add_recipe(self, recipe:BaseRecipe)->None:
+        pass
+
+    def update_recipe(self, recipe:BaseRecipe)->None:
+        pass
+
+    def remove_recipe(self, recipe:Union[str,BaseRecipe])->None:
+        pass
+
+    def get_recipes(self)->None:
+        pass
+
+    def get_rules(self)->None:
         pass
 
 
@@ -171,7 +216,6 @@ class BaseHandler:
 
     def handle(self, event:Any)->None:
         pass
-
 
 def create_rules(patterns:Union[dict[str,BasePattern],list[BasePattern]], 
         recipes:Union[dict[str,BaseRecipe],list[BaseRecipe]],
@@ -204,22 +248,31 @@ def create_rules(patterns:Union[dict[str,BasePattern],list[BasePattern]],
                     "Recipe dictionaries must be keyed with the name of the "
                     "Recipe.")
 
+    generated_rules = {}
+    for pattern in patterns.values():
+        if pattern.recipe in recipes:
+            rule = create_rule(pattern, recipes[pattern.recipe])
+            generated_rules[rule.name] = rule
+    return generated_rules
+
+def create_rule(pattern:BasePattern, recipe:BaseRecipe, 
+        new_rules:list[BaseRule]=[])->BaseRule:
+    check_type(pattern, BasePattern)
+    check_type(recipe, BaseRecipe)
+    valid_list(new_rules, BaseRule, min_length=0)
+
     # Imported here to avoid circular imports at top of file
     import rules
-    rules = {}
     all_rules ={(r.pattern_type, r.recipe_type):r for r in [r[1] \
         for r in inspect.getmembers(sys.modules["rules"], inspect.isclass) \
         if (issubclass(r[1], BaseRule))]}
 
-    for pattern in patterns.values():
-        if pattern.recipe in recipes:
-            key = (type(pattern).__name__, 
-                type(recipes[pattern.recipe]).__name__)
-            if (key) in all_rules:
-                rule = all_rules[key](
-                    generate_id(prefix="Rule_"), 
-                    pattern, 
-                    recipes[pattern.recipe]
-                )
-                rules[rule.name] = rule
-    return rules
+    key = (type(pattern).__name__, type(recipe).__name__)
+    if (key) in all_rules:
+        return all_rules[key](
+            generate_id(prefix="Rule_"), 
+            pattern, 
+            recipe
+        )
+    raise TypeError(f"No valid rule for Pattern '{pattern}' and Recipe "
+        f"'{recipe}' could be found.")
