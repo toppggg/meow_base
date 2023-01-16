@@ -8,7 +8,7 @@ from core.correctness.validation import check_type, check_implementation, \
     valid_string, valid_dict, valid_list, valid_existing_file_path, \
     valid_existing_dir_path, valid_non_existing_path, valid_event
 from core.correctness.vars import VALID_NAME_CHARS, TEST_MONITOR_BASE, \
-    SHA256, EVENT_TYPE
+    SHA256, EVENT_TYPE, EVENT_PATH
 from core.functionality import rmtree, make_dir
 
 class CorrectnessTests(unittest.TestCase):
@@ -208,10 +208,11 @@ class CorrectnessTests(unittest.TestCase):
             valid_non_existing_path("first/second")
 
     def testEventValidation(self)->None:
-        valid_event({EVENT_TYPE: "test"})
-        valid_event({EVENT_TYPE: "another"})
-        valid_event({EVENT_TYPE: "anything", "a": 1})
-        valid_event({EVENT_TYPE: "something", 1: 1})
+        valid_event({EVENT_TYPE: "test", EVENT_PATH: "path"})
+        valid_event({EVENT_TYPE: "anything", EVENT_PATH: "path", "a": 1})
+
+        with self.assertRaises(KeyError):
+            valid_event({EVENT_TYPE: "test"})
 
         with self.assertRaises(KeyError):
             valid_event({"EVENT_TYPE": "test"})

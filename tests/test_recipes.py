@@ -12,7 +12,7 @@ from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe, \
 from rules.file_event_jupyter_notebook_rule import FileEventJupyterNotebookRule
 from core.correctness.vars import BAREBONES_NOTEBOOK, TEST_HANDLER_BASE, \
     TEST_JOB_OUTPUT, TEST_MONITOR_BASE, COMPLETE_NOTEBOOK, EVENT_TYPE, \
-    WATCHDOG_BASE, WATCHDOG_RULE, WATCHDOG_SRC, WATCHDOG_TYPE
+    WATCHDOG_BASE, WATCHDOG_RULE, WATCHDOG_TYPE, EVENT_PATH
 from core.functionality import rmtree, make_dir, read_notebook
 from core.meow import create_rules
 
@@ -131,7 +131,7 @@ class CorrectnessTests(unittest.TestCase):
 
         event = {
             EVENT_TYPE: WATCHDOG_TYPE,
-            WATCHDOG_SRC: os.path.join(TEST_MONITOR_BASE, "A"),
+            EVENT_PATH: os.path.join(TEST_MONITOR_BASE, "A"),
             WATCHDOG_BASE: TEST_MONITOR_BASE,
             WATCHDOG_RULE: rule
         }

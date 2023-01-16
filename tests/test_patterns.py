@@ -6,7 +6,7 @@ from multiprocessing import Pipe
 
 from core.correctness.vars import FILE_CREATE_EVENT, BAREBONES_NOTEBOOK, \
     TEST_MONITOR_BASE, EVENT_TYPE, WATCHDOG_RULE, WATCHDOG_BASE, \
-    WATCHDOG_SRC, WATCHDOG_TYPE
+    WATCHDOG_TYPE, EVENT_PATH
 from core.functionality import rmtree, make_dir
 from core.meow import create_rules
 from patterns.file_event_pattern import FileEventPattern, WatchdogMonitor, \
@@ -183,11 +183,11 @@ class CorrectnessTests(unittest.TestCase):
         self.assertIsNotNone(event)
         self.assertEqual(type(event), dict)
         self.assertTrue(EVENT_TYPE in event.keys())        
-        self.assertTrue(WATCHDOG_SRC in event.keys())        
+        self.assertTrue(EVENT_PATH in event.keys())        
         self.assertTrue(WATCHDOG_BASE in event.keys())        
         self.assertTrue(WATCHDOG_RULE in event.keys())        
         self.assertEqual(event[EVENT_TYPE], WATCHDOG_TYPE)
-        self.assertEqual(event[WATCHDOG_SRC], os.path.join(TEST_MONITOR_BASE, "A"))
+        self.assertEqual(event[EVENT_PATH], os.path.join(TEST_MONITOR_BASE, "A"))
         self.assertEqual(event[WATCHDOG_BASE], TEST_MONITOR_BASE)
         self.assertEqual(event[WATCHDOG_RULE].name, rule.name)
 

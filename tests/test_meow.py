@@ -8,7 +8,7 @@ from typing import Any, Union
 
 from core.correctness.vars import TEST_HANDLER_BASE, TEST_JOB_OUTPUT, \
     TEST_MONITOR_BASE, BAREBONES_NOTEBOOK, WATCHDOG_BASE, WATCHDOG_RULE, \
-    WATCHDOG_SRC, WATCHDOG_TYPE, EVENT_TYPE
+    EVENT_PATH, WATCHDOG_TYPE, EVENT_TYPE
 from core.functionality import make_dir, rmtree
 from core.meow import BasePattern, BaseRecipe, BaseRule, BaseMonitor, \
     BaseHandler, create_rules
@@ -223,8 +223,8 @@ class MeowTests(unittest.TestCase):
         self.assertEqual(message[EVENT_TYPE], WATCHDOG_TYPE)
         self.assertIn(WATCHDOG_BASE, message)
         self.assertEqual(message[WATCHDOG_BASE], TEST_MONITOR_BASE)
-        self.assertIn(WATCHDOG_SRC, message)
-        self.assertEqual(message[WATCHDOG_SRC], 
+        self.assertIn(EVENT_PATH, message)
+        self.assertEqual(message[EVENT_PATH], 
             os.path.join(start_dir, "A.txt"))
         self.assertIn(WATCHDOG_RULE, message)
         self.assertEqual(message[WATCHDOG_RULE].name, rule.name)
@@ -286,8 +286,8 @@ class MeowTests(unittest.TestCase):
         self.assertEqual(message[EVENT_TYPE], WATCHDOG_TYPE)
         self.assertIn(WATCHDOG_BASE, message)
         self.assertEqual(message[WATCHDOG_BASE], TEST_MONITOR_BASE)
-        self.assertIn(WATCHDOG_SRC, message)
-        self.assertEqual(message[WATCHDOG_SRC], 
+        self.assertIn(EVENT_PATH, message)
+        self.assertEqual(message[EVENT_PATH], 
             os.path.join(start_dir, "A.txt"))
         self.assertIn(WATCHDOG_RULE, message)
         self.assertEqual(message[WATCHDOG_RULE].name, rule.name)

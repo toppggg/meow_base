@@ -6,7 +6,7 @@ from multiprocessing import Pipe, Queue
 from time import sleep
 
 from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
-    SHA256, TEST_MONITOR_BASE, COMPLETE_NOTEBOOK, EVENT_TYPE
+    SHA256, TEST_MONITOR_BASE, COMPLETE_NOTEBOOK, EVENT_TYPE, EVENT_PATH
 from core.functionality import generate_id, wait, get_file_hash, rmtree, \
     make_dir, parameterize_jupyter_notebook, create_event
     
@@ -219,18 +219,20 @@ class CorrectnessTests(unittest.TestCase):
             "# The first cell\n\ns = 4\nnum = 1000")
 
     def testCreateEvent(self)->None:
-        event = create_event("test")
+        event = create_event("test", "path")
 
         self.assertEqual(type(event), dict)
         self.assertTrue(EVENT_TYPE in event.keys())
-        self.assertEqual(len(event.keys()), 1)
+        self.assertEqual(len(event.keys()), 2)
         self.assertEqual(event[EVENT_TYPE], "test")
+        self.assertEqual(event[EVENT_PATH], "path")
 
-        event2 = create_event("test2", {"a":1})
+        event2 = create_event("test2", "path2", {"a":1})
 
         self.assertEqual(type(event2), dict)
         self.assertTrue(EVENT_TYPE in event2.keys())
-        self.assertEqual(len(event2.keys()), 2)
+        self.assertEqual(len(event2.keys()), 3)
         self.assertEqual(event2[EVENT_TYPE], "test2")
+        self.assertEqual(event2[EVENT_PATH], "path2")
         self.assertEqual(event2["a"], 1)
 
