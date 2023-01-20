@@ -18,7 +18,7 @@ from core.correctness.validation import check_type, valid_string, \
     setup_debugging
 from core.correctness.vars import VALID_VARIABLE_NAME_CHARS, VALID_CHANNELS, \
     SHA256, DEBUG_ERROR, DEBUG_WARNING, DEBUG_INFO, WATCHDOG_TYPE, \
-    WATCHDOG_SRC, WATCHDOG_BASE, WATCHDOG_RULE
+    WATCHDOG_BASE, WATCHDOG_RULE, EVENT_PATH
 from core.functionality import wait, get_file_hash, generate_id, make_dir, \
     write_yaml, write_notebook, get_file_hash, parameterize_jupyter_notebook, \
     print_debug
@@ -118,9 +118,9 @@ class PapermillHandler(BaseHandler):
         # TODO finish implementation and test
 
         print_debug(self._print_target, self.debug_level, 
-            f"Handling event {event[WATCHDOG_SRC]}", DEBUG_INFO)
+            f"Handling event {event[EVENT_PATH]}", DEBUG_INFO)
 
-        file_hash = get_file_hash(event[WATCHDOG_SRC], SHA256)   
+        file_hash = get_file_hash(event[EVENT_PATH], SHA256)   
         rule = event[WATCHDOG_RULE]
 
         yaml_dict = {}
@@ -128,7 +128,7 @@ class PapermillHandler(BaseHandler):
             yaml_dict[var] = val
         for var, val in rule.pattern.outputs.items():
             yaml_dict[var] = val
-        yaml_dict[rule.pattern.triggering_file] = event[WATCHDOG_SRC]
+        yaml_dict[rule.pattern.triggering_file] = event[EVENT_PATH]
 
         if not rule.pattern.sweep:
             waiting_for_threaded_resources = True
@@ -203,7 +203,7 @@ class PapermillHandler(BaseHandler):
             JOB_PATTERN: event[WATCHDOG_RULE].pattern,
             JOB_RECIPE: event[WATCHDOG_RULE].recipe,
             JOB_RULE: event[WATCHDOG_RULE].name,
-            JOB_PATH: event[WATCHDOG_SRC],
+            JOB_PATH: event[EVENT_PATH],
             JOB_HASH: triggerfile_hash,
             JOB_STATUS: STATUS_QUEUED,
             JOB_CREATE_TIME: datetime.now(),
@@ -211,7 +211,7 @@ class PapermillHandler(BaseHandler):
         }
 
         print_debug(self._print_target, self.debug_level, 
-            f"Creating job for event at {event[WATCHDOG_SRC]} with ID "
+            f"Creating job for event at {event[EVENT_PATH]} with ID "
             f"{job_dict[JOB_ID]}", DEBUG_INFO)
 
         self.add_job(job_dict[JOB_ID])
@@ -219,7 +219,7 @@ class PapermillHandler(BaseHandler):
         yaml_dict = self.replace_keywords(
             yaml_dict,
             job_dict[JOB_ID],
-            event[WATCHDOG_SRC],
+            event[EVENT_PATH],
             event[WATCHDOG_BASE]
         )
 

@@ -3,7 +3,8 @@ from inspect import signature
 from os.path import sep, exists, isfile, isdir, dirname
 from typing import Any, _SpecialForm, Union, Tuple, get_origin, get_args
 
-from core.correctness.vars import VALID_PATH_CHARS, get_not_imp_msg, EVENT_TYPE
+from core.correctness.vars import VALID_PATH_CHARS, get_not_imp_msg, \
+    EVENT_TYPE, EVENT_PATH
 
 def check_type(variable:Any, expected_type:type, alt_types:list[type]=[], 
         or_none:bool=False)->None:
@@ -183,3 +184,5 @@ def valid_event(event)->None:
     check_type(event, dict)
     if not EVENT_TYPE in event.keys():
         raise KeyError(f"Events require key '{EVENT_TYPE}'")
+    if not EVENT_PATH in event.keys():
+        raise KeyError(f"Events require key '{EVENT_PATH}'")

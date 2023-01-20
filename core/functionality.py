@@ -16,7 +16,7 @@ from core.correctness.validation import check_type, valid_existing_file_path, \
     valid_path
 from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
     VALID_CHANNELS, HASH_BUFFER_SIZE, SHA256, DEBUG_WARNING, DEBUG_INFO, \
-    EVENT_TYPE
+    EVENT_TYPE, EVENT_PATH
 
 def generate_id(prefix:str="", length:int=16, existing_ids:list[str]=[], 
         charset:str=CHAR_UPPERCASE+CHAR_LOWERCASE, attempts:int=24):
@@ -241,6 +241,6 @@ def print_debug(print_target, debug_level, msg, level)->None:
                     status = "WARNING"
                 print(f"{status}: {msg}", file=print_target)
 
-def create_event(event_type:str, source:dict[Any,Any]={})->dict[Any,Any]:
-    return {**source, EVENT_TYPE: event_type}
+def create_event(event_type:str, path:str, source:dict[Any,Any]={})->dict[Any,Any]:
+    return {**source, EVENT_PATH: path, EVENT_TYPE: event_type}
 

@@ -189,8 +189,8 @@ APPENDING_NOTEBOOK = {
 
 # meow events
 EVENT_TYPE = "meow_event_type"
+EVENT_PATH = "event_path"
 WATCHDOG_TYPE = "watchdog"
-WATCHDOG_SRC = "src_path"
 WATCHDOG_BASE = "monitor_base"
 WATCHDOG_RULE = "rule_name"
 

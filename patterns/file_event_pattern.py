@@ -18,7 +18,7 @@ from core.correctness.validation import check_type, valid_string, \
 from core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
     VALID_VARIABLE_NAME_CHARS, FILE_EVENTS, FILE_CREATE_EVENT, \
     FILE_MODIFY_EVENT, FILE_MOVED_EVENT, DEBUG_INFO, WATCHDOG_TYPE, \
-    WATCHDOG_SRC, WATCHDOG_RULE, WATCHDOG_BASE, FILE_RETROACTIVE_EVENT
+    WATCHDOG_RULE, WATCHDOG_BASE, FILE_RETROACTIVE_EVENT, EVENT_PATH
 from core.functionality import print_debug, create_event
 from core.meow import BasePattern, BaseMonitor, BaseRule, BaseRecipe, \
     create_rule
@@ -189,11 +189,10 @@ class WatchdogMonitor(BaseMonitor):
 
                 if direct_hit or recursive_hit:
                     meow_event = create_event(
-                        WATCHDOG_TYPE, {
-                            WATCHDOG_SRC: event.src_path,
-                            WATCHDOG_BASE: self.base_dir,
-                            WATCHDOG_RULE: rule
-                    })
+                        WATCHDOG_TYPE, 
+                        event.src_path, 
+                        { WATCHDOG_BASE: self.base_dir, WATCHDOG_RULE: rule }
+                    )
                     print_debug(self._print_target, self.debug_level,  
                         f"Event at {src_path} of type {event_type} hit rule "
                         f"{rule.name}", DEBUG_INFO)
@@ -418,11 +417,10 @@ class WatchdogMonitor(BaseMonitor):
                 for globble in globbed:
 
                     meow_event = create_event(
-                        WATCHDOG_TYPE, {
-                            WATCHDOG_SRC: globble,
-                            WATCHDOG_BASE: self.base_dir,
-                            WATCHDOG_RULE: rule
-                    })
+                        WATCHDOG_TYPE, 
+                        globble,
+                        { WATCHDOG_BASE: self.base_dir, WATCHDOG_RULE: rule }
+                    )
                     print_debug(self._print_target, self.debug_level,  
                         f"Retroactive event for file at at {globble} hit rule "
                         f"{rule.name}", DEBUG_INFO)
