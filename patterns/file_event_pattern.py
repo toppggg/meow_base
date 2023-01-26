@@ -18,8 +18,8 @@ from core.correctness.validation import check_type, valid_string, \
 from core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
     VALID_VARIABLE_NAME_CHARS, FILE_EVENTS, FILE_CREATE_EVENT, \
     FILE_MODIFY_EVENT, FILE_MOVED_EVENT, DEBUG_INFO, WATCHDOG_TYPE, \
-    WATCHDOG_RULE, WATCHDOG_BASE, FILE_RETROACTIVE_EVENT, EVENT_PATH
-from core.functionality import print_debug, create_event
+    WATCHDOG_RULE, WATCHDOG_BASE, FILE_RETROACTIVE_EVENT, WATCHDOG_HASH, SHA256
+from core.functionality import print_debug, create_event, get_file_hash
 from core.meow import BasePattern, BaseMonitor, BaseRule, BaseRecipe, \
     create_rule
 
@@ -191,7 +191,14 @@ class WatchdogMonitor(BaseMonitor):
                     meow_event = create_event(
                         WATCHDOG_TYPE, 
                         event.src_path, 
-                        { WATCHDOG_BASE: self.base_dir, WATCHDOG_RULE: rule }
+                        { 
+                            WATCHDOG_BASE: self.base_dir, 
+                            WATCHDOG_RULE: rule, 
+                            WATCHDOG_HASH: get_file_hash(
+                                event.src_path, 
+                                SHA256
+                            ) 
+                        }
                     )
                     print_debug(self._print_target, self.debug_level,  
                         f"Event at {src_path} of type {event_type} hit rule "
@@ -200,34 +207,35 @@ class WatchdogMonitor(BaseMonitor):
 
         except Exception as e:
             self._rules_lock.release()
-            raise Exception(e)            
+            raise e
 
         self._rules_lock.release()
 
-    def add_pattern(self, pattern: FileEventPattern) -> None:
+    def add_pattern(self, pattern:FileEventPattern)->None:
         check_type(pattern, FileEventPattern)
         self._patterns_lock.acquire()
         try:
             if pattern.name in self._patterns:
-                raise KeyError(f"An entry for Pattern '{pattern.name}' already "
-                    "exists. Do you intend to update instead?")
+                raise KeyError(f"An entry for Pattern '{pattern.name}' "
+                    "already exists. Do you intend to update instead?")
             self._patterns[pattern.name] = pattern
         except Exception as e:
             self._patterns_lock.release()
-            raise Exception(e)            
+            raise e            
         self._patterns_lock.release()
 
         self._identify_new_rules(new_pattern=pattern)
 
-    def update_pattern(self, pattern: FileEventPattern) -> None:
+    def update_pattern(self, pattern:FileEventPattern)->None:
         check_type(pattern, FileEventPattern)
         self.remove_pattern(pattern.name)
+        print(f"adding pattern w/ recipe {pattern.recipe}")
         self.add_pattern(pattern)
 
-    def remove_pattern(self, pattern: Union[str, FileEventPattern]) -> None:
+    def remove_pattern(self, pattern: Union[str,FileEventPattern])->None:
         check_type(pattern, str, alt_types=[FileEventPattern])
         lookup_key = pattern
-        if type(lookup_key) is FileEventPattern:
+        if isinstance(lookup_key, FileEventPattern):
             lookup_key = pattern.name
         self._patterns_lock.acquire()
         try:
@@ -237,23 +245,26 @@ class WatchdogMonitor(BaseMonitor):
             self._patterns.pop(lookup_key)
         except Exception as e:
             self._patterns_lock.release()
-            raise Exception(e)            
+            raise e 
         self._patterns_lock.release()
 
-        self._identify_lost_rules(lost_pattern=pattern.name)
+        if isinstance(pattern, FileEventPattern):
+            self._identify_lost_rules(lost_pattern=pattern.name)
+        else:
+            self._identify_lost_rules(lost_pattern=pattern)
         
-    def get_patterns(self) -> None:
+    def get_patterns(self)->None:
         to_return = {}
         self._patterns_lock.acquire()
         try:
             to_return = deepcopy(self._patterns)
         except Exception as e:
             self._patterns_lock.release()
-            raise Exception(e)            
+            raise e
         self._patterns_lock.release()
         return to_return
 
-    def add_recipe(self, recipe: BaseRecipe) -> None:
+    def add_recipe(self, recipe: BaseRecipe)->None:
         check_type(recipe, BaseRecipe)
         self._recipes_lock.acquire()
         try:
@@ -263,20 +274,20 @@ class WatchdogMonitor(BaseMonitor):
             self._recipes[recipe.name] = recipe
         except Exception as e:
             self._recipes_lock.release()
-            raise Exception(e)            
+            raise e
         self._recipes_lock.release()
 
         self._identify_new_rules(new_recipe=recipe)
 
-    def update_recipe(self, recipe: BaseRecipe) -> None:
+    def update_recipe(self, recipe: BaseRecipe)->None:
         check_type(recipe, BaseRecipe)
         self.remove_recipe(recipe.name)
         self.add_recipe(recipe)
     
-    def remove_recipe(self, recipe: Union[str, BaseRecipe]) -> None:
+    def remove_recipe(self, recipe:Union[str,BaseRecipe])->None:
         check_type(recipe, str, alt_types=[BaseRecipe])
         lookup_key = recipe
-        if type(lookup_key) is BaseRecipe:
+        if isinstance(lookup_key, BaseRecipe):
             lookup_key = recipe.name
         self._recipes_lock.acquire()
         try:
@@ -286,30 +297,33 @@ class WatchdogMonitor(BaseMonitor):
             self._recipes.pop(lookup_key)
         except Exception as e:
             self._recipes_lock.release()
-            raise Exception(e)            
+            raise e
         self._recipes_lock.release()
 
-        self._identify_lost_rules(lost_recipe=recipe.name)
+        if isinstance(recipe, BaseRecipe):
+            self._identify_lost_rules(lost_recipe=recipe.name)
+        else:
+            self._identify_lost_rules(lost_recipe=recipe)
 
-    def get_recipes(self) -> None:
+    def get_recipes(self)->None:
         to_return = {}
         self._recipes_lock.acquire()
         try:
             to_return = deepcopy(self._recipes)
         except Exception as e:
             self._recipes_lock.release()
-            raise Exception(e)            
+            raise e
         self._recipes_lock.release()
         return to_return
     
-    def get_rules(self) -> None:
+    def get_rules(self)->None:
         to_return = {}
         self._rules_lock.acquire()
         try:
             to_return = deepcopy(self._rules)
         except Exception as e:
             self._rules_lock.release()
-            raise Exception(e)            
+            raise e
         self._rules_lock.release()
         return to_return
 
@@ -332,13 +346,13 @@ class WatchdogMonitor(BaseMonitor):
             except Exception as e:
                 self._patterns_lock.release()
                 self._recipes_lock.release()
-                raise Exception(e)            
+                raise e
             self._patterns_lock.release()
             self._recipes_lock.release()
 
         if new_recipe:
             self._patterns_lock.acquire()
-            self._patterns_lock.acquire()
+            self._recipes_lock.acquire()
             try:
                 if new_recipe.name not in self._recipes:
                     self._patterns_lock.release()
@@ -353,11 +367,12 @@ class WatchdogMonitor(BaseMonitor):
             except Exception as e:
                 self._patterns_lock.release()
                 self._recipes_lock.release()
-                raise Exception(e)            
+                raise e
             self._patterns_lock.release()
             self._recipes_lock.release()
 
-    def _identify_lost_rules(self, lost_pattern:str, lost_recipe:str)->None:
+    def _identify_lost_rules(self, lost_pattern:str=None, 
+            lost_recipe:str=None)->None:
         to_delete = []
         self._rules_lock.acquire()
         try:
@@ -371,7 +386,7 @@ class WatchdogMonitor(BaseMonitor):
                     self._rules.pop(delete)
         except Exception as e:
             self._rules_lock.release()
-            raise Exception(e)            
+            raise e
         self._rules_lock.release()
 
     def _create_new_rule(self, pattern:FileEventPattern, recipe:BaseRecipe)->None:
@@ -384,7 +399,7 @@ class WatchdogMonitor(BaseMonitor):
             self._rules[rule.name] = rule
         except Exception as e:
             self._rules_lock.release()
-            raise Exception(e)            
+            raise e
         self._rules_lock.release()
 
         self._apply_retroactive_rule(rule)
@@ -410,7 +425,8 @@ class WatchdogMonitor(BaseMonitor):
                 return
             if FILE_RETROACTIVE_EVENT in rule.pattern.event_mask:
             
-                testing_path = os.path.join(self.base_dir, rule.pattern.triggering_path)
+                testing_path = os.path.join(
+                    self.base_dir, rule.pattern.triggering_path)
 
                 globbed = glob.glob(testing_path)
 
@@ -428,8 +444,9 @@ class WatchdogMonitor(BaseMonitor):
 
         except Exception as e:
             self._rules_lock.release()
-            raise Exception(e)            
+            raise e
         self._rules_lock.release()
+
 
 class WatchdogEventHandler(PatternMatchingEventHandler):
     monitor:WatchdogMonitor

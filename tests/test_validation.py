@@ -1,22 +1,26 @@
 
+import io
 import unittest
 import os
 
+from datetime import datetime
 from typing import Any, Union
 
 from core.correctness.validation import check_type, check_implementation, \
     valid_string, valid_dict, valid_list, valid_existing_file_path, \
-    valid_existing_dir_path, valid_non_existing_path, valid_event
+    valid_existing_dir_path, valid_non_existing_path, valid_event, valid_job, \
+    setup_debugging
 from core.correctness.vars import VALID_NAME_CHARS, TEST_MONITOR_BASE, \
-    SHA256, EVENT_TYPE, EVENT_PATH
+    SHA256, EVENT_TYPE, EVENT_PATH, JOB_TYPE, JOB_EVENT, JOB_ID, JOB_PATTERN, \
+    JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME
 from core.functionality import rmtree, make_dir
 
 class CorrectnessTests(unittest.TestCase):
-    def setUp(self) -> None:
+    def setUp(self)->None:
         super().setUp()
         make_dir(TEST_MONITOR_BASE, ensure_clean=True)
 
-    def tearDown(self) -> None:
+    def tearDown(self)->None:
         super().tearDown()
         rmtree(TEST_MONITOR_BASE)
         rmtree("first")
@@ -219,3 +223,38 @@ class CorrectnessTests(unittest.TestCase):
 
         with self.assertRaises(KeyError):
             valid_event({})
+
+    def testJobValidation(self)->None:
+        valid_job({
+            JOB_TYPE: "test", 
+            JOB_EVENT: {},
+            JOB_ID: "id",
+            JOB_PATTERN: "pattern",
+            JOB_RECIPE: "recipe",
+            JOB_RULE: "rule",
+            JOB_STATUS: "status",
+            JOB_CREATE_TIME: datetime.now()
+        })
+
+        with self.assertRaises(KeyError):
+            valid_job({JOB_TYPE: "test"})
+
+        with self.assertRaises(KeyError):
+            valid_job({"JOB_TYPE": "test"})
+
+        with self.assertRaises(KeyError):
+            valid_job({})
+
+    def testSetupDebugging(self)->None:
+        stream = io.StringIO("")
+
+        target, level = setup_debugging(stream, 1)
+
+        self.assertIsInstance(target, io.StringIO)
+        self.assertIsInstance(level, int)
+
+        with self.assertRaises(TypeError):
+            setup_debugging("stream", 1)
+
+        with self.assertRaises(TypeError):
+            setup_debugging(stream, "1")

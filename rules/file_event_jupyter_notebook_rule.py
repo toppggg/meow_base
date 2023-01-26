@@ -15,8 +15,8 @@ class FileEventJupyterNotebookRule(BaseRule):
                 f"{pattern.name} does not identify Recipe {recipe.name}. It "
                 f"uses {pattern.recipe}")
 
-    def _is_valid_pattern(self, pattern:FileEventPattern) -> None:
+    def _is_valid_pattern(self, pattern:FileEventPattern)->None:
         check_type(pattern, FileEventPattern)
 
-    def _is_valid_recipe(self, recipe:JupyterNotebookRecipe) -> None:
+    def _is_valid_recipe(self, recipe:JupyterNotebookRecipe)->None:
         check_type(recipe, JupyterNotebookRecipe)

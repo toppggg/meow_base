@@ -1,4 +1,5 @@
 
+import io
 import os
 import unittest
 
@@ -8,17 +9,38 @@ from core.correctness.vars import FILE_CREATE_EVENT, BAREBONES_NOTEBOOK, \
     TEST_MONITOR_BASE, EVENT_TYPE, WATCHDOG_RULE, WATCHDOG_BASE, \
     WATCHDOG_TYPE, EVENT_PATH
 from core.functionality import rmtree, make_dir
-from core.meow import create_rules
 from patterns.file_event_pattern import FileEventPattern, WatchdogMonitor, \
     _DEFAULT_MASK, SWEEP_START, SWEEP_STOP, SWEEP_JUMP
 from recipes import JupyterNotebookRecipe
 
+
+def patterns_equal(tester, pattern_one, pattern_two):
+        tester.assertEqual(pattern_one.name, pattern_two.name)
+        tester.assertEqual(pattern_one.recipe, pattern_two.recipe)
+        tester.assertEqual(pattern_one.parameters, pattern_two.parameters)
+        tester.assertEqual(pattern_one.outputs, pattern_two.outputs)
+        tester.assertEqual(pattern_one.triggering_path, 
+            pattern_two.triggering_path)
+        tester.assertEqual(pattern_one.triggering_file, 
+            pattern_two.triggering_file)
+        tester.assertEqual(pattern_one.event_mask, pattern_two.event_mask)
+        tester.assertEqual(pattern_one.sweep, pattern_two.sweep)
+
+
+def recipes_equal(tester, recipe_one, recipe_two):
+        tester.assertEqual(recipe_one.name, recipe_two.name)
+        tester.assertEqual(recipe_one.recipe, recipe_two.recipe)
+        tester.assertEqual(recipe_one.parameters, recipe_two.parameters)
+        tester.assertEqual(recipe_one.requirements, recipe_two.requirements)
+        tester.assertEqual(recipe_one.source, recipe_two.source)
+
+
 class CorrectnessTests(unittest.TestCase):
-    def setUp(self) -> None:
+    def setUp(self)->None:
         super().setUp()
         make_dir(TEST_MONITOR_BASE, ensure_clean=True)
 
-    def tearDown(self) -> None:
+    def tearDown(self)->None:
         super().tearDown()
         rmtree(TEST_MONITOR_BASE)
 
@@ -199,3 +221,493 @@ class CorrectnessTests(unittest.TestCase):
         self.assertIsNone(new_message)
 
         wm.stop()
+
+    def testMonitoring(self)->None:
+        pattern_one = FileEventPattern(
+            "pattern_one", "start/A.txt", "recipe_one", "infile", 
+            parameters={})
+        recipe = JupyterNotebookRecipe(
+            "recipe_one", BAREBONES_NOTEBOOK)
+
+        patterns = {
+            pattern_one.name: pattern_one,
+        }
+        recipes = {
+            recipe.name: recipe,
+        }
+
+        monitor_debug_stream = io.StringIO("")
+
+        wm = WatchdogMonitor(
+            TEST_MONITOR_BASE,
+            patterns,
+            recipes,
+            print=monitor_debug_stream,
+            logging=3, 
+            settletime=1
+        )
+
+        rules = wm.get_rules()
+        rule = rules[list(rules.keys())[0]]
+
+        from_monitor_reader, from_monitor_writer = Pipe()
+        wm.to_runner = from_monitor_writer
+   
+        wm.start()
+
+        start_dir = os.path.join(TEST_MONITOR_BASE, "start")
+        make_dir(start_dir)
+        self.assertTrue(start_dir)
+        with open(os.path.join(start_dir, "A.txt"), "w") as f:
+            f.write("Initial Data")
+
+        self.assertTrue(os.path.exists(os.path.join(start_dir, "A.txt")))
+
+        messages = []
+        while True:
+            if from_monitor_reader.poll(3):
+                messages.append(from_monitor_reader.recv())
+            else:
+                break
+        self.assertTrue(len(messages), 1)
+        message = messages[0]
+
+        self.assertEqual(type(message), dict)
+        self.assertIn(EVENT_TYPE, message)
+        self.assertEqual(message[EVENT_TYPE], WATCHDOG_TYPE)
+        self.assertIn(WATCHDOG_BASE, message)
+        self.assertEqual(message[WATCHDOG_BASE], TEST_MONITOR_BASE)
+        self.assertIn(EVENT_PATH, message)
+        self.assertEqual(message[EVENT_PATH], 
+            os.path.join(start_dir, "A.txt"))
+        self.assertIn(WATCHDOG_RULE, message)
+        self.assertEqual(message[WATCHDOG_RULE].name, rule.name)
+
+        wm.stop()
+
+    def testMonitoringRetroActive(self)->None:
+        pattern_one = FileEventPattern(
+            "pattern_one", "start/A.txt", "recipe_one", "infile", 
+            parameters={})
+        recipe = JupyterNotebookRecipe(
+            "recipe_one", BAREBONES_NOTEBOOK)
+
+        patterns = {
+            pattern_one.name: pattern_one,
+        }
+        recipes = {
+            recipe.name: recipe,
+        }
+
+        start_dir = os.path.join(TEST_MONITOR_BASE, "start")
+        make_dir(start_dir)
+        self.assertTrue(start_dir)
+        with open(os.path.join(start_dir, "A.txt"), "w") as f:
+            f.write("Initial Data")
+
+        self.assertTrue(os.path.exists(os.path.join(start_dir, "A.txt")))
+
+        monitor_debug_stream = io.StringIO("")
+
+        wm = WatchdogMonitor(
+            TEST_MONITOR_BASE,
+            patterns,
+            recipes,
+            print=monitor_debug_stream,
+            logging=3, 
+            settletime=1
+        )
+
+        rules = wm.get_rules()
+        rule = rules[list(rules.keys())[0]]
+
+        from_monitor_reader, from_monitor_writer = Pipe()
+        wm.to_runner = from_monitor_writer
+   
+        wm.start()
+
+        messages = []
+        while True:
+            if from_monitor_reader.poll(3):
+                messages.append(from_monitor_reader.recv())
+            else:
+                break
+        self.assertTrue(len(messages), 1)
+        message = messages[0]
+
+        self.assertEqual(type(message), dict)
+        self.assertIn(EVENT_TYPE, message)
+        self.assertEqual(message[EVENT_TYPE], WATCHDOG_TYPE)
+        self.assertIn(WATCHDOG_BASE, message)
+        self.assertEqual(message[WATCHDOG_BASE], TEST_MONITOR_BASE)
+        self.assertIn(EVENT_PATH, message)
+        self.assertEqual(message[EVENT_PATH], 
+            os.path.join(start_dir, "A.txt"))
+        self.assertIn(WATCHDOG_RULE, message)
+        self.assertEqual(message[WATCHDOG_RULE].name, rule.name)
+
+        wm.stop()
+
+    def testMonitorGetPatterns(self)->None:
+        pattern_one = FileEventPattern(
+            "pattern_one", "start/A.txt", "recipe_one", "infile", 
+            parameters={})
+        pattern_two = FileEventPattern(
+            "pattern_two", "start/B.txt", "recipe_two", "infile", 
+            parameters={})
+
+        wm = WatchdogMonitor(
+            TEST_MONITOR_BASE,
+            {
+                pattern_one.name: pattern_one,
+                pattern_two.name: pattern_two
+            },
+            {}
+        )
+
+        patterns = wm.get_patterns()
+
+        self.assertIsInstance(patterns, dict)
+        self.assertEqual(len(patterns), 2)
+        self.assertIn(pattern_one.name, patterns)
+        patterns_equal(self, patterns[pattern_one.name], pattern_one)
+        self.assertIn(pattern_two.name, patterns)
+        patterns_equal(self, patterns[pattern_two.name], pattern_two)
+
+    def testMonitorAddPattern(self)->None:
+        pattern_one = FileEventPattern(
+            "pattern_one", "start/A.txt", "recipe_one", "infile", 
+            parameters={})
+        pattern_two = FileEventPattern(
+            "pattern_two", "start/B.txt", "recipe_two", "infile", 
+            parameters={})
+
+        wm = WatchdogMonitor(
+            TEST_MONITOR_BASE,
+            {pattern_one.name: pattern_one},
+            {}
+        )
+
+        patterns = wm.get_patterns()
+
+        self.assertIsInstance(patterns, dict)
+        self.assertEqual(len(patterns), 1)
+        self.assertIn(pattern_one.name, patterns)
+        patterns_equal(self, patterns[pattern_one.name], pattern_one)
+
+        wm.add_pattern(pattern_two)
+
+        patterns = wm.get_patterns()
+
+        self.assertIsInstance(patterns, dict)
+        self.assertEqual(len(patterns), 2)
+        self.assertIn(pattern_one.name, patterns)
+        patterns_equal(self, patterns[pattern_one.name], pattern_one)
+        self.assertIn(pattern_two.name, patterns)
+        patterns_equal(self, patterns[pattern_two.name], pattern_two)
+
+        with self.assertRaises(KeyError):
+            wm.add_pattern(pattern_two)
+
+        patterns = wm.get_patterns()
+
+        self.assertIsInstance(patterns, dict)
+        self.assertEqual(len(patterns), 2)
+        self.assertIn(pattern_one.name, patterns)
+        patterns_equal(self, patterns[pattern_one.name], pattern_one)
+        self.assertIn(pattern_two.name, patterns)
+        patterns_equal(self, patterns[pattern_two.name], pattern_two)
+
+    def testMonitorUpdatePattern(self)->None:
+        pattern_one = FileEventPattern(
+            "pattern_one", "start/A.txt", "recipe_one", "infile", 
+            parameters={})
+        pattern_two = FileEventPattern(
+            "pattern_two", "start/B.txt", "recipe_two", "infile", 
+            parameters={})
+
+        wm = WatchdogMonitor(
+            TEST_MONITOR_BASE,
+            {pattern_one.name: pattern_one},
+            {}
+        )
+
+        patterns = wm.get_patterns()
+
+        self.assertIsInstance(patterns, dict)
+        self.assertEqual(len(patterns), 1)
+        self.assertIn(pattern_one.name, patterns)
+        patterns_equal(self, patterns[pattern_one.name], pattern_one)
+
+        pattern_one.recipe = "top_secret_recipe"
+
+        patterns = wm.get_patterns()
+        self.assertIsInstance(patterns, dict)
+        self.assertEqual(len(patterns), 1)
+        self.assertIn(pattern_one.name, patterns)
+        self.assertEqual(patterns[pattern_one.name].name, 
+            pattern_one.name)
+        self.assertEqual(patterns[pattern_one.name].recipe, 
+            "recipe_one")
+        self.assertEqual(patterns[pattern_one.name].parameters, 
+            pattern_one.parameters)
+        self.assertEqual(patterns[pattern_one.name].outputs, 
+            pattern_one.outputs)
+        self.assertEqual(patterns[pattern_one.name].triggering_path, 
+            pattern_one.triggering_path)
+        self.assertEqual(patterns[pattern_one.name].triggering_file, 
+            pattern_one.triggering_file)
+        self.assertEqual(patterns[pattern_one.name].event_mask, 
+            pattern_one.event_mask)
+        self.assertEqual(patterns[pattern_one.name].sweep, 
+            pattern_one.sweep)
+
+        wm.update_pattern(pattern_one)
+
+        patterns = wm.get_patterns()
+        self.assertIsInstance(patterns, dict)
+        self.assertEqual(len(patterns), 1)
+        self.assertIn(pattern_one.name, patterns)
+        patterns_equal(self, patterns[pattern_one.name], pattern_one)
+
+        with self.assertRaises(KeyError):
+            wm.update_pattern(pattern_two)
+
+        patterns = wm.get_patterns()
+        self.assertIsInstance(patterns, dict)
+        self.assertEqual(len(patterns), 1)
+        self.assertIn(pattern_one.name, patterns)
+        patterns_equal(self, patterns[pattern_one.name], pattern_one)
+
+    def testMonitorRemovePattern(self)->None:
+        pattern_one = FileEventPattern(
+            "pattern_one", "start/A.txt", "recipe_one", "infile", 
+            parameters={})
+        pattern_two = FileEventPattern(
+            "pattern_two", "start/B.txt", "recipe_two", "infile", 
+            parameters={})
+
+        wm = WatchdogMonitor(
+            TEST_MONITOR_BASE,
+            {pattern_one.name: pattern_one},
+            {}
+        )
+
+        patterns = wm.get_patterns()
+
+        self.assertIsInstance(patterns, dict)
+        self.assertEqual(len(patterns), 1)
+        self.assertIn(pattern_one.name, patterns)
+        patterns_equal(self, patterns[pattern_one.name], pattern_one)
+
+        with self.assertRaises(KeyError):
+            wm.remove_pattern(pattern_two)
+
+        patterns = wm.get_patterns()
+
+        self.assertIsInstance(patterns, dict)
+        self.assertEqual(len(patterns), 1)
+        self.assertIn(pattern_one.name, patterns)
+        patterns_equal(self, patterns[pattern_one.name], pattern_one)
+
+        wm.remove_pattern(pattern_one)
+
+        patterns = wm.get_patterns()
+
+        self.assertIsInstance(patterns, dict)
+        self.assertEqual(len(patterns), 0)
+
+    def testMonitorGetRecipes(self)->None:
+        recipe_one = JupyterNotebookRecipe(
+            "recipe_one", BAREBONES_NOTEBOOK)
+        recipe_two = JupyterNotebookRecipe(
+            "recipe_two", BAREBONES_NOTEBOOK)
+
+        wm = WatchdogMonitor(
+            TEST_MONITOR_BASE,
+            {},
+            {
+                recipe_one.name: recipe_one,
+                recipe_two.name: recipe_two
+            }
+        )
+
+        recipes = wm.get_recipes()
+
+        self.assertIsInstance(recipes, dict)
+        self.assertEqual(len(recipes), 2)
+        self.assertIn(recipe_one.name, recipes)
+        recipes_equal(self, recipes[recipe_one.name], recipe_one)
+        self.assertIn(recipe_two.name, recipes)
+        recipes_equal(self, recipes[recipe_two.name], recipe_two)
+
+    def testMonitorAddRecipe(self)->None:
+        recipe_one = JupyterNotebookRecipe(
+            "recipe_one", BAREBONES_NOTEBOOK)
+        recipe_two = JupyterNotebookRecipe(
+            "recipe_two", BAREBONES_NOTEBOOK)
+
+        wm = WatchdogMonitor(
+            TEST_MONITOR_BASE,
+            {},
+            {
+                recipe_one.name: recipe_one
+            }
+        )
+
+        recipes = wm.get_recipes()
+
+        self.assertIsInstance(recipes, dict)
+        self.assertEqual(len(recipes), 1)
+        self.assertIn(recipe_one.name, recipes)
+        recipes_equal(self, recipes[recipe_one.name], recipe_one)
+
+
+        wm.add_recipe(recipe_two)
+
+        recipes = wm.get_recipes()
+
+        self.assertIsInstance(recipes, dict)
+        self.assertEqual(len(recipes), 2)
+        self.assertIn(recipe_one.name, recipes)
+        recipes_equal(self, recipes[recipe_one.name], recipe_one)
+        self.assertIn(recipe_two.name, recipes)
+        recipes_equal(self, recipes[recipe_two.name], recipe_two)
+
+        with self.assertRaises(KeyError):
+            wm.add_recipe(recipe_two)
+
+        recipes = wm.get_recipes()
+
+        self.assertIsInstance(recipes, dict)
+        self.assertEqual(len(recipes), 2)
+        self.assertIn(recipe_one.name, recipes)
+        recipes_equal(self, recipes[recipe_one.name], recipe_one)
+        self.assertIn(recipe_two.name, recipes)
+        recipes_equal(self, recipes[recipe_two.name], recipe_two)
+
+    def testMonitorUpdateRecipe(self)->None:
+        recipe_one = JupyterNotebookRecipe(
+            "recipe_one", BAREBONES_NOTEBOOK)
+        recipe_two = JupyterNotebookRecipe(
+            "recipe_two", BAREBONES_NOTEBOOK)
+
+        wm = WatchdogMonitor(
+            TEST_MONITOR_BASE,
+            {},
+            {
+                recipe_one.name: recipe_one
+            }
+        )
+
+        recipes = wm.get_recipes()
+
+        self.assertIsInstance(recipes, dict)
+        self.assertEqual(len(recipes), 1)
+        self.assertIn(recipe_one.name, recipes)
+        recipes_equal(self, recipes[recipe_one.name], recipe_one)
+
+        recipe_one.source = "top_secret_source"
+
+        recipes = wm.get_recipes()
+        self.assertIsInstance(recipes, dict)
+        self.assertEqual(len(recipes), 1)
+        self.assertIn(recipe_one.name, recipes)
+        self.assertEqual(recipes[recipe_one.name].name, 
+            recipe_one.name)
+        self.assertEqual(recipes[recipe_one.name].recipe, 
+            recipe_one.recipe)
+        self.assertEqual(recipes[recipe_one.name].parameters, 
+            recipe_one.parameters)
+        self.assertEqual(recipes[recipe_one.name].requirements, 
+            recipe_one.requirements)
+        self.assertEqual(recipes[recipe_one.name].source, 
+            "")
+
+        wm.update_recipe(recipe_one)
+
+        recipes = wm.get_recipes()
+        self.assertIsInstance(recipes, dict)
+        self.assertEqual(len(recipes), 1)
+        self.assertIn(recipe_one.name, recipes)
+        recipes_equal(self, recipes[recipe_one.name], recipe_one)
+
+        with self.assertRaises(KeyError):
+            wm.update_recipe(recipe_two)
+
+        recipes = wm.get_recipes()
+        self.assertIsInstance(recipes, dict)
+        self.assertEqual(len(recipes), 1)
+        self.assertIn(recipe_one.name, recipes)
+        recipes_equal(self, recipes[recipe_one.name], recipe_one)
+
+    def testMonitorRemoveRecipe(self)->None:
+        recipe_one = JupyterNotebookRecipe(
+            "recipe_one", BAREBONES_NOTEBOOK)
+        recipe_two = JupyterNotebookRecipe(
+            "recipe_two", BAREBONES_NOTEBOOK)
+
+        wm = WatchdogMonitor(
+            TEST_MONITOR_BASE,
+            {},
+            {
+                recipe_one.name: recipe_one
+            }
+        )
+
+        recipes = wm.get_recipes()
+
+        self.assertIsInstance(recipes, dict)
+        self.assertEqual(len(recipes), 1)
+        self.assertIn(recipe_one.name, recipes)
+        recipes_equal(self, recipes[recipe_one.name], recipe_one)
+
+        with self.assertRaises(KeyError):
+            wm.remove_recipe(recipe_two)
+
+        recipes = wm.get_recipes()
+
+        self.assertIsInstance(recipes, dict)
+        self.assertEqual(len(recipes), 1)
+        self.assertIn(recipe_one.name, recipes)
+        recipes_equal(self, recipes[recipe_one.name], recipe_one)
+
+        wm.remove_recipe(recipe_one)
+
+        recipes = wm.get_recipes()
+
+        self.assertIsInstance(recipes, dict)
+        self.assertEqual(len(recipes), 0)
+
+    def testMonitorGetRules(self)->None:
+        pattern_one = FileEventPattern(
+            "pattern_one", "start/A.txt", "recipe_one", "infile", 
+            parameters={})
+        pattern_two = FileEventPattern(
+            "pattern_two", "start/B.txt", "recipe_two", "infile", 
+            parameters={})
+        recipe_one = JupyterNotebookRecipe(
+            "recipe_one", BAREBONES_NOTEBOOK)
+        recipe_two = JupyterNotebookRecipe(
+            "recipe_two", BAREBONES_NOTEBOOK)
+
+        patterns = {
+            pattern_one.name: pattern_one,
+            pattern_two.name: pattern_two,
+        }
+        recipes = {
+            recipe_one.name: recipe_one,
+            recipe_two.name: recipe_two,
+        }
+
+        wm = WatchdogMonitor(
+            TEST_MONITOR_BASE,
+            patterns,
+            recipes
+        )
+
+        rules = wm.get_rules()
+
+        self.assertIsInstance(rules, dict)
+        self.assertEqual(len(rules), 2)
+        

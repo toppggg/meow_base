@@ -1,10 +1,28 @@
 
+from datetime import datetime
 from inspect import signature
 from os.path import sep, exists, isfile, isdir, dirname
 from typing import Any, _SpecialForm, Union, Tuple, get_origin, get_args
 
 from core.correctness.vars import VALID_PATH_CHARS, get_not_imp_msg, \
-    EVENT_TYPE, EVENT_PATH
+    EVENT_TYPE, EVENT_PATH, JOB_EVENT, JOB_TYPE, JOB_ID, JOB_PATTERN, \
+    JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME
+
+EVENT_KEYS = {
+    EVENT_TYPE: str,
+    EVENT_PATH: str
+}
+
+JOB_KEYS = {
+    JOB_TYPE: str,
+    JOB_EVENT: dict,
+    JOB_ID: str,
+    JOB_PATTERN: Any,
+    JOB_RECIPE: Any,
+    JOB_RULE: str,
+    JOB_STATUS: str,
+    JOB_CREATE_TIME: datetime,
+}
 
 def check_type(variable:Any, expected_type:type, alt_types:list[type]=[], 
         or_none:bool=False)->None:
@@ -42,12 +60,18 @@ def check_type(variable:Any, expected_type:type, alt_types:list[type]=[],
         return
 
     if not isinstance(variable, tuple(type_list)):
+        print("egh")
+
         raise TypeError(
             'Expected type(s) are %s, got %s'
             % (get_args(expected_type), type(variable))
         )
 
 def check_implementation(child_func, parent_class):
+    if not hasattr(parent_class, child_func.__name__):
+        raise AttributeError(
+            f"Parent class {parent_class} does not implement base function "
+            f"{child_func.__name__} for children to override.")
     parent_func = getattr(parent_class, child_func.__name__)
     if (child_func == parent_func):
         msg = get_not_imp_msg(parent_class, parent_func)
@@ -180,9 +204,15 @@ def setup_debugging(print:Any=None, logging:int=0)->Tuple[Any,int]:
 
     return print, logging
 
-def valid_event(event)->None:
-    check_type(event, dict)
-    if not EVENT_TYPE in event.keys():
-        raise KeyError(f"Events require key '{EVENT_TYPE}'")
-    if not EVENT_PATH in event.keys():
-        raise KeyError(f"Events require key '{EVENT_PATH}'")
+def valid_meow_dict(meow_dict:dict[str,Any], msg:str, keys:dict[str,type])->None:
+    check_type(meow_dict, dict)
+    for key, value_type in keys.items():
+        if not key in meow_dict.keys():
+            raise KeyError(f"{msg} require key '{key}'")
+        check_type(meow_dict[key], value_type)
+
+def valid_event(event:dict[str,Any])->None:
+    valid_meow_dict(event, "Event", EVENT_KEYS)
+
+def valid_job(job:dict[str,Any])->None:
+    valid_meow_dict(job, "Job", JOB_KEYS)

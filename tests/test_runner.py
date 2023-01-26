@@ -5,30 +5,171 @@ import unittest
  
 from time import sleep
 
+from conductors import LocalPythonConductor
 from core.correctness.vars import TEST_HANDLER_BASE, TEST_JOB_OUTPUT, \
-    TEST_MONITOR_BASE, APPENDING_NOTEBOOK
+    TEST_MONITOR_BASE, APPENDING_NOTEBOOK, RESULT_FILE
 from core.functionality import make_dir, rmtree, read_notebook
-from core.meow import create_rules
+from core.meow import BaseMonitor, BaseHandler, BaseConductor
 from core.runner import MeowRunner
 from patterns import WatchdogMonitor, FileEventPattern
 from recipes.jupyter_notebook_recipe import PapermillHandler, \
-    JupyterNotebookRecipe, RESULT_FILE
+    JupyterNotebookRecipe
 
 
 class MeowTests(unittest.TestCase):
-    def setUp(self) -> None:
+    def setUp(self)->None:
         super().setUp()
         make_dir(TEST_MONITOR_BASE)
         make_dir(TEST_HANDLER_BASE)
         make_dir(TEST_JOB_OUTPUT)
 
-    def tearDown(self) -> None:
+    def tearDown(self)->None:
         super().tearDown()
         rmtree(TEST_MONITOR_BASE)
         rmtree(TEST_HANDLER_BASE)
         rmtree(TEST_JOB_OUTPUT)
 
-    def testMeowRunner(self)->None:
+    def testMeowRunnerSetup(self)->None:
+
+        monitor_one = WatchdogMonitor(TEST_MONITOR_BASE, {}, {})
+        monitor_two = WatchdogMonitor(TEST_MONITOR_BASE, {}, {})
+        monitors = [ monitor_one, monitor_two ]
+
+        handler_one = PapermillHandler(TEST_HANDLER_BASE, TEST_JOB_OUTPUT)
+        handler_two = PapermillHandler(TEST_HANDLER_BASE, TEST_JOB_OUTPUT)
+        handlers = [ handler_one, handler_two ]
+
+        conductor_one = LocalPythonConductor()
+        conductor_two = LocalPythonConductor()
+        conductors = [ conductor_one, conductor_two ]
+
+        runner = MeowRunner(monitor_one, handler_one, conductor_one)
+
+        self.assertIsInstance(runner.monitors, list)
+        for m in runner.monitors:
+            self.assertIsInstance(m, BaseMonitor)
+        self.assertEqual(len(runner.monitors), 1)
+        self.assertEqual(runner.monitors[0], monitor_one)
+
+        self.assertIsInstance(runner.from_monitors, list)
+        self.assertEqual(len(runner.from_monitors), 1)
+        runner.monitors[0].to_runner.send("monitor test message")
+        message = None
+        if runner.from_monitors[0].poll(3):
+            message = runner.from_monitors[0].recv()
+        self.assertIsNotNone(message)
+        self.assertEqual(message, "monitor test message")
+
+        self.assertIsInstance(runner.handlers, dict)
+        for handler_list in runner.handlers.values():
+            for h in handler_list:
+                self.assertIsInstance(h, BaseHandler)
+        self.assertEqual(
+            len(runner.handlers.keys()), len(handler_one.valid_event_types()))
+        for event_type in handler_one.valid_event_types():
+            self.assertIn(event_type, runner.handlers.keys())
+            self.assertEqual(len(runner.handlers[event_type]), 1)
+            self.assertEqual(runner.handlers[event_type][0], handler_one)
+
+        self.assertIsInstance(runner.from_handlers, list)
+        self.assertEqual(len(runner.from_handlers), 1)
+        runner.handlers[handler_one.valid_event_types()[0]][0].to_runner.send(
+            "handler test message")
+        message = None
+        if runner.from_handlers[0].poll(3):
+            message = runner.from_handlers[0].recv()
+        self.assertIsNotNone(message)
+        self.assertEqual(message, "handler test message")
+
+        self.assertIsInstance(runner.conductors, dict)        
+        for conductor_list in runner.conductors.values():
+            for c in conductor_list:
+                self.assertIsInstance(c, BaseConductor)
+        self.assertEqual(
+            len(runner.conductors.keys()), len(conductor_one.valid_job_types()))
+        for job_type in conductor_one.valid_job_types():
+            self.assertIn(job_type, runner.conductors.keys())
+            self.assertEqual(len(runner.conductors[job_type]), 1)
+            self.assertEqual(runner.conductors[job_type][0], conductor_one)
+
+        runner = MeowRunner(monitors, handlers, conductors)
+
+        self.assertIsInstance(runner.monitors, list)
+        for m in runner.monitors:
+            self.assertIsInstance(m, BaseMonitor)
+        self.assertEqual(len(runner.monitors), len(monitors))
+        self.assertIn(monitor_one, runner.monitors)
+        self.assertIn(monitor_two, runner.monitors)
+
+        self.assertIsInstance(runner.from_monitors, list)
+        self.assertEqual(len(runner.from_monitors), len(monitors))
+        for rm in runner.monitors:
+            rm.to_runner.send("monitor test message")
+        messages = [None] * len(monitors)
+        for i, rfm in enumerate(runner.from_monitors):
+            if rfm.poll(3):
+                messages[i] = rfm.recv()
+        for m in messages:
+            self.assertIsNotNone(m)
+            self.assertEqual(m, "monitor test message")
+
+        self.assertIsInstance(runner.handlers, dict)
+        for handler_list in runner.handlers.values():
+            for h in handler_list:
+                self.assertIsInstance(h, BaseHandler)
+        all_events = []
+        for h in handlers:
+            for e in h.valid_event_types():
+                if e not in all_events:
+                    all_events.append(e)
+        self.assertEqual(len(runner.handlers.keys()), len(all_events))
+        for handler in handlers:
+            for event_type in handler.valid_event_types():
+                relevent_handlers = [h for h in handlers 
+                    if event_type in h.valid_event_types()]
+                self.assertIn(event_type, runner.handlers.keys())
+                self.assertEqual(len(runner.handlers[event_type]), 
+                    len(relevent_handlers))
+                for rh in relevent_handlers:
+                    self.assertIn(rh, runner.handlers[event_type])
+
+        self.assertIsInstance(runner.from_handlers, list)
+        self.assertEqual(len(runner.from_handlers), len(handlers))
+        runner_handlers = []
+        for handler_list in runner.handlers.values():
+            for h in handler_list:
+                runner_handlers.append(h)
+        runner_handlers = [h for h in handler_list for 
+            handler_list in runner.handlers.values()]
+        for rh in handler_list:
+            rh.to_runner.send("handler test message")
+        message = None
+        if runner.from_handlers[0].poll(3):
+            message = runner.from_handlers[0].recv()
+        self.assertIsNotNone(message)
+        self.assertEqual(message, "handler test message")
+
+        self.assertIsInstance(runner.conductors, dict)
+        for conductor_list in runner.conductors.values():
+            for c in conductor_list:
+                self.assertIsInstance(c, BaseConductor)
+        all_jobs = []
+        for c in conductors:
+            for j in c.valid_job_types():
+                if j not in all_jobs:
+                    all_jobs.append(j)
+        self.assertEqual(len(runner.conductors.keys()), len(all_jobs))
+        for conductor in conductors:
+            for job_type in conductor.valid_job_types():
+                relevent_conductors = [c for c in conductors 
+                    if job_type in c.valid_job_types()]
+                self.assertIn(job_type, runner.conductors.keys())
+                self.assertEqual(len(runner.conductors[job_type]), 
+                    len(relevent_conductors))
+                for rc in relevent_conductors:
+                    self.assertIn(rc, runner.conductors[job_type])
+
+    def testMeowRunnerExecution(self)->None:
         pattern_one = FileEventPattern(
             "pattern_one", "start/A.txt", "recipe_one", "infile", 
             parameters={
@@ -45,24 +186,22 @@ class MeowTests(unittest.TestCase):
             recipe.name: recipe,
         }
 
-        monitor_debug_stream = io.StringIO("")
-        handler_debug_stream = io.StringIO("")
+        runner_debug_stream = io.StringIO("")
 
         runner = MeowRunner(
             WatchdogMonitor(
                 TEST_MONITOR_BASE,
                 patterns,
                 recipes,
-                print=monitor_debug_stream,
-                logging=3, 
                 settletime=1
             ), 
             PapermillHandler(
                 TEST_HANDLER_BASE,
                 TEST_JOB_OUTPUT,
-                print=handler_debug_stream,
-                logging=3                
-            )
+            ),
+            LocalPythonConductor(),
+            print=runner_debug_stream,
+            logging=3                
         )        
    
         runner.start()
@@ -79,17 +218,21 @@ class MeowTests(unittest.TestCase):
         job_id = None
         while loops < 15:
             sleep(1)
-            handler_debug_stream.seek(0)
-            messages = handler_debug_stream.readlines()
+            runner_debug_stream.seek(0)
+            messages = runner_debug_stream.readlines()
 
             for msg in messages:
                 self.assertNotIn("ERROR", msg)
             
-                if "INFO: Completed job " in msg:
-                    job_id = msg.replace("INFO: Completed job ", "")
-                    job_id = job_id[:job_id.index(" with output")]
+                if "INFO: Completed execution for job: '" in msg:
+                    job_id = msg.replace(
+                        "INFO: Completed execution for job: '", "")
+                    job_id = job_id[:-2]
                     loops = 15
             loops += 1
+
+        print("JOB ID:")
+        print(job_id)
 
         self.assertIsNotNone(job_id)
         self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), 1)
@@ -111,7 +254,7 @@ class MeowTests(unittest.TestCase):
         
         self.assertEqual(data, "Initial Data\nA line from a test Pattern")
 
-    def testMeowRunnerLinkeExecution(self)->None:
+    def testMeowRunnerLinkedExecution(self)->None:
         pattern_one = FileEventPattern(
             "pattern_one", "start/A.txt", "recipe_one", "infile", 
             parameters={
@@ -134,26 +277,23 @@ class MeowTests(unittest.TestCase):
         recipes = {
             recipe.name: recipe,
         }
-        rules = create_rules(patterns, recipes)
 
-        monitor_debug_stream = io.StringIO("")
-        handler_debug_stream = io.StringIO("")
+        runner_debug_stream = io.StringIO("")
 
         runner = MeowRunner(
             WatchdogMonitor(
                 TEST_MONITOR_BASE,
                 patterns,
                 recipes,
-                print=monitor_debug_stream,
-                logging=3, 
                 settletime=1
             ), 
             PapermillHandler(
                 TEST_HANDLER_BASE,
-                TEST_JOB_OUTPUT,
-                print=handler_debug_stream,
-                logging=3                
-            )
+                TEST_JOB_OUTPUT
+            ),
+            LocalPythonConductor(),
+            print=runner_debug_stream,
+            logging=3
         )        
    
         runner.start()
@@ -170,15 +310,16 @@ class MeowTests(unittest.TestCase):
         job_ids = []
         while len(job_ids) < 2 and loops < 15:
             sleep(1)
-            handler_debug_stream.seek(0)
-            messages = handler_debug_stream.readlines()
+            runner_debug_stream.seek(0)
+            messages = runner_debug_stream.readlines()
 
             for msg in messages:
                 self.assertNotIn("ERROR", msg)
             
-                if "INFO: Completed job " in msg:
-                    job_id = msg.replace("INFO: Completed job ", "")
-                    job_id = job_id[:job_id.index(" with output")]
+                if "INFO: Completed execution for job: '" in msg:
+                    job_id = msg.replace(
+                        "INFO: Completed execution for job: '", "")
+                    job_id = job_id[:-2]
                     if job_id not in job_ids:
                         job_ids.append(job_id)
             loops += 1

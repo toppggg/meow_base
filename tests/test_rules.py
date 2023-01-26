@@ -7,10 +7,10 @@ from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
 from rules.file_event_jupyter_notebook_rule import FileEventJupyterNotebookRule
 
 class CorrectnessTests(unittest.TestCase):
-    def setUp(self) -> None:
+    def setUp(self)->None:
         return super().setUp()
 
-    def tearDown(self) -> None:
+    def tearDown(self)->None:
         return super().tearDown()
 
     def testFileEventJupyterNotebookRuleCreationMinimum(self)->None:

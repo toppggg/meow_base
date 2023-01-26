@@ -6,6 +6,8 @@ import nbformat
 import os
 import yaml
 
+from datetime import datetime
+
 from multiprocessing.connection import Connection, wait as multi_wait
 from multiprocessing.queues import Queue
 from papermill.translators import papermill_translators
@@ -16,8 +18,23 @@ from core.correctness.validation import check_type, valid_existing_file_path, \
     valid_path
 from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
     VALID_CHANNELS, HASH_BUFFER_SIZE, SHA256, DEBUG_WARNING, DEBUG_INFO, \
-    EVENT_TYPE, EVENT_PATH
+    EVENT_TYPE, EVENT_PATH, JOB_EVENT, JOB_TYPE, JOB_ID, JOB_PATTERN, \
+    JOB_RECIPE, JOB_RULE, WATCHDOG_RULE, JOB_STATUS, STATUS_QUEUED, \
+    JOB_CREATE_TIME, JOB_REQUIREMENTS
 
+# mig trigger keyword replacements
+KEYWORD_PATH = "{PATH}"
+KEYWORD_REL_PATH = "{REL_PATH}"
+KEYWORD_DIR = "{DIR}"
+KEYWORD_REL_DIR = "{REL_DIR}"
+KEYWORD_FILENAME = "{FILENAME}"
+KEYWORD_PREFIX = "{PREFIX}"
+KEYWORD_BASE = "{VGRID}"
+KEYWORD_EXTENSION = "{EXTENSION}"
+KEYWORD_JOB = "{JOB}"
+
+
+#TODO Make this guaranteed unique
 def generate_id(prefix:str="", length:int=16, existing_ids:list[str]=[], 
         charset:str=CHAR_UPPERCASE+CHAR_LOWERCASE, attempts:int=24):
     random_length = max(length - len(prefix), 0)
@@ -100,19 +117,16 @@ def make_dir(path:str, can_exist:bool=True, ensure_clean:bool=False):
 
     :return: No return
     """
-    if not os.path.exists(path):
-        os.mkdir(path)
-    elif os.path.isfile(path):
-        raise ValueError('Cannot make directory in %s as it already '
-                         'exists and is a file' % path)
-    else:
-        if not can_exist:
-            if ensure_clean:
-                rmtree(path)
-                os.mkdir(path)
-            else:
-                raise ValueError("Directory %s already exists. " % path)
-
+    if os.path.exists(path):
+        if os.path.isfile(path):
+            raise ValueError(
+                f"Cannot make directory in {path} as it already exists and is "
+                "a file")
+        if ensure_clean:
+            rmtree(path)
+                
+    os.makedirs(path, exist_ok=can_exist)
+    
 def read_yaml(filepath:str):
     """
     Reads a file path as a yaml object.
@@ -124,7 +138,7 @@ def read_yaml(filepath:str):
     with open(filepath, 'r') as yaml_file:
         return yaml.load(yaml_file, Loader=yaml.Loader)
 
-def write_yaml(source:Any, filename:str, mode:str='w'):
+def write_yaml(source:Any, filename:str):
     """
     Writes a given objcet to a yaml file.
 
@@ -134,7 +148,7 @@ def write_yaml(source:Any, filename:str, mode:str='w'):
 
     :return: No return
     """
-    with open(filename, mode) as param_file:
+    with open(filename, 'w') as param_file:
         yaml.dump(source, param_file, default_flow_style=False)
 
 def read_notebook(filepath:str):
@@ -241,6 +255,51 @@ def print_debug(print_target, debug_level, msg, level)->None:
                     status = "WARNING"
                 print(f"{status}: {msg}", file=print_target)
 
-def create_event(event_type:str, path:str, source:dict[Any,Any]={})->dict[Any,Any]:
+def replace_keywords(old_dict:dict[str,str], job_id:str, src_path:str, 
+            monitor_base:str)->dict[str,str]:
+        new_dict = {}
+
+        filename = os.path.basename(src_path)
+        dirname = os.path.dirname(src_path)
+        relpath = os.path.relpath(src_path, monitor_base)
+        reldirname = os.path.dirname(relpath)
+        (prefix, extension) = os.path.splitext(filename)
+
+        for var, val in old_dict.items():
+            if isinstance(val, str):
+                val = val.replace(KEYWORD_PATH, src_path)
+                val = val.replace(KEYWORD_REL_PATH, relpath)
+                val = val.replace(KEYWORD_DIR, dirname)
+                val = val.replace(KEYWORD_REL_DIR, reldirname)
+                val = val.replace(KEYWORD_FILENAME, filename)
+                val = val.replace(KEYWORD_PREFIX, prefix)
+                val = val.replace(KEYWORD_BASE, monitor_base)
+                val = val.replace(KEYWORD_EXTENSION, extension)
+                val = val.replace(KEYWORD_JOB, job_id)
+
+                new_dict[var] = val
+            else:
+                new_dict[var] = val
+
+        return new_dict
+
+def create_event(event_type:str, path:str, source:dict[Any,Any]={}
+        )->dict[Any,Any]:
     return {**source, EVENT_PATH: path, EVENT_TYPE: event_type}
 
+def create_job(job_type:str, event:dict[str,Any], source:dict[Any,Any]={}
+        )->dict[Any,Any]:
+    job_dict = {
+        #TODO compress pattern, recipe, rule?
+        JOB_ID: generate_id(prefix="job_"),
+        JOB_EVENT: event,
+        JOB_TYPE: job_type,
+        JOB_PATTERN: event[WATCHDOG_RULE].pattern,
+        JOB_RECIPE: event[WATCHDOG_RULE].recipe,
+        JOB_RULE: event[WATCHDOG_RULE].name,
+        JOB_STATUS: STATUS_QUEUED,
+        JOB_CREATE_TIME: datetime.now(),
+        JOB_REQUIREMENTS: event[WATCHDOG_RULE].recipe.requirements
+    }
+
+    return {**source, **job_dict}

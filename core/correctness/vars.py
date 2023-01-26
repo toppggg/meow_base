@@ -188,11 +188,12 @@ APPENDING_NOTEBOOK = {
 }
 
 # meow events
-EVENT_TYPE = "meow_event_type"
+EVENT_TYPE = "event_type"
 EVENT_PATH = "event_path"
 WATCHDOG_TYPE = "watchdog"
 WATCHDOG_BASE = "monitor_base"
 WATCHDOG_RULE = "rule_name"
+WATCHDOG_HASH = "file_hash"
 
 # inotify events
 FILE_CREATE_EVENT = "file_created"
@@ -222,6 +223,42 @@ DIR_EVENTS = [
     DIR_DELETED_EVENT,
     DIR_RETROACTIVE_EVENT
 ]
+
+# meow jobs
+JOB_TYPE = "job_type"
+PYTHON_TYPE = "python"
+PYTHON_FUNC = "func"
+PYTHON_EXECUTION_BASE = "exection_base"
+PYTHON_OUTPUT_DIR = "output_dir"
+
+# job definitions
+JOB_ID = "id"
+JOB_EVENT = "event"
+JOB_PATTERN = "pattern"
+JOB_RECIPE = "recipe"
+JOB_RULE = "rule"
+JOB_HASH = "hash"
+JOB_STATUS = "status"
+JOB_CREATE_TIME = "create"
+JOB_START_TIME = "start"
+JOB_END_TIME = "end"
+JOB_ERROR = "error"
+JOB_REQUIREMENTS = "requirements"
+JOB_PARAMETERS = "parameters"
+
+# job statuses
+STATUS_QUEUED = "queued"
+STATUS_RUNNING = "running"
+STATUS_SKIPPED = "skipped"
+STATUS_FAILED = "failed"
+STATUS_DONE = "done"
+
+# job definition files
+META_FILE = "job.yml"
+BASE_FILE = "base.ipynb"
+PARAMS_FILE = "params.yml"
+JOB_FILE = "job.ipynb"
+RESULT_FILE = "result.ipynb"
 
 # debug printing levels
 DEBUG_ERROR = 1

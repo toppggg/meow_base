@@ -2,6 +2,7 @@
 import inspect
 import sys
 
+from copy import deepcopy
 from typing import Any, Union
 
 from core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
@@ -150,8 +151,8 @@ class BaseMonitor:
         check_implementation(type(self).remove_recipe, BaseMonitor)
         check_implementation(type(self).get_recipes, BaseMonitor)
         check_implementation(type(self).get_rules, BaseMonitor)
-        self._patterns = patterns
-        self._recipes = recipes
+        self._patterns = deepcopy(patterns)
+        self._recipes = deepcopy(recipes)
         self._rules = create_rules(patterns, recipes)
         
     def __new__(cls, *args, **kwargs):
@@ -201,7 +202,8 @@ class BaseMonitor:
 
 
 class BaseHandler:
-    def __init__(self) -> None:
+    to_runner: VALID_CHANNELS
+    def __init__(self)->None:
         check_implementation(type(self).handle, BaseHandler)
         check_implementation(type(self).valid_event_types, BaseHandler)
 
@@ -214,8 +216,21 @@ class BaseHandler:
     def valid_event_types(self)->list[str]:
         pass
 
-    def handle(self, event:Any)->None:
+    def handle(self, event:dict[str,Any])->None:
         pass
+
+
+class BaseConductor:
+    def __init__(self)->None:
+        check_implementation(type(self).execute, BaseConductor)
+        check_implementation(type(self).valid_job_types, BaseConductor)
+
+    def valid_job_types(self)->list[str]:
+        pass
+
+    def execute(self, job:dict[str,Any])->None:
+        pass
+
 
 def create_rules(patterns:Union[dict[str,BasePattern],list[BasePattern]], 
         recipes:Union[dict[str,BaseRecipe],list[BaseRecipe]],

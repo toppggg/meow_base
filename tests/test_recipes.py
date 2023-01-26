@@ -1,29 +1,34 @@
 
-import io
 import jsonschema
 import os
 import unittest
 
-from time import sleep
+from multiprocessing import Pipe
 
-from patterns.file_event_pattern import FileEventPattern
-from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe, \
-    PapermillHandler, BASE_FILE, META_FILE, PARAMS_FILE, JOB_FILE, RESULT_FILE
-from rules.file_event_jupyter_notebook_rule import FileEventJupyterNotebookRule
 from core.correctness.vars import BAREBONES_NOTEBOOK, TEST_HANDLER_BASE, \
     TEST_JOB_OUTPUT, TEST_MONITOR_BASE, COMPLETE_NOTEBOOK, EVENT_TYPE, \
-    WATCHDOG_BASE, WATCHDOG_RULE, WATCHDOG_TYPE, EVENT_PATH
-from core.functionality import rmtree, make_dir, read_notebook
-from core.meow import create_rules
+    WATCHDOG_BASE, WATCHDOG_RULE, WATCHDOG_TYPE, EVENT_PATH, SHA256, \
+    WATCHDOG_HASH, JOB_ID, PYTHON_TYPE, JOB_PARAMETERS, JOB_HASH, \
+    PYTHON_FUNC, PYTHON_OUTPUT_DIR, PYTHON_EXECUTION_BASE, \
+    APPENDING_NOTEBOOK, META_FILE, BASE_FILE, PARAMS_FILE, JOB_FILE, \
+    RESULT_FILE
+from core.correctness.validation import valid_job
+from core.functionality import rmtree, make_dir, get_file_hash, create_job, \
+    create_event
+from core.meow import create_rules, create_rule
+from patterns.file_event_pattern import FileEventPattern
+from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe, \
+    PapermillHandler, job_func
+from rules.file_event_jupyter_notebook_rule import FileEventJupyterNotebookRule
 
 class CorrectnessTests(unittest.TestCase):
-    def setUp(self) -> None:
+    def setUp(self)->None:
         super().setUp()
         make_dir(TEST_MONITOR_BASE)
         make_dir(TEST_HANDLER_BASE)
         make_dir(TEST_JOB_OUTPUT)
 
-    def tearDown(self) -> None:
+    def tearDown(self)->None:
         super().tearDown()
         rmtree(TEST_MONITOR_BASE)
         rmtree(TEST_HANDLER_BASE)
@@ -98,14 +103,12 @@ class CorrectnessTests(unittest.TestCase):
         )
 
     def testPapermillHandlerHandling(self)->None:
-        debug_stream = io.StringIO("")
-
+        from_handler_reader, from_handler_writer = Pipe()
         ph = PapermillHandler(
             TEST_HANDLER_BASE,
-            TEST_JOB_OUTPUT,
-            print=debug_stream,
-            logging=3
+            TEST_JOB_OUTPUT
         )
+        ph.to_runner = from_handler_writer
         
         with open(os.path.join(TEST_MONITOR_BASE, "A"), "w") as f:
             f.write("Data")
@@ -133,41 +136,88 @@ class CorrectnessTests(unittest.TestCase):
             EVENT_TYPE: WATCHDOG_TYPE,
             EVENT_PATH: os.path.join(TEST_MONITOR_BASE, "A"),
             WATCHDOG_BASE: TEST_MONITOR_BASE,
-            WATCHDOG_RULE: rule
+            WATCHDOG_RULE: rule,
+            WATCHDOG_HASH: get_file_hash(
+                os.path.join(TEST_MONITOR_BASE, "A"), SHA256
+            )
         }
 
         ph.handle(event)
 
-        loops = 0
-        job_id = None
-        while loops < 15:
-            sleep(1)
-            debug_stream.seek(0)
-            messages = debug_stream.readlines()
+        if from_handler_reader.poll(3):
+            job = from_handler_reader.recv()
 
-            for msg in messages:
-                self.assertNotIn("ERROR", msg)
-            
-                if "INFO: Completed job " in msg:
-                    job_id = msg.replace("INFO: Completed job ", "")
-                    job_id = job_id[:job_id.index(" with output")]
-                    loops = 15
-            loops += 1
+        self.assertIsNotNone(job[JOB_ID])
 
-        self.assertIsNotNone(job_id)
-        self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), 1)
-        self.assertIn(job_id, os.listdir(TEST_JOB_OUTPUT))
+        valid_job(job)
 
-        job_dir = os.path.join(TEST_JOB_OUTPUT, job_id)
-        self.assertEqual(len(os.listdir(job_dir)), 5)
+    def testJobFunc(self)->None:
+        file_path = os.path.join(TEST_MONITOR_BASE, "test")
+        result_path = os.path.join(TEST_MONITOR_BASE, "output", "test")
 
-        self.assertIn(META_FILE, os.listdir(job_dir))
-        self.assertIn(BASE_FILE, os.listdir(job_dir))
-        self.assertIn(PARAMS_FILE, os.listdir(job_dir))
-        self.assertIn(JOB_FILE, os.listdir(job_dir))
-        self.assertIn(RESULT_FILE, os.listdir(job_dir))
+        with open(file_path, "w") as f:
+            f.write("Data")
 
-        result = read_notebook(os.path.join(job_dir, RESULT_FILE))
+        file_hash = get_file_hash(file_path, SHA256)
 
-        self.assertEqual("124875.0\n", 
-            result["cells"][4]["outputs"][0]["text"][0])
+        pattern = FileEventPattern(
+            "pattern", 
+            file_path, 
+            "recipe_one", 
+            "infile", 
+            parameters={
+                "extra":"A line from a test Pattern",
+                "outfile":result_path
+            })
+        recipe = JupyterNotebookRecipe(
+            "recipe_one", APPENDING_NOTEBOOK)
+
+        rule = create_rule(pattern, recipe)
+
+        job_dict = create_job(
+            PYTHON_TYPE,
+            create_event(
+                WATCHDOG_TYPE,
+                file_path,
+                {
+                    WATCHDOG_BASE: TEST_MONITOR_BASE,
+                    WATCHDOG_RULE: rule,
+                    WATCHDOG_HASH: file_hash
+                }
+            ),
+            {
+                JOB_PARAMETERS:{
+                    "extra":"extra",
+                    "infile":file_path,
+                    "outfile":result_path
+                },
+                JOB_HASH: file_hash,
+                PYTHON_FUNC:job_func,
+                PYTHON_OUTPUT_DIR:TEST_JOB_OUTPUT,
+                PYTHON_EXECUTION_BASE:TEST_HANDLER_BASE
+            }
+        )
+
+        job_func(job_dict)
+
+        job_dir = os.path.join(TEST_HANDLER_BASE, job_dict[JOB_ID])
+        self.assertFalse(os.path.exists(job_dir))
+        
+        output_dir = os.path.join(TEST_JOB_OUTPUT, job_dict[JOB_ID])
+        self.assertTrue(os.path.exists(output_dir))
+        self.assertTrue(os.path.exists(os.path.join(output_dir, META_FILE)))
+        self.assertTrue(os.path.exists(os.path.join(output_dir, BASE_FILE)))
+        self.assertTrue(os.path.exists(os.path.join(output_dir, PARAMS_FILE)))
+        self.assertTrue(os.path.exists(os.path.join(output_dir, JOB_FILE)))
+        self.assertTrue(os.path.exists(os.path.join(output_dir, RESULT_FILE)))
+
+        self.assertTrue(os.path.exists(result_path))
+
+    def testJobFuncBadArgs(self)->None:
+        try:
+            job_func({})
+        except Exception:
+            pass
+
+        self.assertEqual(len(os.listdir(TEST_HANDLER_BASE)), 0)
+        self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), 0)

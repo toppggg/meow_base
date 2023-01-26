@@ -1,18 +1,14 @@
 
-import io
-import os
 import unittest
  
-from multiprocessing import Pipe
 from typing import Any, Union
 
 from core.correctness.vars import TEST_HANDLER_BASE, TEST_JOB_OUTPUT, \
-    TEST_MONITOR_BASE, BAREBONES_NOTEBOOK, WATCHDOG_BASE, WATCHDOG_RULE, \
-    EVENT_PATH, WATCHDOG_TYPE, EVENT_TYPE
+    TEST_MONITOR_BASE, BAREBONES_NOTEBOOK
 from core.functionality import make_dir, rmtree
 from core.meow import BasePattern, BaseRecipe, BaseRule, BaseMonitor, \
-    BaseHandler, create_rules
-from patterns import FileEventPattern, WatchdogMonitor
+    BaseHandler, BaseConductor, create_rules, create_rule
+from patterns import FileEventPattern
 from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
 
 valid_pattern_one = FileEventPattern(
@@ -27,13 +23,13 @@ valid_recipe_two = JupyterNotebookRecipe(
 
 
 class MeowTests(unittest.TestCase):
-    def setUp(self) -> None:
+    def setUp(self)->None:
         super().setUp()
         make_dir(TEST_MONITOR_BASE)
         make_dir(TEST_HANDLER_BASE)
         make_dir(TEST_JOB_OUTPUT)
 
-    def tearDown(self) -> None:
+    def tearDown(self)->None:
         super().tearDown()
         rmtree(TEST_MONITOR_BASE)
         rmtree(TEST_HANDLER_BASE)
@@ -93,8 +89,18 @@ class MeowTests(unittest.TestCase):
                 pass
         FullRule("name", "", "")
 
+    def testCreateRule(self)->None:
+        rule = create_rule(valid_pattern_one, valid_recipe_one)
+
+        self.assertIsInstance(rule, BaseRule)
+
+        with self.assertRaises(ValueError):
+            rule = create_rule(valid_pattern_one, valid_recipe_two)
+    
     def testCreateRulesMinimum(self)->None:
-        create_rules({}, {})
+        rules = create_rules({}, {})
+
+        self.assertEqual(len(rules), 0)
 
     def testCreateRulesPatternsAndRecipesDicts(self)->None:
         patterns = {
@@ -166,134 +172,8 @@ class MeowTests(unittest.TestCase):
                 pass
             def get_rules(self)->None:
                 pass
+            
         FullTestMonitor({}, {})
-
-    def testMonitoring(self)->None:
-        pattern_one = FileEventPattern(
-            "pattern_one", "start/A.txt", "recipe_one", "infile", 
-            parameters={})
-        recipe = JupyterNotebookRecipe(
-            "recipe_one", BAREBONES_NOTEBOOK)
-
-        patterns = {
-            pattern_one.name: pattern_one,
-        }
-        recipes = {
-            recipe.name: recipe,
-        }
-
-        monitor_debug_stream = io.StringIO("")
-
-        wm = WatchdogMonitor(
-            TEST_MONITOR_BASE,
-            patterns,
-            recipes,
-            print=monitor_debug_stream,
-            logging=3, 
-            settletime=1
-        )
-
-        rules = wm.get_rules()
-        rule = rules[list(rules.keys())[0]]
-
-        from_monitor_reader, from_monitor_writer = Pipe()
-        wm.to_runner = from_monitor_writer
-   
-        wm.start()
-
-        start_dir = os.path.join(TEST_MONITOR_BASE, "start")
-        make_dir(start_dir)
-        self.assertTrue(start_dir)
-        with open(os.path.join(start_dir, "A.txt"), "w") as f:
-            f.write("Initial Data")
-
-        self.assertTrue(os.path.exists(os.path.join(start_dir, "A.txt")))
-
-        messages = []
-        while True:
-            if from_monitor_reader.poll(3):
-                messages.append(from_monitor_reader.recv())
-            else:
-                break
-        self.assertTrue(len(messages), 1)
-        message = messages[0]
-
-        self.assertEqual(type(message), dict)
-        self.assertIn(EVENT_TYPE, message)
-        self.assertEqual(message[EVENT_TYPE], WATCHDOG_TYPE)
-        self.assertIn(WATCHDOG_BASE, message)
-        self.assertEqual(message[WATCHDOG_BASE], TEST_MONITOR_BASE)
-        self.assertIn(EVENT_PATH, message)
-        self.assertEqual(message[EVENT_PATH], 
-            os.path.join(start_dir, "A.txt"))
-        self.assertIn(WATCHDOG_RULE, message)
-        self.assertEqual(message[WATCHDOG_RULE].name, rule.name)
-
-        wm.stop()
-
-    def testMonitoringRetroActive(self)->None:
-        pattern_one = FileEventPattern(
-            "pattern_one", "start/A.txt", "recipe_one", "infile", 
-            parameters={})
-        recipe = JupyterNotebookRecipe(
-            "recipe_one", BAREBONES_NOTEBOOK)
-
-        patterns = {
-            pattern_one.name: pattern_one,
-        }
-        recipes = {
-            recipe.name: recipe,
-        }
-
-        start_dir = os.path.join(TEST_MONITOR_BASE, "start")
-        make_dir(start_dir)
-        self.assertTrue(start_dir)
-        with open(os.path.join(start_dir, "A.txt"), "w") as f:
-            f.write("Initial Data")
-
-        self.assertTrue(os.path.exists(os.path.join(start_dir, "A.txt")))
-
-        monitor_debug_stream = io.StringIO("")
-
-        wm = WatchdogMonitor(
-            TEST_MONITOR_BASE,
-            patterns,
-            recipes,
-            print=monitor_debug_stream,
-            logging=3, 
-            settletime=1
-        )
-
-        rules = wm.get_rules()
-        rule = rules[list(rules.keys())[0]]
-
-        from_monitor_reader, from_monitor_writer = Pipe()
-        wm.to_runner = from_monitor_writer
-   
-        wm.start()
-
-        messages = []
-        while True:
-            if from_monitor_reader.poll(3):
-                messages.append(from_monitor_reader.recv())
-            else:
-                break
-        self.assertTrue(len(messages), 1)
-        message = messages[0]
-
-        self.assertEqual(type(message), dict)
-        self.assertIn(EVENT_TYPE, message)
-        self.assertEqual(message[EVENT_TYPE], WATCHDOG_TYPE)
-        self.assertIn(WATCHDOG_BASE, message)
-        self.assertEqual(message[WATCHDOG_BASE], TEST_MONITOR_BASE)
-        self.assertIn(EVENT_PATH, message)
-        self.assertEqual(message[EVENT_PATH], 
-            os.path.join(start_dir, "A.txt"))
-        self.assertIn(WATCHDOG_RULE, message)
-        self.assertEqual(message[WATCHDOG_RULE].name, rule.name)
-
-        wm.stop()
-
 
     def testBaseHandler(self)->None:
         with self.assertRaises(TypeError):
@@ -316,5 +196,24 @@ class MeowTests(unittest.TestCase):
                 pass
             def valid_event_types(self)->list[str]:
                 pass
+
         FullTestHandler()
 
+    def testBaseConductor(self)->None:
+        with self.assertRaises(NotImplementedError):
+            BaseConductor()
+
+        class TestConductor(BaseConductor):
+            pass
+
+        with self.assertRaises(NotImplementedError):
+            TestConductor()
+
+        class FullTestConductor(BaseConductor):
+            def execute(self, job:dict[str,Any])->None:
+                pass
+
+            def valid_job_types(self)->list[str]:
+                pass
+
+        FullTestConductor()
