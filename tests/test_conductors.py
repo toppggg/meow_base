@@ -7,12 +7,12 @@ from core.correctness.vars import PYTHON_TYPE, TEST_HANDLER_BASE, SHA256, \
     WATCHDOG_BASE, WATCHDOG_RULE, WATCHDOG_HASH, JOB_PARAMETERS, JOB_HASH, \
     PYTHON_FUNC, PYTHON_OUTPUT_DIR, PYTHON_EXECUTION_BASE, JOB_ID, META_FILE, \
     BASE_FILE, PARAMS_FILE, JOB_FILE, RESULT_FILE
-from core.functionality import make_dir, rmtree, get_file_hash, create_event, \
-    create_job
+from core.functionality import get_file_hash, create_event, create_job
 from core.meow import create_rule
 from conductors import LocalPythonConductor
 from patterns import FileEventPattern
 from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe, job_func
+from shared import setup, teardown
 
 
 def failing_func():
@@ -22,16 +22,12 @@ def failing_func():
 class MeowTests(unittest.TestCase):
     def setUp(self)->None:
         super().setUp()
-        make_dir(TEST_MONITOR_BASE)
-        make_dir(TEST_HANDLER_BASE)
-        make_dir(TEST_JOB_OUTPUT)
+        setup()
 
     def tearDown(self)->None:
         super().tearDown()
-        rmtree(TEST_MONITOR_BASE)
-        rmtree(TEST_HANDLER_BASE)
-        rmtree(TEST_JOB_OUTPUT)
-
+        teardown()
+        
     def testLocalPythonConductorCreation(self)->None:
         lpc = LocalPythonConductor()
 

@@ -13,18 +13,18 @@ from core.correctness.validation import check_type, check_implementation, \
 from core.correctness.vars import VALID_NAME_CHARS, TEST_MONITOR_BASE, \
     SHA256, EVENT_TYPE, EVENT_PATH, JOB_TYPE, JOB_EVENT, JOB_ID, JOB_PATTERN, \
     JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME
-from core.functionality import rmtree, make_dir
+from core.functionality import make_dir
+from shared import setup, teardown
 
 class CorrectnessTests(unittest.TestCase):
     def setUp(self)->None:
         super().setUp()
-        make_dir(TEST_MONITOR_BASE, ensure_clean=True)
+        setup()
 
     def tearDown(self)->None:
         super().tearDown()
-        rmtree(TEST_MONITOR_BASE)
-        rmtree("first")
-
+        teardown()
+        
     def testCheckTypeValid(self)->None:
         check_type(1, int)
         check_type(0, int)

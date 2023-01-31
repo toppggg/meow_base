@@ -3,13 +3,12 @@ import unittest
  
 from typing import Any, Union
 
-from core.correctness.vars import TEST_HANDLER_BASE, TEST_JOB_OUTPUT, \
-    TEST_MONITOR_BASE, BAREBONES_NOTEBOOK
-from core.functionality import make_dir, rmtree
+from core.correctness.vars import BAREBONES_NOTEBOOK
 from core.meow import BasePattern, BaseRecipe, BaseRule, BaseMonitor, \
     BaseHandler, BaseConductor, create_rules, create_rule
 from patterns import FileEventPattern
 from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
+from shared import setup, teardown
 
 valid_pattern_one = FileEventPattern(
     "pattern_one", "path_one", "recipe_one", "file_one")
@@ -25,15 +24,11 @@ valid_recipe_two = JupyterNotebookRecipe(
 class MeowTests(unittest.TestCase):
     def setUp(self)->None:
         super().setUp()
-        make_dir(TEST_MONITOR_BASE)
-        make_dir(TEST_HANDLER_BASE)
-        make_dir(TEST_JOB_OUTPUT)
+        setup()
 
     def tearDown(self)->None:
         super().tearDown()
-        rmtree(TEST_MONITOR_BASE)
-        rmtree(TEST_HANDLER_BASE)
-        rmtree(TEST_JOB_OUTPUT)
+        teardown()
 
     def testBaseRecipe(self)->None:
         with self.assertRaises(TypeError):

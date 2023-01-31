@@ -13,7 +13,7 @@ cd $script_dir
 search_dir=.
 for entry in "$search_dir"/*
 do
-  if  [[ $entry == ./test* ]] && [[ $entry != ./$script_name ]];
+  if  [[ $entry == ./test* ]] && [[ $entry != ./$script_name ]] && [[ $entry != ./shared.py ]];
   then
     pytest $entry "-W ignore::DeprecationWarning"
   fi

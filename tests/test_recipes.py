@@ -13,26 +13,22 @@ from core.correctness.vars import BAREBONES_NOTEBOOK, TEST_HANDLER_BASE, \
     APPENDING_NOTEBOOK, META_FILE, BASE_FILE, PARAMS_FILE, JOB_FILE, \
     RESULT_FILE
 from core.correctness.validation import valid_job
-from core.functionality import rmtree, make_dir, get_file_hash, create_job, \
-    create_event
+from core.functionality import get_file_hash, create_job, create_event
 from core.meow import create_rules, create_rule
 from patterns.file_event_pattern import FileEventPattern
 from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe, \
     PapermillHandler, job_func
 from rules.file_event_jupyter_notebook_rule import FileEventJupyterNotebookRule
+from shared import setup, teardown
 
 class CorrectnessTests(unittest.TestCase):
     def setUp(self)->None:
         super().setUp()
-        make_dir(TEST_MONITOR_BASE)
-        make_dir(TEST_HANDLER_BASE)
-        make_dir(TEST_JOB_OUTPUT)
+        setup()
 
     def tearDown(self)->None:
         super().tearDown()
-        rmtree(TEST_MONITOR_BASE)
-        rmtree(TEST_HANDLER_BASE)
-        rmtree(TEST_JOB_OUTPUT)
+        teardown()
 
     def testJupyterNotebookRecipeCreationMinimum(self)->None:
         JupyterNotebookRecipe("test_recipe", BAREBONES_NOTEBOOK)

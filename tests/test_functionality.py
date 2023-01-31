@@ -23,16 +23,17 @@ from core.functionality import generate_id, wait, get_file_hash, rmtree, \
 from core.meow import create_rule
 from patterns import FileEventPattern
 from recipes import JupyterNotebookRecipe
+from shared import setup, teardown
 
 class CorrectnessTests(unittest.TestCase):
     def setUp(self)->None:
         super().setUp()
-        make_dir(TEST_MONITOR_BASE, ensure_clean=True)
+        setup()
 
     def tearDown(self)->None:
         super().tearDown()
-        rmtree(TEST_MONITOR_BASE)
-
+        teardown()
+        
     def testGenerateIDWorking(self)->None:
         id = generate_id()
         self.assertEqual(len(id), 16)

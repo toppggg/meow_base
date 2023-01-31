@@ -5,14 +5,17 @@ from core.correctness.vars import BAREBONES_NOTEBOOK
 from patterns.file_event_pattern import FileEventPattern
 from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
 from rules.file_event_jupyter_notebook_rule import FileEventJupyterNotebookRule
+from shared import setup, teardown
 
 class CorrectnessTests(unittest.TestCase):
     def setUp(self)->None:
-        return super().setUp()
+        super().setUp()
+        setup()
 
     def tearDown(self)->None:
-        return super().tearDown()
-
+        super().tearDown()
+        teardown()
+        
     def testFileEventJupyterNotebookRuleCreationMinimum(self)->None:
         fep = FileEventPattern("name", "path", "recipe", "file")
         jnr = JupyterNotebookRecipe("recipe", BAREBONES_NOTEBOOK)

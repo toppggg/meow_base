@@ -8,27 +8,24 @@ from time import sleep
 from conductors import LocalPythonConductor
 from core.correctness.vars import TEST_HANDLER_BASE, TEST_JOB_OUTPUT, \
     TEST_MONITOR_BASE, APPENDING_NOTEBOOK, RESULT_FILE
-from core.functionality import make_dir, rmtree, read_notebook
+from core.functionality import make_dir, read_notebook
 from core.meow import BaseMonitor, BaseHandler, BaseConductor
 from core.runner import MeowRunner
 from patterns import WatchdogMonitor, FileEventPattern
 from recipes.jupyter_notebook_recipe import PapermillHandler, \
     JupyterNotebookRecipe
+from shared import setup, teardown
 
 
 class MeowTests(unittest.TestCase):
     def setUp(self)->None:
         super().setUp()
-        make_dir(TEST_MONITOR_BASE)
-        make_dir(TEST_HANDLER_BASE)
-        make_dir(TEST_JOB_OUTPUT)
+        setup()
 
     def tearDown(self)->None:
         super().tearDown()
-        rmtree(TEST_MONITOR_BASE)
-        rmtree(TEST_HANDLER_BASE)
-        rmtree(TEST_JOB_OUTPUT)
-
+        teardown()
+        
     def testMeowRunnerSetup(self)->None:
 
         monitor_one = WatchdogMonitor(TEST_MONITOR_BASE, {}, {})
