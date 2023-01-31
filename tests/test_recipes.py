@@ -13,7 +13,8 @@ from core.correctness.vars import EVENT_TYPE, WATCHDOG_BASE, WATCHDOG_RULE, \
 from core.correctness.validation import valid_job
 from core.functionality import get_file_hash, create_job, create_event
 from core.meow import create_rules, create_rule
-from patterns.file_event_pattern import FileEventPattern
+from patterns.file_event_pattern import FileEventPattern, SWEEP_START, \
+    SWEEP_STOP, SWEEP_JUMP
 from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe, \
     PapermillHandler, job_func
 from rules.file_event_jupyter_notebook_rule import FileEventJupyterNotebookRule
@@ -159,6 +160,153 @@ class CorrectnessTests(unittest.TestCase):
         self.assertIsNotNone(job[JOB_ID])
 
         valid_job(job)
+
+    # Test PapermillHandler will create enough jobs from single sweep
+    def testPapermillHandlerHandlingSingleSweep(self)->None:
+        from_handler_reader, from_handler_writer = Pipe()
+        ph = PapermillHandler(
+            TEST_HANDLER_BASE,
+            TEST_JOB_OUTPUT
+        )
+        ph.to_runner = from_handler_writer
+        
+        with open(os.path.join(TEST_MONITOR_BASE, "A"), "w") as f:
+            f.write("Data")
+
+        pattern_one = FileEventPattern(
+            "pattern_one", "A", "recipe_one", "file_one", sweep={"s":{
+                SWEEP_START: 0, SWEEP_STOP: 2, SWEEP_JUMP:1
+            }})
+        recipe = JupyterNotebookRecipe(
+            "recipe_one", COMPLETE_NOTEBOOK)
+
+        patterns = {
+            pattern_one.name: pattern_one,
+        }
+        recipes = {
+            recipe.name: recipe,
+        }
+
+        rules = create_rules(patterns, recipes)
+        self.assertEqual(len(rules), 1)
+        _, rule = rules.popitem()
+        self.assertIsInstance(rule, FileEventJupyterNotebookRule)
+
+        self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), 0)
+
+        event = {
+            EVENT_TYPE: WATCHDOG_TYPE,
+            EVENT_PATH: os.path.join(TEST_MONITOR_BASE, "A"),
+            WATCHDOG_BASE: TEST_MONITOR_BASE,
+            WATCHDOG_RULE: rule,
+            WATCHDOG_HASH: get_file_hash(
+                os.path.join(TEST_MONITOR_BASE, "A"), SHA256
+            )
+        }
+
+        ph.handle(event)
+
+        jobs = []
+        recieving = True
+        while recieving:
+            if from_handler_reader.poll(3):
+                jobs.append(from_handler_reader.recv())
+            else:
+                recieving = False
+
+        values = [0, 1, 2]
+        self.assertEqual(len(jobs), 3)
+        for job in jobs:
+            valid_job(job)
+            self.assertIn(JOB_PARAMETERS, job)
+            self.assertIn("s", job[JOB_PARAMETERS])
+            if job[JOB_PARAMETERS]["s"] in values:
+                values.remove(job[JOB_PARAMETERS]["s"])
+        self.assertEqual(len(values), 0)
+
+    # Test PapermillHandler will create enough jobs from multiple sweeps
+    def testPapermillHandlerHandlingMultipleSweep(self)->None:
+        from_handler_reader, from_handler_writer = Pipe()
+        ph = PapermillHandler(
+            TEST_HANDLER_BASE,
+            TEST_JOB_OUTPUT
+        )
+        ph.to_runner = from_handler_writer
+        
+        with open(os.path.join(TEST_MONITOR_BASE, "A"), "w") as f:
+            f.write("Data")
+
+        pattern_one = FileEventPattern(
+            "pattern_one", "A", "recipe_one", "file_one", sweep={
+                "s1":{
+                    SWEEP_START: 0, SWEEP_STOP: 2, SWEEP_JUMP:1
+                },
+                "s2":{
+                    SWEEP_START: 20, SWEEP_STOP: 80, SWEEP_JUMP:15
+                }
+            })
+        recipe = JupyterNotebookRecipe(
+            "recipe_one", COMPLETE_NOTEBOOK)
+
+        patterns = {
+            pattern_one.name: pattern_one,
+        }
+        recipes = {
+            recipe.name: recipe,
+        }
+
+        rules = create_rules(patterns, recipes)
+        self.assertEqual(len(rules), 1)
+        _, rule = rules.popitem()
+        self.assertIsInstance(rule, FileEventJupyterNotebookRule)
+
+        self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), 0)
+
+        event = {
+            EVENT_TYPE: WATCHDOG_TYPE,
+            EVENT_PATH: os.path.join(TEST_MONITOR_BASE, "A"),
+            WATCHDOG_BASE: TEST_MONITOR_BASE,
+            WATCHDOG_RULE: rule,
+            WATCHDOG_HASH: get_file_hash(
+                os.path.join(TEST_MONITOR_BASE, "A"), SHA256
+            )
+        }
+
+        ph.handle(event)
+
+        jobs = []
+        recieving = True
+        while recieving:
+            if from_handler_reader.poll(3):
+                jobs.append(from_handler_reader.recv())
+            else:
+                recieving = False
+
+        values = [
+            "s1-0/s2-20", "s1-1/s2-20", "s1-2/s2-20", 
+            "s1-0/s2-35", "s1-1/s2-35", "s1-2/s2-35", 
+            "s1-0/s2-50", "s1-1/s2-50", "s1-2/s2-50", 
+            "s1-0/s2-65", "s1-1/s2-65", "s1-2/s2-65", 
+            "s1-0/s2-80", "s1-1/s2-80", "s1-2/s2-80", 
+        ]
+        self.assertEqual(len(jobs), 15)
+        for job in jobs:
+            valid_job(job)
+            self.assertIn(JOB_PARAMETERS, job)
+            val1 = None
+            val2 = None
+            if "s1" in job[JOB_PARAMETERS]:
+                val1 = f"s1-{job[JOB_PARAMETERS]['s1']}"
+            if "s2" in job[JOB_PARAMETERS]:
+                val2 = f"s2-{job[JOB_PARAMETERS]['s2']}"
+            val = None
+            if val1 and val2:
+                val = f"{val1}/{val2}"
+            if val and val in values:
+                values.remove(val)
+        print([j[JOB_PARAMETERS] for j in jobs])
+        print(values)
+        self.assertEqual(len(values), 0)
 
     # Test jobFunc performs as expected
     def testJobFunc(self)->None:

@@ -341,8 +341,6 @@ class CorrectnessTests(unittest.TestCase):
             "N": 1
         }
 
-        print(test_dict["A"])
-
         replaced = replace_keywords(
             test_dict, "job_id", "base/src/dir/file.ext", "base/monitor/dir")
 
@@ -379,7 +377,6 @@ class CorrectnessTests(unittest.TestCase):
         with open(notebook_path, 'r') as f:
             data = f.readlines()
         
-        print(data)
         expected_bytes = [
             '{"cells": [{"cell_type": "code", "execution_count": null, '
             '"metadata": {}, "outputs": [], "source": ["# Default parameters '

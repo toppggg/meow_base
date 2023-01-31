@@ -174,3 +174,91 @@ APPENDING_NOTEBOOK = {
  "nbformat": 4,
  "nbformat_minor": 4
 }
+ADDING_NOTEBOOK = {
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": None,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Default parameters values\n",
+    "# Amount to add to data\n",
+    "extra = 10\n",
+    "# Data input file location\n",
+    "infile = 'example_data/data_0.npy'\n",
+    "# Output file location\n",
+    "outfile = 'standard_output/data_0.npy'"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": None,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "import os"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": None,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# load in dataset. Should be numpy array\n",
+    "data = np.load(infile)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": None,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Add an amount to all the values in the array\n",
+    "added = data + int(float(extra))\n",
+    "\n",
+    "added"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": None,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Create output directory if it doesn't exist\n",
+    "output_dir_path = os.path.dirname(outfile)\n",
+    "\n",
+    "if output_dir_path:\n",
+    "    os.makedirs(output_dir_path, exist_ok=True)\n",
+    "\n",
+    "# Save added array as new dataset\n",
+    "np.save(outfile, added)"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.6.9"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}
