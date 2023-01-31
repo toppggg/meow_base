@@ -11,7 +11,8 @@ from core.correctness.vars import EVENT_TYPE, WATCHDOG_BASE, WATCHDOG_RULE, \
     PYTHON_EXECUTION_BASE, META_FILE, BASE_FILE, PARAMS_FILE, JOB_FILE, \
     RESULT_FILE
 from core.correctness.validation import valid_job
-from core.functionality import get_file_hash, create_job, create_event
+from core.functionality import get_file_hash, create_job, create_event, \
+    make_dir, write_yaml, write_notebook
 from core.meow import create_rules, create_rule
 from patterns.file_event_pattern import FileEventPattern, SWEEP_START, \
     SWEEP_STOP, SWEEP_JUMP
@@ -332,6 +333,12 @@ class CorrectnessTests(unittest.TestCase):
 
         rule = create_rule(pattern, recipe)
 
+        params_dict = {
+            "extra":"extra",
+            "infile":file_path,
+            "outfile":result_path
+        }
+
         job_dict = create_job(
             PYTHON_TYPE,
             create_event(
@@ -344,17 +351,23 @@ class CorrectnessTests(unittest.TestCase):
                 }
             ),
             {
-                JOB_PARAMETERS:{
-                    "extra":"extra",
-                    "infile":file_path,
-                    "outfile":result_path
-                },
+                JOB_PARAMETERS:params_dict,
                 JOB_HASH: file_hash,
                 PYTHON_FUNC:job_func,
                 PYTHON_OUTPUT_DIR:TEST_JOB_OUTPUT,
                 PYTHON_EXECUTION_BASE:TEST_HANDLER_BASE
             }
         )
+
+        job_dir = os.path.join(
+            job_dict[PYTHON_EXECUTION_BASE], job_dict[JOB_ID])
+        make_dir(job_dir)
+
+        param_file = os.path.join(job_dir, PARAMS_FILE)
+        write_yaml(params_dict, param_file)
+
+        base_file = os.path.join(job_dir, BASE_FILE)
+        write_notebook(APPENDING_NOTEBOOK, base_file)
 
         job_func(job_dict)
 

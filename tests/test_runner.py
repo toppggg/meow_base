@@ -10,8 +10,7 @@ from core.correctness.vars import RESULT_FILE
 from core.functionality import make_dir, read_notebook
 from core.meow import BaseMonitor, BaseHandler, BaseConductor
 from core.runner import MeowRunner
-from patterns.file_event_pattern import WatchdogMonitor, FileEventPattern, \
-    SWEEP_JUMP, SWEEP_START, SWEEP_STOP
+from patterns.file_event_pattern import WatchdogMonitor, FileEventPattern
 from recipes.jupyter_notebook_recipe import PapermillHandler, \
     JupyterNotebookRecipe
 from shared import setup, teardown, TEST_HANDLER_BASE, TEST_JOB_OUTPUT, \

@@ -6,7 +6,8 @@ from core.correctness.vars import PYTHON_TYPE, SHA256, WATCHDOG_TYPE, \
     WATCHDOG_BASE, WATCHDOG_RULE, WATCHDOG_HASH, JOB_PARAMETERS, JOB_HASH, \
     PYTHON_FUNC, PYTHON_OUTPUT_DIR, PYTHON_EXECUTION_BASE, JOB_ID, META_FILE, \
     BASE_FILE, PARAMS_FILE, JOB_FILE, RESULT_FILE
-from core.functionality import get_file_hash, create_event, create_job
+from core.functionality import get_file_hash, create_event, create_job, \
+    make_dir, write_yaml, write_notebook
 from core.meow import create_rule
 from conductors import LocalPythonConductor
 from patterns import FileEventPattern
@@ -62,6 +63,12 @@ class MeowTests(unittest.TestCase):
 
         rule = create_rule(pattern, recipe)
 
+        params_dict = {
+            "extra":"extra",
+            "infile":file_path,
+            "outfile":result_path
+        }
+
         job_dict = create_job(
             PYTHON_TYPE,
             create_event(
@@ -74,17 +81,22 @@ class MeowTests(unittest.TestCase):
                 }
             ),
             {
-                JOB_PARAMETERS:{
-                    "extra":"extra",
-                    "infile":file_path,
-                    "outfile":result_path
-                },
+                JOB_PARAMETERS:params_dict,
                 JOB_HASH: file_hash,
                 PYTHON_FUNC:job_func,
                 PYTHON_OUTPUT_DIR:TEST_JOB_OUTPUT,
                 PYTHON_EXECUTION_BASE:TEST_HANDLER_BASE
             }
         )
+
+        job_dir = os.path.join(TEST_HANDLER_BASE, job_dict[JOB_ID])
+        make_dir(job_dir)
+
+        param_file = os.path.join(job_dir, PARAMS_FILE)
+        write_yaml(params_dict, param_file)
+
+        base_file = os.path.join(job_dir, BASE_FILE)
+        write_notebook(APPENDING_NOTEBOOK, base_file)
 
         lpc.execute(job_dict)
 
@@ -127,6 +139,12 @@ class MeowTests(unittest.TestCase):
 
         rule = create_rule(pattern, recipe)
 
+        params_dict = {
+            "extra":"extra",
+            "infile":file_path,
+            "outfile":result_path
+        }
+
         bad_job_dict = create_job(
             PYTHON_TYPE,
             create_event(
@@ -139,15 +157,20 @@ class MeowTests(unittest.TestCase):
                 }
             ),
             {
-                JOB_PARAMETERS:{
-                    "extra":"extra",
-                    "infile":file_path,
-                    "outfile":result_path
-                },
+                JOB_PARAMETERS:params_dict,
                 JOB_HASH: file_hash,
                 PYTHON_FUNC:job_func,
             }
         )
+
+        job_dir = os.path.join(TEST_HANDLER_BASE, bad_job_dict[JOB_ID])
+        make_dir(job_dir)
+
+        param_file = os.path.join(job_dir, PARAMS_FILE)
+        write_yaml(params_dict, param_file)
+
+        base_file = os.path.join(job_dir, BASE_FILE)
+        write_notebook(APPENDING_NOTEBOOK, base_file)
 
         with self.assertRaises(KeyError):
             lpc.execute(bad_job_dict)
@@ -165,17 +188,22 @@ class MeowTests(unittest.TestCase):
                 }
             ),
             {
-                JOB_PARAMETERS:{
-                    "extra":"extra",
-                    "infile":file_path,
-                    "outfile":result_path
-                },
+                JOB_PARAMETERS:params_dict,
                 JOB_HASH: file_hash,
                 PYTHON_FUNC:job_func,
                 PYTHON_OUTPUT_DIR:TEST_JOB_OUTPUT,
                 PYTHON_EXECUTION_BASE:TEST_HANDLER_BASE
             }
         )
+
+        job_dir = os.path.join(TEST_HANDLER_BASE, good_job_dict[JOB_ID])
+        make_dir(job_dir)
+
+        param_file = os.path.join(job_dir, PARAMS_FILE)
+        write_yaml(params_dict, param_file)
+
+        base_file = os.path.join(job_dir, BASE_FILE)
+        write_notebook(APPENDING_NOTEBOOK, base_file)
 
         lpc.execute(good_job_dict)
 
