@@ -5,6 +5,7 @@ along with an appropriate handler for said events.
 
 Author(s): David Marchant
 """
+import itertools
 import nbformat
 import sys
 
@@ -103,16 +104,21 @@ class PapermillHandler(BaseHandler):
             self.setup_job(event, yaml_dict)
         else:
             # If parameter sweeps, then many jobs created
+            values_dict = {}
             for var, val in rule.pattern.sweep.items():
-                values = []
-                par_val = rule.pattern.sweep[SWEEP_START]
-                while par_val <= rule.pattern.sweep[SWEEP_STOP]:
-                    values.append(par_val)
-                    par_val += rule.pattern.sweep[SWEEP_JUMP]
+                values_dict[var] = []
+                par_val = val[SWEEP_START]
+                while par_val <= val[SWEEP_STOP]:
+                    values_dict[var].append((var, par_val))
+                    par_val += val[SWEEP_JUMP]
 
+            # combine all combinations of sweep values
+            values_list = list(itertools.product(
+                *[v for v in values_dict.values()]))
+            for values in values_list:
                 for value in values:
-                    yaml_dict[var] = value
-                    self.setup_job(event, yaml_dict)
+                    yaml_dict[value[0]] = value[1]
+                self.setup_job(event, yaml_dict)
 
     def valid_event_types(self)->list[str]:
         """Function to provide a list of the types of events this handler can 

@@ -283,7 +283,6 @@ class WatchdogMonitor(BaseMonitor):
         created from that pattern will be automatically updated."""
         check_type(pattern, FileEventPattern)
         self.remove_pattern(pattern.name)
-        print(f"adding pattern w/ recipe {pattern.recipe}")
         self.add_pattern(pattern)
 
     def remove_pattern(self, pattern: Union[str,FileEventPattern])->None:
