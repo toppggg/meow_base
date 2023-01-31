@@ -6,15 +6,16 @@ import unittest
 from time import sleep
 
 from conductors import LocalPythonConductor
-from core.correctness.vars import TEST_HANDLER_BASE, TEST_JOB_OUTPUT, \
-    TEST_MONITOR_BASE, APPENDING_NOTEBOOK, RESULT_FILE
+from core.correctness.vars import RESULT_FILE
 from core.functionality import make_dir, read_notebook
 from core.meow import BaseMonitor, BaseHandler, BaseConductor
 from core.runner import MeowRunner
-from patterns import WatchdogMonitor, FileEventPattern
+from patterns.file_event_pattern import WatchdogMonitor, FileEventPattern, \
+    SWEEP_JUMP, SWEEP_START, SWEEP_STOP
 from recipes.jupyter_notebook_recipe import PapermillHandler, \
     JupyterNotebookRecipe
-from shared import setup, teardown
+from shared import setup, teardown, TEST_HANDLER_BASE, TEST_JOB_OUTPUT, \
+    TEST_MONITOR_BASE, APPENDING_NOTEBOOK
 
 
 class MeowTests(unittest.TestCase):
@@ -361,3 +362,175 @@ class MeowTests(unittest.TestCase):
         
         self.assertEqual(data, 
             "Initial Data\nA line from Pattern 1\nA line from Pattern 2")
+
+    # Test single swept meow job execution
+    def testMeowRunnerExecution(self)->None:
+        pattern_one = FileEventPattern(
+            "pattern_one", "start/A.txt", "recipe_one", "infile", 
+            parameters={
+                "extra":"A line from a test Pattern",
+                "outfile":"{VGRID}/output/{FILENAME}"
+            })
+        recipe = JupyterNotebookRecipe(
+            "recipe_one", APPENDING_NOTEBOOK)
+
+        patterns = {
+            pattern_one.name: pattern_one,
+        }
+        recipes = {
+            recipe.name: recipe,
+        }
+
+        runner_debug_stream = io.StringIO("")
+
+        runner = MeowRunner(
+            WatchdogMonitor(
+                TEST_MONITOR_BASE,
+                patterns,
+                recipes,
+                settletime=1
+            ), 
+            PapermillHandler(
+                TEST_HANDLER_BASE,
+                TEST_JOB_OUTPUT,
+            ),
+            LocalPythonConductor(),
+            print=runner_debug_stream,
+            logging=3                
+        )        
+   
+        runner.start()
+
+        start_dir = os.path.join(TEST_MONITOR_BASE, "start")
+        make_dir(start_dir)
+        self.assertTrue(start_dir)
+        with open(os.path.join(start_dir, "A.txt"), "w") as f:
+            f.write("Initial Data")
+
+        self.assertTrue(os.path.exists(os.path.join(start_dir, "A.txt")))
+
+        loops = 0
+        job_id = None
+        while loops < 15:
+            sleep(1)
+            runner_debug_stream.seek(0)
+            messages = runner_debug_stream.readlines()
+
+            for msg in messages:
+                self.assertNotIn("ERROR", msg)
+            
+                if "INFO: Completed execution for job: '" in msg:
+                    job_id = msg.replace(
+                        "INFO: Completed execution for job: '", "")
+                    job_id = job_id[:-2]
+                    loops = 15
+            loops += 1
+
+        print("JOB ID:")
+        print(job_id)
+
+        self.assertIsNotNone(job_id)
+        self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), 1)
+        self.assertIn(job_id, os.listdir(TEST_JOB_OUTPUT))
+
+        runner.stop()
+
+        job_dir = os.path.join(TEST_JOB_OUTPUT, job_id)
+        self.assertEqual(len(os.listdir(job_dir)), 5)
+
+        result = read_notebook(os.path.join(job_dir, RESULT_FILE))
+        self.assertIsNotNone(result)
+
+        output_path = os.path.join(TEST_MONITOR_BASE, "output", "A.txt")
+        self.assertTrue(os.path.exists(output_path))
+        
+        with open(output_path, "r") as f:
+            data = f.read()
+        
+        self.assertEqual(data, "Initial Data\nA line from a test Pattern")
+
+    # Test multiple swept meow job execution
+    def testMeowRunnerExecution(self)->None:
+        pattern_one = FileEventPattern(
+            "pattern_one", "start/A.txt", "recipe_one", "infile", 
+            parameters={
+                "extra":"A line from a test Pattern",
+                "outfile":"{VGRID}/output/{FILENAME}"
+            })
+        recipe = JupyterNotebookRecipe(
+            "recipe_one", APPENDING_NOTEBOOK)
+
+        patterns = {
+            pattern_one.name: pattern_one,
+        }
+        recipes = {
+            recipe.name: recipe,
+        }
+
+        runner_debug_stream = io.StringIO("")
+
+        runner = MeowRunner(
+            WatchdogMonitor(
+                TEST_MONITOR_BASE,
+                patterns,
+                recipes,
+                settletime=1
+            ), 
+            PapermillHandler(
+                TEST_HANDLER_BASE,
+                TEST_JOB_OUTPUT,
+            ),
+            LocalPythonConductor(),
+            print=runner_debug_stream,
+            logging=3                
+        )        
+   
+        runner.start()
+
+        start_dir = os.path.join(TEST_MONITOR_BASE, "start")
+        make_dir(start_dir)
+        self.assertTrue(start_dir)
+        with open(os.path.join(start_dir, "A.txt"), "w") as f:
+            f.write("Initial Data")
+
+        self.assertTrue(os.path.exists(os.path.join(start_dir, "A.txt")))
+
+        loops = 0
+        job_id = None
+        while loops < 15:
+            sleep(1)
+            runner_debug_stream.seek(0)
+            messages = runner_debug_stream.readlines()
+
+            for msg in messages:
+                self.assertNotIn("ERROR", msg)
+            
+                if "INFO: Completed execution for job: '" in msg:
+                    job_id = msg.replace(
+                        "INFO: Completed execution for job: '", "")
+                    job_id = job_id[:-2]
+                    loops = 15
+            loops += 1
+
+        print("JOB ID:")
+        print(job_id)
+
+        self.assertIsNotNone(job_id)
+        self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), 1)
+        self.assertIn(job_id, os.listdir(TEST_JOB_OUTPUT))
+
+        runner.stop()
+
+        job_dir = os.path.join(TEST_JOB_OUTPUT, job_id)
+        self.assertEqual(len(os.listdir(job_dir)), 5)
+
+        result = read_notebook(os.path.join(job_dir, RESULT_FILE))
+        self.assertIsNotNone(result)
+
+        output_path = os.path.join(TEST_MONITOR_BASE, "output", "A.txt")
+        self.assertTrue(os.path.exists(output_path))
+        
+        with open(output_path, "r") as f:
+            data = f.read()
+        
+        self.assertEqual(data, "Initial Data\nA line from a test Pattern")

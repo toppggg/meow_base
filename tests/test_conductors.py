@@ -2,8 +2,7 @@
 import os
 import unittest
 
-from core.correctness.vars import PYTHON_TYPE, TEST_HANDLER_BASE, SHA256, \
-    TEST_JOB_OUTPUT, TEST_MONITOR_BASE, APPENDING_NOTEBOOK, WATCHDOG_TYPE, \
+from core.correctness.vars import PYTHON_TYPE, SHA256, WATCHDOG_TYPE, \
     WATCHDOG_BASE, WATCHDOG_RULE, WATCHDOG_HASH, JOB_PARAMETERS, JOB_HASH, \
     PYTHON_FUNC, PYTHON_OUTPUT_DIR, PYTHON_EXECUTION_BASE, JOB_ID, META_FILE, \
     BASE_FILE, PARAMS_FILE, JOB_FILE, RESULT_FILE
@@ -12,7 +11,8 @@ from core.meow import create_rule
 from conductors import LocalPythonConductor
 from patterns import FileEventPattern
 from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe, job_func
-from shared import setup, teardown
+from shared import setup, teardown, TEST_MONITOR_BASE, APPENDING_NOTEBOOK, \
+    TEST_JOB_OUTPUT, TEST_HANDLER_BASE
 
 
 def failing_func():

@@ -10,11 +10,11 @@ from core.correctness.validation import check_type, check_implementation, \
     valid_string, valid_dict, valid_list, valid_existing_file_path, \
     valid_existing_dir_path, valid_non_existing_path, valid_event, valid_job, \
     setup_debugging
-from core.correctness.vars import VALID_NAME_CHARS, TEST_MONITOR_BASE, \
-    SHA256, EVENT_TYPE, EVENT_PATH, JOB_TYPE, JOB_EVENT, JOB_ID, JOB_PATTERN, \
-    JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME
+from core.correctness.vars import VALID_NAME_CHARS, SHA256, EVENT_TYPE, \
+    EVENT_PATH, JOB_TYPE, JOB_EVENT, JOB_ID, JOB_PATTERN, JOB_RECIPE, \
+    JOB_RULE, JOB_STATUS, JOB_CREATE_TIME
 from core.functionality import make_dir
-from shared import setup, teardown
+from shared import setup, teardown, TEST_MONITOR_BASE
 
 class CorrectnessTests(unittest.TestCase):
     def setUp(self)->None:

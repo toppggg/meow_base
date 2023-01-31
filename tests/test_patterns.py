@@ -5,14 +5,13 @@ import unittest
 
 from multiprocessing import Pipe
 
-from core.correctness.vars import FILE_CREATE_EVENT, BAREBONES_NOTEBOOK, \
-    TEST_MONITOR_BASE, EVENT_TYPE, WATCHDOG_RULE, WATCHDOG_BASE, \
-    WATCHDOG_TYPE, EVENT_PATH
+from core.correctness.vars import FILE_CREATE_EVENT, EVENT_TYPE, \
+    WATCHDOG_RULE, WATCHDOG_BASE, WATCHDOG_TYPE, EVENT_PATH
 from core.functionality import make_dir
 from patterns.file_event_pattern import FileEventPattern, WatchdogMonitor, \
     _DEFAULT_MASK, SWEEP_START, SWEEP_STOP, SWEEP_JUMP
 from recipes import JupyterNotebookRecipe
-from shared import setup, teardown
+from shared import setup, teardown, BAREBONES_NOTEBOOK, TEST_MONITOR_BASE
 
 
 def patterns_equal(tester, pattern_one, pattern_two):

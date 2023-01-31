@@ -8,11 +8,10 @@ from multiprocessing import Pipe, Queue
 from time import sleep
 
 from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
-    SHA256, TEST_MONITOR_BASE, COMPLETE_NOTEBOOK, EVENT_TYPE, EVENT_PATH, \
-    WATCHDOG_TYPE, PYTHON_TYPE, WATCHDOG_BASE, WATCHDOG_HASH, WATCHDOG_RULE, \
-    JOB_PARAMETERS, JOB_HASH, PYTHON_FUNC, PYTHON_OUTPUT_DIR, \
-    PYTHON_EXECUTION_BASE, APPENDING_NOTEBOOK, JOB_ID, JOB_EVENT, JOB_TYPE, \
-    JOB_PATTERN, JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, \
+    SHA256, EVENT_TYPE, EVENT_PATH, WATCHDOG_TYPE, PYTHON_TYPE, \
+    WATCHDOG_BASE, WATCHDOG_HASH, WATCHDOG_RULE, JOB_PARAMETERS, JOB_HASH, \
+    PYTHON_FUNC, PYTHON_OUTPUT_DIR, PYTHON_EXECUTION_BASE, JOB_ID, JOB_EVENT, \
+    JOB_TYPE, JOB_PATTERN, JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, \
     JOB_REQUIREMENTS, STATUS_QUEUED
 from core.functionality import generate_id, wait, get_file_hash, rmtree, \
     make_dir, parameterize_jupyter_notebook, create_event, create_job, \
@@ -23,7 +22,8 @@ from core.functionality import generate_id, wait, get_file_hash, rmtree, \
 from core.meow import create_rule
 from patterns import FileEventPattern
 from recipes import JupyterNotebookRecipe
-from shared import setup, teardown
+from shared import setup, teardown, TEST_MONITOR_BASE, COMPLETE_NOTEBOOK, \
+    APPENDING_NOTEBOOK
 
 class CorrectnessTests(unittest.TestCase):
     def setUp(self)->None:

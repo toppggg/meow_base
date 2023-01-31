@@ -3,12 +3,11 @@ import unittest
  
 from typing import Any, Union
 
-from core.correctness.vars import BAREBONES_NOTEBOOK
 from core.meow import BasePattern, BaseRecipe, BaseRule, BaseMonitor, \
     BaseHandler, BaseConductor, create_rules, create_rule
 from patterns import FileEventPattern
 from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
-from shared import setup, teardown
+from shared import setup, teardown, BAREBONES_NOTEBOOK
 
 valid_pattern_one = FileEventPattern(
     "pattern_one", "path_one", "recipe_one", "file_one")
