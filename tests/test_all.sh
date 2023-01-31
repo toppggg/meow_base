@@ -1,4 +1,6 @@
 #! /bin/bash
+# A script to run all tests. This will automatically move to the tests 
+# directory and call all other files as pytest scripts
 
 # Need to more to local dir to run tests
 starting_working_dir=$(pwd)

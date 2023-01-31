@@ -200,7 +200,7 @@ class MeowTests(unittest.TestCase):
         FullTestHandler()
 
     def testBaseConductor(self)->None:
-        with self.assertRaises(NotImplementedError):
+        with self.assertRaises(TypeError):
             BaseConductor()
 
         class TestConductor(BaseConductor):

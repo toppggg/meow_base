@@ -1,4 +1,11 @@
 
+"""
+This file contains a variety of constants used throughout the package. 
+Constants specific to only one file should be stored there, and only shared 
+here.
+
+Author(s): David Marchant
+"""
 import os
 
 from multiprocessing import Queue
