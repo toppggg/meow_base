@@ -25,105 +25,130 @@ class CorrectnessTests(unittest.TestCase):
         super().tearDown()
         teardown()
         
+    # Test check_type accepts valid types
     def testCheckTypeValid(self)->None:
         check_type(1, int)
         check_type(0, int)
         check_type(False, bool)
         check_type(True, bool)
 
+    # Test check_type accepts Any type
     def testCheckTypeValidAny(self)->None:
         check_type(1, Any)
 
+    # Test check_type accepts Union of types
     def testCheckTypeValidUnion(self)->None:
         check_type(1, Union[int,str])
         with self.assertRaises(TypeError):
             check_type(Union[int, str], Union[int,str])
         
+    # Test check_type raises on mismatched type
     def testCheckTypeMistyped(self)->None:
         with self.assertRaises(TypeError):
             check_type(1, str)
 
+    # Test or_none arg for check_type
     def testCheckTypeOrNone(self)->None:
         check_type(None, int, or_none=True)
         with self.assertRaises(TypeError):
             check_type(None, int, or_none=False)
 
+    # Test valid_string with valid chars
     def testValidStringValid(self)->None:
         valid_string("David_Marchant", VALID_NAME_CHARS)
 
+    # Test valid_string with empty input
     def testValidStringEmptyString(self)->None:
         valid_string("", VALID_NAME_CHARS, min_length=0)
 
+    # Test valid_string with no valid chars
     def testValidStringNoValidChars(self)->None:
         with self.assertRaises(ValueError):
             valid_string("David_Marchant", "")
 
+    # Test valid_string with wrong types
     def testValidStringMistypedInput(self)->None:
         with self.assertRaises(TypeError):
             valid_string(1, VALID_NAME_CHARS)
         with self.assertRaises(TypeError):
             valid_string("David_Marchant", 1)
 
+    # Test valid_string with invalid chars
     def testValidStringMissingChars(self)->None:
         with self.assertRaises(ValueError):
             valid_string("David Marchant", VALID_NAME_CHARS)
 
+    # Test valid_string with not long enough input
     def testValidStringInsufficientLength(self)->None:
         with self.assertRaises(ValueError):
             valid_string("", VALID_NAME_CHARS)
             valid_string("David Marchant", VALID_NAME_CHARS, min_length=50)
 
+    # Test valid_dict with not long enough input
     def testValidDictMinimum(self)->None:
         valid_dict({"a": 0, "b": 1}, str, int, strict=False)
 
+    # Test valid_dict with invalid key types
     def testValidDictAnyKeyType(self)->None:
         valid_dict({"a": 0, "b": 1}, Any, int, strict=False)
 
+    # Test valid_dict with invalid value types
     def testValidDictAnyValueType(self)->None:
         valid_dict({"a": 0, "b": 1}, str, Any, strict=False)
 
+    # Test valid_dict with required keys
     def testValidDictAllRequiredKeys(self)->None:
         valid_dict({"a": 0, "b": 1}, str, int, required_keys=["a", "b"])
 
+    # Test valid_dict with required and optional keys
     def testValidDictAllRequiredOrOptionalKeys(self)->None:
         valid_dict(
             {"a": 0, "b": 1}, str, int, required_keys=["a"], 
             optional_keys=["b"])
 
+    # Test valid_dict with extra keys
     def testValidDictExtraKeys(self)->None:
         valid_dict(
             {"a": 0, "b": 1, "c": 2}, str, int, required_keys=["a"], 
             optional_keys=["b"], strict=False)
 
+    # Test valid_dict with missing required keys
     def testValidDictMissingRequiredKeys(self)->None:
         with self.assertRaises(KeyError):
             valid_dict(
                 {"a": 0, "b": 1}, str, int, required_keys=["a", "b", "c"])
 
+    # Test strict checking of valid_dict
     def testValidDictOverlyStrict(self)->None:
         with self.assertRaises(ValueError):
-            valid_dict({"a": 0, "b": 1}, str, int)
+            valid_dict({"a": 0, "b": 1}, str, int, strict=True)
 
+    # Test valid_list with sufficent lengths
     def testValidListMinimum(self)->None:
         valid_list([1, 2, 3], int)
         valid_list(["1", "2", "3"], str)
         valid_list([1], int)
 
+    # Test valid_list with alternate types
     def testValidListAltTypes(self)->None:
         valid_list([1, "2", 3], int, alt_types=[str])
 
+    # Test valid_list with wrong type
     def testValidListMismatchedNotList(self)->None:
         with self.assertRaises(TypeError):
             valid_list((1, 2, 3), int)
 
+    # Test valid_list with mismatch value types
     def testValidListMismatchedType(self)->None:
         with self.assertRaises(TypeError):
             valid_list([1, 2, 3], str)
 
+    # Test valid_list with insufficient length
     def testValidListMinLength(self)->None:
         with self.assertRaises(ValueError):
             valid_list([1, 2, 3], str, min_length=10)
 
+    # Test check_implementation doesn't raise on implemented
     def testCheckImplementationMinimum(self)->None:
         class Parent:
             def func():
@@ -135,6 +160,7 @@ class CorrectnessTests(unittest.TestCase):
 
         check_implementation(Child.func, Parent)
 
+    # Test check_implementation does raise on not implemented
     def testCheckImplementationUnaltered(self)->None:
         class Parent:
             def func():
@@ -146,6 +172,7 @@ class CorrectnessTests(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             check_implementation(Child.func, Parent)
 
+    # Test check_implementation does raise on differing signature
     def testCheckImplementationDifferingSig(self)->None:
         class Parent:
             def func():
@@ -158,6 +185,7 @@ class CorrectnessTests(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             check_implementation(Child.func, Parent)
 
+    # Test check_implementation doesn't raise on Any type in signature
     def testCheckImplementationAnyType(self)->None:
         class Parent:
             def func(var:Any):
@@ -169,6 +197,7 @@ class CorrectnessTests(unittest.TestCase):
         
         check_implementation(Child.func, Parent)
 
+    # Test valid_existing_file_path can find files, or not
     def testValidExistingFilePath(self)->None:
         file_path = os.path.join(TEST_MONITOR_BASE, "file.txt")
         with open(file_path, 'w') as hashed_file:
@@ -185,6 +214,7 @@ class CorrectnessTests(unittest.TestCase):
         with self.assertRaises(ValueError):        
             valid_existing_file_path(dir_path, SHA256)
     
+    # Test valid_existing_dir_path can find directories, or not
     def testValidExistingDirPath(self)->None:
         valid_existing_dir_path(TEST_MONITOR_BASE)
 
@@ -200,6 +230,7 @@ class CorrectnessTests(unittest.TestCase):
         with self.assertRaises(ValueError):        
             valid_existing_dir_path(file_path, SHA256)
 
+    # Test valid_non_existing_path can find existing paths, or not
     def testValidNonExistingPath(self)->None:
         valid_non_existing_path("does_not_exist")
 
@@ -211,6 +242,7 @@ class CorrectnessTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             valid_non_existing_path("first/second")
 
+    # Test valid_event can check given event dictionary
     def testEventValidation(self)->None:
         valid_event({EVENT_TYPE: "test", EVENT_PATH: "path"})
         valid_event({EVENT_TYPE: "anything", EVENT_PATH: "path", "a": 1})
@@ -224,6 +256,7 @@ class CorrectnessTests(unittest.TestCase):
         with self.assertRaises(KeyError):
             valid_event({})
 
+    # Test valid_job can check given job dictionary
     def testJobValidation(self)->None:
         valid_job({
             JOB_TYPE: "test", 
@@ -245,6 +278,7 @@ class CorrectnessTests(unittest.TestCase):
         with self.assertRaises(KeyError):
             valid_job({})
 
+    # Test setup_debugging will create writeable location
     def testSetupDebugging(self)->None:
         stream = io.StringIO("")
 

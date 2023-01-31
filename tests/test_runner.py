@@ -26,6 +26,7 @@ class MeowTests(unittest.TestCase):
         super().tearDown()
         teardown()
         
+    # Test MeowRunner creation
     def testMeowRunnerSetup(self)->None:
 
         monitor_one = WatchdogMonitor(TEST_MONITOR_BASE, {}, {})
@@ -166,6 +167,7 @@ class MeowTests(unittest.TestCase):
                 for rc in relevent_conductors:
                     self.assertIn(rc, runner.conductors[job_type])
 
+    # Test single meow job execution
     def testMeowRunnerExecution(self)->None:
         pattern_one = FileEventPattern(
             "pattern_one", "start/A.txt", "recipe_one", "infile", 
@@ -251,6 +253,7 @@ class MeowTests(unittest.TestCase):
         
         self.assertEqual(data, "Initial Data\nA line from a test Pattern")
 
+    # Test meow job chaining within runner
     def testMeowRunnerLinkedExecution(self)->None:
         pattern_one = FileEventPattern(
             "pattern_one", "start/A.txt", "recipe_one", "infile", 

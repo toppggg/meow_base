@@ -28,6 +28,7 @@ class MeowTests(unittest.TestCase):
         super().tearDown()
         teardown()
         
+    # Test LocalPythonConductor creation and job types
     def testLocalPythonConductorCreation(self)->None:
         lpc = LocalPythonConductor()
 
@@ -35,6 +36,7 @@ class MeowTests(unittest.TestCase):
 
         self.assertEqual(valid_jobs, [PYTHON_TYPE])
 
+    # Test LocalPythonConductor executes valid jobs
     def testLocalPythonConductorValidJob(self)->None:
         lpc = LocalPythonConductor()
 
@@ -99,6 +101,7 @@ class MeowTests(unittest.TestCase):
 
         self.assertTrue(os.path.exists(result_path))
 
+    # Test LocalPythonConductor does not execute jobs with bad arguments
     def testLocalPythonConductorBadArgs(self)->None:
         lpc = LocalPythonConductor()
 
@@ -189,6 +192,7 @@ class MeowTests(unittest.TestCase):
 
         self.assertTrue(os.path.exists(result_path))
 
+    # Test LocalPythonConductor does not execute jobs with bad functions
     def testLocalPythonConductorBadFunc(self)->None:
         lpc = LocalPythonConductor()
 

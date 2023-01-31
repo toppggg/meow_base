@@ -45,57 +45,70 @@ class CorrectnessTests(unittest.TestCase):
         super().tearDown()
         teardown()
 
+    # Test FileEventPattern created
     def testFileEventPatternCreationMinimum(self)->None:
         FileEventPattern("name", "path", "recipe", "file")
 
+    # Test FileEventPattern not created with empty name
     def testFileEventPatternCreationEmptyName(self)->None:
         with self.assertRaises(ValueError):
             FileEventPattern("", "path", "recipe", "file")
 
+    # Test FileEventPattern not created with empty path
     def testFileEventPatternCreationEmptyPath(self)->None:
         with self.assertRaises(ValueError):
             FileEventPattern("name", "", "recipe", "file")
 
+    # Test FileEventPattern not created with empty recipe
     def testFileEventPatternCreationEmptyRecipe(self)->None:
         with self.assertRaises(ValueError):
             FileEventPattern("name", "path", "", "file")
 
+    # Test FileEventPattern not created with empty file
     def testFileEventPatternCreationEmptyFile(self)->None:
         with self.assertRaises(ValueError):
             FileEventPattern("name", "path", "recipe", "")
 
+    # Test FileEventPattern not created with invalid name
     def testFileEventPatternCreationInvalidName(self)->None:
         with self.assertRaises(ValueError):
             FileEventPattern("@name", "path", "recipe", "file")
 
+    # Test FileEventPattern not created with invalid recipe
     def testFileEventPatternCreationInvalidRecipe(self)->None:
         with self.assertRaises(ValueError):
             FileEventPattern("name", "path", "@recipe", "file")
 
+    # Test FileEventPattern not created with invalid file
     def testFileEventPatternCreationInvalidFile(self)->None:
         with self.assertRaises(ValueError):
             FileEventPattern("name", "path", "recipe", "@file")
 
+    # Test FileEventPattern created with valid name
     def testFileEventPatternSetupName(self)->None:
         name = "name"
         fep = FileEventPattern(name, "path", "recipe", "file")
         self.assertEqual(fep.name, name)
 
+    # Test FileEventPattern created with valid path
     def testFileEventPatternSetupPath(self)->None:
         path = "path"
         fep = FileEventPattern("name", path, "recipe", "file")
         self.assertEqual(fep.triggering_path, path)
 
+    # Test FileEventPattern created with valid recipe
     def testFileEventPatternSetupRecipe(self)->None:
         recipe = "recipe"
         fep = FileEventPattern("name", "path", recipe, "file")
         self.assertEqual(fep.recipe, recipe)
 
+    # Test FileEventPattern created with valid file
     def testFileEventPatternSetupFile(self)->None:
         file = "file"
         fep = FileEventPattern("name", "path", "recipe", file)
         self.assertEqual(fep.triggering_file, file)
 
+    # Test FileEventPattern created with valid parameters
     def testFileEventPatternSetupParementers(self)->None:
         parameters = {
             "a": 1,
@@ -105,6 +118,7 @@ class CorrectnessTests(unittest.TestCase):
             "name", "path", "recipe", "file", parameters=parameters)
         self.assertEqual(fep.parameters, parameters)
 
+    # Test FileEventPattern created with valid outputs
     def testFileEventPatternSetupOutputs(self)->None:
         outputs = {
             "a": "a",
@@ -114,6 +128,7 @@ class CorrectnessTests(unittest.TestCase):
             "name", "path", "recipe", "file", outputs=outputs)
         self.assertEqual(fep.outputs, outputs)
 
+    # Test FileEventPattern created with valid event mask
     def testFileEventPatternEventMask(self)->None:
         fep = FileEventPattern("name", "path", "recipe", "file")
         self.assertEqual(fep.event_mask, _DEFAULT_MASK)
@@ -130,6 +145,7 @@ class CorrectnessTests(unittest.TestCase):
             fep = FileEventPattern("name", "path", "recipe", "file", 
                 event_mask=[FILE_CREATE_EVENT, "nope"])
 
+    # Test FileEventPattern created with valid parameter sweep
     def testFileEventPatternSweep(self)->None:
         sweeps = {
             'first':{
@@ -168,10 +184,12 @@ class CorrectnessTests(unittest.TestCase):
             fep = FileEventPattern("name", "path", "recipe", "file", 
                 sweep=bad_sweep)
 
+    # Test WatchdogMonitor created 
     def testWatchdogMonitorMinimum(self)->None:
         from_monitor = Pipe()
         WatchdogMonitor(TEST_MONITOR_BASE, {}, {}, from_monitor[1])
 
+    # Test WatchdogMonitor identifies expected events in base directory
     def testWatchdogMonitorEventIdentificaion(self)->None:
         from_monitor_reader, from_monitor_writer = Pipe()
 
@@ -210,7 +228,8 @@ class CorrectnessTests(unittest.TestCase):
         self.assertTrue(WATCHDOG_BASE in event.keys())        
         self.assertTrue(WATCHDOG_RULE in event.keys())        
         self.assertEqual(event[EVENT_TYPE], WATCHDOG_TYPE)
-        self.assertEqual(event[EVENT_PATH], os.path.join(TEST_MONITOR_BASE, "A"))
+        self.assertEqual(event[EVENT_PATH], 
+            os.path.join(TEST_MONITOR_BASE, "A"))
         self.assertEqual(event[WATCHDOG_BASE], TEST_MONITOR_BASE)
         self.assertEqual(event[WATCHDOG_RULE].name, rule.name)
 
@@ -223,6 +242,7 @@ class CorrectnessTests(unittest.TestCase):
 
         wm.stop()
 
+    # Test WatchdogMonitor identifies expected events in sub directories
     def testMonitoring(self)->None:
         pattern_one = FileEventPattern(
             "pattern_one", "start/A.txt", "recipe_one", "infile", 
@@ -237,15 +257,10 @@ class CorrectnessTests(unittest.TestCase):
             recipe.name: recipe,
         }
 
-        monitor_debug_stream = io.StringIO("")
-
         wm = WatchdogMonitor(
             TEST_MONITOR_BASE,
             patterns,
             recipes,
-            print=monitor_debug_stream,
-            logging=3, 
-            settletime=1
         )
 
         rules = wm.get_rules()
@@ -286,6 +301,7 @@ class CorrectnessTests(unittest.TestCase):
 
         wm.stop()
 
+    # Test WatchdogMonitor identifies fake events for retroactive patterns
     def testMonitoringRetroActive(self)->None:
         pattern_one = FileEventPattern(
             "pattern_one", "start/A.txt", "recipe_one", "infile", 
@@ -349,6 +365,7 @@ class CorrectnessTests(unittest.TestCase):
 
         wm.stop()
 
+    # Test WatchdogMonitor get_patterns function
     def testMonitorGetPatterns(self)->None:
         pattern_one = FileEventPattern(
             "pattern_one", "start/A.txt", "recipe_one", "infile", 
@@ -375,6 +392,7 @@ class CorrectnessTests(unittest.TestCase):
         self.assertIn(pattern_two.name, patterns)
         patterns_equal(self, patterns[pattern_two.name], pattern_two)
 
+    # Test WatchdogMonitor add_pattern function
     def testMonitorAddPattern(self)->None:
         pattern_one = FileEventPattern(
             "pattern_one", "start/A.txt", "recipe_one", "infile", 
@@ -419,6 +437,7 @@ class CorrectnessTests(unittest.TestCase):
         self.assertIn(pattern_two.name, patterns)
         patterns_equal(self, patterns[pattern_two.name], pattern_two)
 
+    # Test WatchdogMonitor update_patterns function
     def testMonitorUpdatePattern(self)->None:
         pattern_one = FileEventPattern(
             "pattern_one", "start/A.txt", "recipe_one", "infile", 
@@ -480,6 +499,7 @@ class CorrectnessTests(unittest.TestCase):
         self.assertIn(pattern_one.name, patterns)
         patterns_equal(self, patterns[pattern_one.name], pattern_one)
 
+    # Test WatchdogMonitor remove_patterns function
     def testMonitorRemovePattern(self)->None:
         pattern_one = FileEventPattern(
             "pattern_one", "start/A.txt", "recipe_one", "infile", 
@@ -518,6 +538,7 @@ class CorrectnessTests(unittest.TestCase):
         self.assertIsInstance(patterns, dict)
         self.assertEqual(len(patterns), 0)
 
+    # Test WatchdogMonitor get_recipes function
     def testMonitorGetRecipes(self)->None:
         recipe_one = JupyterNotebookRecipe(
             "recipe_one", BAREBONES_NOTEBOOK)
@@ -542,6 +563,7 @@ class CorrectnessTests(unittest.TestCase):
         self.assertIn(recipe_two.name, recipes)
         recipes_equal(self, recipes[recipe_two.name], recipe_two)
 
+    # Test WatchdogMonitor add_recipe function
     def testMonitorAddRecipe(self)->None:
         recipe_one = JupyterNotebookRecipe(
             "recipe_one", BAREBONES_NOTEBOOK)
@@ -587,6 +609,7 @@ class CorrectnessTests(unittest.TestCase):
         self.assertIn(recipe_two.name, recipes)
         recipes_equal(self, recipes[recipe_two.name], recipe_two)
 
+    # Test WatchdogMonitor update_recipe function
     def testMonitorUpdateRecipe(self)->None:
         recipe_one = JupyterNotebookRecipe(
             "recipe_one", BAREBONES_NOTEBOOK)
@@ -642,6 +665,7 @@ class CorrectnessTests(unittest.TestCase):
         self.assertIn(recipe_one.name, recipes)
         recipes_equal(self, recipes[recipe_one.name], recipe_one)
 
+    # Test WatchdogMonitor remove_recipe function
     def testMonitorRemoveRecipe(self)->None:
         recipe_one = JupyterNotebookRecipe(
             "recipe_one", BAREBONES_NOTEBOOK)
@@ -680,6 +704,7 @@ class CorrectnessTests(unittest.TestCase):
         self.assertIsInstance(recipes, dict)
         self.assertEqual(len(recipes), 0)
 
+    # Test WatchdogMonitor get_rules function
     def testMonitorGetRules(self)->None:
         pattern_one = FileEventPattern(
             "pattern_one", "start/A.txt", "recipe_one", "infile", 

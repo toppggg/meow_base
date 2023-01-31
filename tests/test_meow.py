@@ -30,6 +30,7 @@ class MeowTests(unittest.TestCase):
         super().tearDown()
         teardown()
 
+    # Test that BaseRecipe instantiation
     def testBaseRecipe(self)->None:
         with self.assertRaises(TypeError):
             BaseRecipe("name", "")
@@ -48,6 +49,7 @@ class MeowTests(unittest.TestCase):
                 pass
         FullRecipe("name", "")
 
+    # Test that BaseRecipe instantiation
     def testBasePattern(self)->None:
         with self.assertRaises(TypeError):
             BasePattern("name", "", "", "")
@@ -66,6 +68,7 @@ class MeowTests(unittest.TestCase):
                 pass
         FullPattern("name", "", "", "")
 
+    # Test that BaseRecipe instantiation
     def testBaseRule(self)->None:
         with self.assertRaises(TypeError):
             BaseRule("name", "", "")
@@ -84,6 +87,7 @@ class MeowTests(unittest.TestCase):
                 pass
         FullRule("name", "", "")
 
+    # Test that create_rule creates a rule from pattern and recipe
     def testCreateRule(self)->None:
         rule = create_rule(valid_pattern_one, valid_recipe_one)
 
@@ -92,11 +96,13 @@ class MeowTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             rule = create_rule(valid_pattern_one, valid_recipe_two)
     
+    # Test that create_rules creates nothing from nothing
     def testCreateRulesMinimum(self)->None:
         rules = create_rules({}, {})
 
         self.assertEqual(len(rules), 0)
 
+    # Test that create_rules creates rules from patterns and recipes
     def testCreateRulesPatternsAndRecipesDicts(self)->None:
         patterns = {
             valid_pattern_one.name: valid_pattern_one,
@@ -114,6 +120,7 @@ class MeowTests(unittest.TestCase):
             self.assertIsInstance(rule, BaseRule)
             self.assertEqual(k, rule.name)
 
+    # Test that create_rules creates nothing from invalid pattern inputs
     def testCreateRulesMisindexedPatterns(self)->None:
         patterns = {
             valid_pattern_two.name: valid_pattern_one,
@@ -122,6 +129,7 @@ class MeowTests(unittest.TestCase):
         with self.assertRaises(KeyError):
             create_rules(patterns, {})
 
+    # Test that create_rules creates nothing from invalid recipe inputs
     def testCreateRulesMisindexedRecipes(self)->None:
         recipes = {
             valid_recipe_two.name: valid_recipe_one,
@@ -130,6 +138,7 @@ class MeowTests(unittest.TestCase):
         with self.assertRaises(KeyError):
             create_rules({}, recipes)
 
+    # Test that BaseMonitor instantiation
     def testBaseMonitor(self)->None:
         with self.assertRaises(TypeError):
             BaseMonitor({}, {})
@@ -170,6 +179,7 @@ class MeowTests(unittest.TestCase):
             
         FullTestMonitor({}, {})
 
+    # Test that BaseHandler instantiation
     def testBaseHandler(self)->None:
         with self.assertRaises(TypeError):
             BaseHandler()
@@ -194,6 +204,7 @@ class MeowTests(unittest.TestCase):
 
         FullTestHandler()
 
+    # Test that BaseConductor instantiation
     def testBaseConductor(self)->None:
         with self.assertRaises(TypeError):
             BaseConductor()

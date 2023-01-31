@@ -30,44 +30,54 @@ class CorrectnessTests(unittest.TestCase):
         super().tearDown()
         teardown()
 
+    # Test JupyterNotebookRecipe can be created
     def testJupyterNotebookRecipeCreationMinimum(self)->None:
         JupyterNotebookRecipe("test_recipe", BAREBONES_NOTEBOOK)
 
+    # Test JupyterNotebookRecipe can be created with source
     def testJupyterNotebookRecipeCreationSource(self)->None:
         JupyterNotebookRecipe(
             "test_recipe", BAREBONES_NOTEBOOK, source="notebook.ipynb")
 
+    # Test JupyterNotebookRecipe cannot be created without name
     def testJupyterNotebookRecipeCreationNoName(self)->None:
         with self.assertRaises(ValueError):
             JupyterNotebookRecipe("", BAREBONES_NOTEBOOK)
 
+    # Test JupyterNotebookRecipe cannot be created with invalid name
     def testJupyterNotebookRecipeCreationInvalidName(self)->None:
         with self.assertRaises(ValueError):
             JupyterNotebookRecipe("@test_recipe", BAREBONES_NOTEBOOK)
 
+    # Test JupyterNotebookRecipe cannot be created with invalid recipe
     def testJupyterNotebookRecipeCreationInvalidRecipe(self)->None:
         with self.assertRaises(jsonschema.exceptions.ValidationError):
             JupyterNotebookRecipe("test_recipe", {})
 
+    # Test JupyterNotebookRecipe cannot be created with invalid source
     def testJupyterNotebookRecipeCreationInvalidSourceExtension(self)->None:
         with self.assertRaises(ValueError):
             JupyterNotebookRecipe(
                 "test_recipe", BAREBONES_NOTEBOOK, source="notebook")
 
+    # Test JupyterNotebookRecipe cannot be created with invalid source name
     def testJupyterNotebookRecipeCreationInvalidSoureChar(self)->None:
         with self.assertRaises(ValueError):
             JupyterNotebookRecipe(
                 "test_recipe", BAREBONES_NOTEBOOK, source="@notebook.ipynb")
 
+    # Test JupyterNotebookRecipe name setup correctly
     def testJupyterNotebookRecipeSetupName(self)->None:
         name = "name"
         jnr = JupyterNotebookRecipe(name, BAREBONES_NOTEBOOK)
         self.assertEqual(jnr.name, name)
 
+    # Test JupyterNotebookRecipe recipe setup correctly
     def testJupyterNotebookRecipeSetupRecipe(self)->None:
         jnr = JupyterNotebookRecipe("name", BAREBONES_NOTEBOOK)
         self.assertEqual(jnr.recipe, BAREBONES_NOTEBOOK)
 
+    # Test JupyterNotebookRecipe parameters setup correctly
     def testJupyterNotebookRecipeSetupParameters(self)->None:
         parameters = {
             "a": 1,
@@ -77,6 +87,7 @@ class CorrectnessTests(unittest.TestCase):
             "name", BAREBONES_NOTEBOOK, parameters=parameters)
         self.assertEqual(jnr.parameters, parameters)
 
+    # Test JupyterNotebookRecipe requirements setup correctly
     def testJupyterNotebookRecipeSetupRequirements(self)->None:
         requirements = {
             "a": 1,
@@ -86,18 +97,21 @@ class CorrectnessTests(unittest.TestCase):
             "name", BAREBONES_NOTEBOOK, requirements=requirements)
         self.assertEqual(jnr.requirements, requirements)
 
+    # Test JupyterNotebookRecipe source setup correctly
     def testJupyterNotebookRecipeSetupSource(self)->None:
         source = "source.ipynb"
         jnr = JupyterNotebookRecipe(
             "name", BAREBONES_NOTEBOOK, source=source)
         self.assertEqual(jnr.source, source)
 
+    # Test PapermillHandler can be created
     def testPapermillHanderMinimum(self)->None:
         PapermillHandler(
             TEST_HANDLER_BASE, 
             TEST_JOB_OUTPUT
         )
 
+    # Test PapermillHandler will handle given events
     def testPapermillHandlerHandling(self)->None:
         from_handler_reader, from_handler_writer = Pipe()
         ph = PapermillHandler(
@@ -147,6 +161,7 @@ class CorrectnessTests(unittest.TestCase):
 
         valid_job(job)
 
+    # Test jobFunc performs as expected
     def testJobFunc(self)->None:
         file_path = os.path.join(TEST_MONITOR_BASE, "test")
         result_path = os.path.join(TEST_MONITOR_BASE, "output", "test")
@@ -209,6 +224,7 @@ class CorrectnessTests(unittest.TestCase):
 
         self.assertTrue(os.path.exists(result_path))
 
+    # Test jobFunc doesn't execute with no args
     def testJobFuncBadArgs(self)->None:
         try:
             job_func({})

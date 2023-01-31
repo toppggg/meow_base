@@ -33,7 +33,8 @@ class CorrectnessTests(unittest.TestCase):
     def tearDown(self)->None:
         super().tearDown()
         teardown()
-        
+
+    # Test that generate_id creates unique ids    
     def testGenerateIDWorking(self)->None:
         id = generate_id()
         self.assertEqual(len(id), 16)
@@ -61,6 +62,7 @@ class CorrectnessTests(unittest.TestCase):
         self.assertEqual(len(prefix_id), 16)
         self.assertTrue(prefix_id.startswith("Test"))
     
+    # Test that wait can wait on multiple pipes
     def testWaitPipes(self)->None:
         pipe_one_reader, pipe_one_writer = Pipe()
         pipe_two_reader, pipe_two_writer = Pipe()
@@ -92,6 +94,7 @@ class CorrectnessTests(unittest.TestCase):
                 msg = readable.recv()        
                 self.assertEqual(msg, 2)
 
+    # Test that wait can wait on multiple queues
     def testWaitQueues(self)->None:
         queue_one = Queue()
         queue_two = Queue()
@@ -124,6 +127,7 @@ class CorrectnessTests(unittest.TestCase):
                 msg = readable.get()
                 self.assertEqual(msg, 2)
 
+    # Test that wait can wait on multiple pipes and queues
     def testWaitPipesAndQueues(self)->None:
         pipe_one_reader, pipe_one_writer = Pipe()
         pipe_two_reader, pipe_two_writer = Pipe()
@@ -197,6 +201,7 @@ class CorrectnessTests(unittest.TestCase):
                 msg = readable.recv()
                 self.assertEqual(msg, 1)
 
+    # Test that get_file_hash produces the expected hash
     def testGetFileHashSha256(self)->None:
         file_path = os.path.join(TEST_MONITOR_BASE, "hased_file.txt")
         with open(file_path, 'w') as hashed_file:
@@ -207,12 +212,14 @@ class CorrectnessTests(unittest.TestCase):
         hash = get_file_hash(file_path, SHA256)
         self.assertEqual(hash, expected_hash)
     
+    # Test that get_file_hash raises on a missing file
     def testGetFileHashSha256NoFile(self)->None:
         file_path = os.path.join(TEST_MONITOR_BASE, "file.txt")
 
         with self.assertRaises(FileNotFoundError):        
             get_file_hash(file_path, SHA256)
 
+    # Test that parameterize_jupyter_notebook parameterises given notebook
     def testParameteriseNotebook(self)->None:
         pn = parameterize_jupyter_notebook(
             COMPLETE_NOTEBOOK, {})
@@ -232,6 +239,7 @@ class CorrectnessTests(unittest.TestCase):
             pn["cells"][0]["source"], 
             "# The first cell\n\ns = 4\nnum = 1000")
 
+    # Test that create_event produces valid event dictionary
     def testCreateEvent(self)->None:
         event = create_event("test", "path")
 
@@ -250,6 +258,7 @@ class CorrectnessTests(unittest.TestCase):
         self.assertEqual(event2[EVENT_PATH], "path2")
         self.assertEqual(event2["a"], 1)
 
+    # Test that create_job produces valid job dictionary
     def testCreateJob(self)->None:
         pattern = FileEventPattern(
             "pattern", 
@@ -311,6 +320,7 @@ class CorrectnessTests(unittest.TestCase):
         self.assertIn(JOB_REQUIREMENTS, job_dict)
         self.assertEqual(job_dict[JOB_REQUIREMENTS], {})
 
+    # Test that replace_keywords replaces MEOW keywords in a given dictionary
     def testReplaceKeywords(self)->None:
         test_dict = {
             "A": f"--{KEYWORD_PATH}--",
@@ -359,6 +369,7 @@ class CorrectnessTests(unittest.TestCase):
         self.assertEqual(replaced["M"], "A") 
         self.assertEqual(replaced["N"], 1) 
 
+    # Test that write_notebook can read jupyter notebooks to files
     def testWriteNotebook(self)->None:
         notebook_path = os.path.join(TEST_MONITOR_BASE, "test_notebook.ipynb")
         self.assertFalse(os.path.exists(notebook_path))
@@ -402,13 +413,13 @@ class CorrectnessTests(unittest.TestCase):
 
         self.assertEqual(data, expected_bytes)
 
+    # Test that read_notebook can read jupyter notebooks from files
     def testReadNotebook(self)->None:
         notebook_path = os.path.join(TEST_MONITOR_BASE, "test_notebook.ipynb")
         write_notebook(APPENDING_NOTEBOOK, notebook_path)
 
         notebook = read_notebook(notebook_path)
         self.assertEqual(notebook, APPENDING_NOTEBOOK)
-
 
         with self.assertRaises(FileNotFoundError):
             read_notebook("doesNotExist.ipynb")
@@ -427,6 +438,7 @@ class CorrectnessTests(unittest.TestCase):
         with self.assertRaises(json.decoder.JSONDecodeError):
             read_notebook(filepath)
 
+    # Test that write_yaml can write dicts to yaml files
     def testWriteYaml(self)->None:
         yaml_dict = {
             "A": "a",
@@ -461,6 +473,7 @@ class CorrectnessTests(unittest.TestCase):
         
         self.assertEqual(data, expected_bytes)
 
+    # Test that read_yaml can read yaml files
     def testReadYaml(self)->None:
         yaml_dict = {
             "A": "a",
@@ -489,6 +502,7 @@ class CorrectnessTests(unittest.TestCase):
         data = read_yaml(filepath)
         self.assertEqual(data, "Data")
 
+    # Test that make_dir creates a directory and path to it
     def testMakeDir(self)->None:
         testDir = os.path.join(TEST_MONITOR_BASE, "Test")
         self.assertFalse(os.path.exists(testDir))
@@ -516,6 +530,7 @@ class CorrectnessTests(unittest.TestCase):
         self.assertTrue(os.path.exists(halfway))
         self.assertEqual(len(os.listdir(halfway)), 0)
 
+    # Test that rmtree removes a directory, its content, and subdirectory
     def testRemoveTree(self)->None:
         nested = os.path.join(TEST_MONITOR_BASE, "A", "B")
         self.assertFalse(os.path.exists(os.path.join(TEST_MONITOR_BASE, "A")))
