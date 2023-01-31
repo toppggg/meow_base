@@ -18,7 +18,7 @@ from core.correctness.vars import VALID_VARIABLE_NAME_CHARS, PYTHON_FUNC, \
     DEBUG_INFO, WATCHDOG_TYPE, JOB_HASH, PYTHON_EXECUTION_BASE, \
     WATCHDOG_RULE, EVENT_PATH, PYTHON_TYPE, WATCHDOG_HASH, JOB_PARAMETERS, \
     PYTHON_OUTPUT_DIR, JOB_ID, WATCHDOG_BASE, META_FILE, BASE_FILE, \
-    PARAMS_FILE, JOB_FILE, RESULT_FILE, JOB_STATUS, STATUS_QUEUED
+    PARAMS_FILE, JOB_STATUS, STATUS_QUEUED
 from core.functionality import print_debug, create_job, replace_keywords, \
     make_dir, write_yaml, write_notebook
 from core.meow import BaseRecipe, BaseHandler
@@ -190,14 +190,13 @@ def job_func(job):
     import shutil
     import papermill
     from datetime import datetime
-    from core.functionality import make_dir, write_yaml, read_yaml, \
-        write_notebook, get_file_hash, parameterize_jupyter_notebook
-    from core.correctness.vars import JOB_EVENT, WATCHDOG_RULE, \
-        JOB_ID, EVENT_PATH, WATCHDOG_BASE, META_FILE, \
-        BASE_FILE, PARAMS_FILE, JOB_FILE, RESULT_FILE, JOB_STATUS, \
-        JOB_START_TIME, STATUS_RUNNING, JOB_HASH, SHA256, \
-        STATUS_SKIPPED, STATUS_DONE, JOB_END_TIME, STATUS_QUEUED, \
-        JOB_ERROR, STATUS_FAILED, PYTHON_EXECUTION_BASE, PYTHON_OUTPUT_DIR
+    from core.functionality import write_yaml, read_yaml, write_notebook, \
+        get_file_hash, parameterize_jupyter_notebook
+    from core.correctness.vars import JOB_EVENT, WATCHDOG_RULE, JOB_ID, \
+        EVENT_PATH, META_FILE, PARAMS_FILE, JOB_FILE, RESULT_FILE, \
+        JOB_STATUS, JOB_START_TIME, STATUS_RUNNING, JOB_HASH, SHA256, \
+        STATUS_SKIPPED, STATUS_DONE, JOB_END_TIME, JOB_ERROR, STATUS_FAILED, \
+        PYTHON_EXECUTION_BASE, PYTHON_OUTPUT_DIR
 
     event = job[JOB_EVENT]
 
