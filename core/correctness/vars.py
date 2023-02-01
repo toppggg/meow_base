@@ -41,9 +41,11 @@ SHA256 = "sha256"
 # meow events
 EVENT_TYPE = "event_type"
 EVENT_PATH = "event_path"
-WATCHDOG_TYPE = "watchdog"
+EVENT_RULE = "rule"
+
+# watchdog events
+EVENT_TYPE_WATCHDOG = "watchdog"
 WATCHDOG_BASE = "monitor_base"
-WATCHDOG_RULE = "rule_name"
 WATCHDOG_HASH = "file_hash"
 
 # inotify events
@@ -77,7 +79,7 @@ DIR_EVENTS = [
 
 # meow jobs
 JOB_TYPE = "job_type"
-PYTHON_TYPE = "python"
+JOB_TYPE_PYTHON = "python"
 PYTHON_FUNC = "func"
 PYTHON_EXECUTION_BASE = "exection_base"
 PYTHON_OUTPUT_DIR = "output_dir"

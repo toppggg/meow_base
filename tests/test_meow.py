@@ -198,7 +198,7 @@ class MeowTests(unittest.TestCase):
                 pass
             def _is_valid_inputs(self, inputs:Any)->None:
                 pass
-            def valid_event_types(self)->list[str]:
+            def valid_handle_criteria(self, event:dict[str,Any])->bool:
                 pass
 
         FullTestHandler()
@@ -218,7 +218,7 @@ class MeowTests(unittest.TestCase):
             def execute(self, job:dict[str,Any])->None:
                 pass
 
-            def valid_job_types(self)->list[str]:
+            def valid_execute_criteria(self, job:dict[str,Any])->bool:
                 pass
 
         FullTestConductor()

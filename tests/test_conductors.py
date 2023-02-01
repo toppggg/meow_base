@@ -2,8 +2,8 @@
 import os
 import unittest
 
-from core.correctness.vars import PYTHON_TYPE, SHA256, WATCHDOG_TYPE, \
-    WATCHDOG_BASE, WATCHDOG_RULE, WATCHDOG_HASH, JOB_PARAMETERS, JOB_HASH, \
+from core.correctness.vars import JOB_TYPE_PYTHON, SHA256, EVENT_TYPE_WATCHDOG, \
+    WATCHDOG_BASE, EVENT_RULE, WATCHDOG_HASH, JOB_PARAMETERS, JOB_HASH, \
     PYTHON_FUNC, PYTHON_OUTPUT_DIR, PYTHON_EXECUTION_BASE, JOB_ID, META_FILE, \
     BASE_FILE, PARAMS_FILE, JOB_FILE, RESULT_FILE
 from core.functionality import get_file_hash, create_event, create_job, \
@@ -31,11 +31,9 @@ class MeowTests(unittest.TestCase):
         
     # Test LocalPythonConductor creation and job types
     def testLocalPythonConductorCreation(self)->None:
-        lpc = LocalPythonConductor()
+        LocalPythonConductor()
 
-        valid_jobs = lpc.valid_job_types()
-
-        self.assertEqual(valid_jobs, [PYTHON_TYPE])
+    #TODO Test LocalPythonConductor execution criteria
 
     # Test LocalPythonConductor executes valid jobs
     def testLocalPythonConductorValidJob(self)->None:
@@ -70,13 +68,14 @@ class MeowTests(unittest.TestCase):
         }
 
         job_dict = create_job(
-            PYTHON_TYPE,
+            JOB_TYPE_PYTHON,
             create_event(
-                WATCHDOG_TYPE,
+                EVENT_TYPE_WATCHDOG,
                 file_path,
+                rule,
                 {
                     WATCHDOG_BASE: TEST_MONITOR_BASE,
-                    WATCHDOG_RULE: rule,
+                    EVENT_RULE: rule,
                     WATCHDOG_HASH: file_hash
                 }
             ),
@@ -146,13 +145,14 @@ class MeowTests(unittest.TestCase):
         }
 
         bad_job_dict = create_job(
-            PYTHON_TYPE,
+            JOB_TYPE_PYTHON,
             create_event(
-                WATCHDOG_TYPE,
+                EVENT_TYPE_WATCHDOG,
                 file_path,
+                rule,
                 {
                     WATCHDOG_BASE: TEST_MONITOR_BASE,
-                    WATCHDOG_RULE: rule,
+                    EVENT_RULE: rule,
                     WATCHDOG_HASH: file_hash
                 }
             ),
@@ -177,13 +177,14 @@ class MeowTests(unittest.TestCase):
 
         # Ensure execution can continue after one failed job
         good_job_dict = create_job(
-            PYTHON_TYPE,
+            JOB_TYPE_PYTHON,
             create_event(
-                WATCHDOG_TYPE,
+                EVENT_TYPE_WATCHDOG,
                 file_path,
+                rule,
                 {
                     WATCHDOG_BASE: TEST_MONITOR_BASE,
-                    WATCHDOG_RULE: rule,
+                    EVENT_RULE: rule,
                     WATCHDOG_HASH: file_hash
                 }
             ),
@@ -247,13 +248,14 @@ class MeowTests(unittest.TestCase):
         rule = create_rule(pattern, recipe)
 
         job_dict = create_job(
-            PYTHON_TYPE,
+            JOB_TYPE_PYTHON,
             create_event(
-                WATCHDOG_TYPE,
+                EVENT_TYPE_WATCHDOG,
                 file_path,
+                rule,
                 {
                     WATCHDOG_BASE: TEST_MONITOR_BASE,
-                    WATCHDOG_RULE: rule,
+                    EVENT_RULE: rule,
                     WATCHDOG_HASH: file_hash
                 }
             ),

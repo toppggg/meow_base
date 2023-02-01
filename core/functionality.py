@@ -19,7 +19,7 @@ from core.correctness.validation import check_type, valid_existing_file_path, \
 from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
     VALID_CHANNELS, HASH_BUFFER_SIZE, SHA256, DEBUG_WARNING, DEBUG_INFO, \
     EVENT_TYPE, EVENT_PATH, JOB_EVENT, JOB_TYPE, JOB_ID, JOB_PATTERN, \
-    JOB_RECIPE, JOB_RULE, WATCHDOG_RULE, JOB_STATUS, STATUS_QUEUED, \
+    JOB_RECIPE, JOB_RULE, EVENT_RULE, JOB_STATUS, STATUS_QUEUED, \
     JOB_CREATE_TIME, JOB_REQUIREMENTS
 
 # mig trigger keyword replacements
@@ -283,9 +283,14 @@ def replace_keywords(old_dict:dict[str,str], job_id:str, src_path:str,
 
         return new_dict
 
-def create_event(event_type:str, path:str, source:dict[Any,Any]={}
+def create_event(event_type:str, path:str, rule:Any, source:dict[Any,Any]={}
         )->dict[Any,Any]:
-    return {**source, EVENT_PATH: path, EVENT_TYPE: event_type}
+    return {
+        **source, 
+        EVENT_PATH: path, 
+        EVENT_TYPE: event_type, 
+        EVENT_RULE: rule
+    }
 
 def create_job(job_type:str, event:dict[str,Any], source:dict[Any,Any]={}
         )->dict[Any,Any]:
@@ -294,12 +299,12 @@ def create_job(job_type:str, event:dict[str,Any], source:dict[Any,Any]={}
         JOB_ID: generate_id(prefix="job_"),
         JOB_EVENT: event,
         JOB_TYPE: job_type,
-        JOB_PATTERN: event[WATCHDOG_RULE].pattern.name,
-        JOB_RECIPE: event[WATCHDOG_RULE].recipe.name,
-        JOB_RULE: event[WATCHDOG_RULE].name,
+        JOB_PATTERN: event[EVENT_RULE].pattern.name,
+        JOB_RECIPE: event[EVENT_RULE].recipe.name,
+        JOB_RULE: event[EVENT_RULE].name,
         JOB_STATUS: STATUS_QUEUED,
         JOB_CREATE_TIME: datetime.now(),
-        JOB_REQUIREMENTS: event[WATCHDOG_RULE].recipe.requirements
+        JOB_REQUIREMENTS: event[EVENT_RULE].recipe.requirements
     }
 
     return {**source, **job_dict}

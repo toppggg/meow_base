@@ -8,8 +8,8 @@ from multiprocessing import Pipe, Queue
 from time import sleep
 
 from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
-    SHA256, EVENT_TYPE, EVENT_PATH, WATCHDOG_TYPE, PYTHON_TYPE, \
-    WATCHDOG_BASE, WATCHDOG_HASH, WATCHDOG_RULE, JOB_PARAMETERS, JOB_HASH, \
+    SHA256, EVENT_TYPE, EVENT_PATH, EVENT_TYPE_WATCHDOG, JOB_TYPE_PYTHON, \
+    WATCHDOG_BASE, WATCHDOG_HASH, EVENT_RULE, JOB_PARAMETERS, JOB_HASH, \
     PYTHON_FUNC, PYTHON_OUTPUT_DIR, PYTHON_EXECUTION_BASE, JOB_ID, JOB_EVENT, \
     JOB_TYPE, JOB_PATTERN, JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, \
     JOB_REQUIREMENTS, STATUS_QUEUED
@@ -241,21 +241,41 @@ class CorrectnessTests(unittest.TestCase):
 
     # Test that create_event produces valid event dictionary
     def testCreateEvent(self)->None:
-        event = create_event("test", "path")
+        pattern = FileEventPattern(
+            "pattern", 
+            "file_path", 
+            "recipe_one", 
+            "infile", 
+            parameters={
+                "extra":"A line from a test Pattern",
+                "outfile":"result_path"
+            })
+        recipe = JupyterNotebookRecipe(
+            "recipe_one", APPENDING_NOTEBOOK)
+
+        rule = create_rule(pattern, recipe)
+
+        event = create_event("test", "path", rule)
 
         self.assertEqual(type(event), dict)
+        self.assertEqual(len(event.keys()), 3)
         self.assertTrue(EVENT_TYPE in event.keys())
-        self.assertEqual(len(event.keys()), 2)
+        self.assertTrue(EVENT_PATH in event.keys())
+        self.assertTrue(EVENT_RULE in event.keys())
         self.assertEqual(event[EVENT_TYPE], "test")
         self.assertEqual(event[EVENT_PATH], "path")
+        self.assertEqual(event[EVENT_RULE], rule)
 
-        event2 = create_event("test2", "path2", {"a":1})
+        event2 = create_event("test2", "path2", rule, {"a":1})
 
         self.assertEqual(type(event2), dict)
         self.assertTrue(EVENT_TYPE in event2.keys())
-        self.assertEqual(len(event2.keys()), 3)
+        self.assertTrue(EVENT_PATH in event.keys())
+        self.assertTrue(EVENT_RULE in event.keys())
+        self.assertEqual(len(event2.keys()), 4)
         self.assertEqual(event2[EVENT_TYPE], "test2")
         self.assertEqual(event2[EVENT_PATH], "path2")
+        self.assertEqual(event2[EVENT_RULE], rule)
         self.assertEqual(event2["a"], 1)
 
     # Test that create_job produces valid job dictionary
@@ -275,17 +295,18 @@ class CorrectnessTests(unittest.TestCase):
         rule = create_rule(pattern, recipe)
 
         event = create_event(
-            WATCHDOG_TYPE,
+            EVENT_TYPE_WATCHDOG,
             "file_path",
+            rule,
             {
                 WATCHDOG_BASE: TEST_MONITOR_BASE,
-                WATCHDOG_RULE: rule,
+                EVENT_RULE: rule,
                 WATCHDOG_HASH: "file_hash"
             }
         )
 
         job_dict = create_job(
-            PYTHON_TYPE,
+            JOB_TYPE_PYTHON,
             event,
             {
                 JOB_PARAMETERS:{
@@ -306,7 +327,7 @@ class CorrectnessTests(unittest.TestCase):
         self.assertIn(JOB_EVENT, job_dict)
         self.assertEqual(job_dict[JOB_EVENT], event)
         self.assertIn(JOB_TYPE, job_dict)
-        self.assertEqual(job_dict[JOB_TYPE], PYTHON_TYPE)
+        self.assertEqual(job_dict[JOB_TYPE], JOB_TYPE_PYTHON)
         self.assertIn(JOB_PATTERN, job_dict)
         self.assertEqual(job_dict[JOB_PATTERN], pattern.name)
         self.assertIn(JOB_RECIPE, job_dict)

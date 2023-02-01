@@ -12,7 +12,7 @@ from core.correctness.validation import check_type, check_implementation, \
     setup_debugging
 from core.correctness.vars import VALID_NAME_CHARS, SHA256, EVENT_TYPE, \
     EVENT_PATH, JOB_TYPE, JOB_EVENT, JOB_ID, JOB_PATTERN, JOB_RECIPE, \
-    JOB_RULE, JOB_STATUS, JOB_CREATE_TIME
+    JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, EVENT_RULE
 from core.functionality import make_dir
 from shared import setup, teardown, TEST_MONITOR_BASE
 
@@ -242,10 +242,20 @@ class CorrectnessTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             valid_non_existing_path("first/second")
 
+    # TODO modify so tests for actual rule values
     # Test valid_event can check given event dictionary
     def testEventValidation(self)->None:
-        valid_event({EVENT_TYPE: "test", EVENT_PATH: "path"})
-        valid_event({EVENT_TYPE: "anything", EVENT_PATH: "path", "a": 1})
+        valid_event({
+            EVENT_TYPE: "test", 
+            EVENT_PATH: "path", 
+            EVENT_RULE: "rule"
+        })
+        valid_event({
+            EVENT_TYPE: "anything", 
+            EVENT_PATH: "path", 
+            EVENT_RULE: "rule",
+            "a": 1
+        })
 
         with self.assertRaises(KeyError):
             valid_event({EVENT_TYPE: "test"})
@@ -292,3 +302,5 @@ class CorrectnessTests(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             setup_debugging(stream, "1")
+
+    #TODO test watchdog event dict

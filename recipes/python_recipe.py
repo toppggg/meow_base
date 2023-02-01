@@ -1,7 +1,7 @@
 
 """
-This file contains definitions for a MEOW recipe based off of jupyter 
-notebooks, along with an appropriate handler for said events.
+This file contains definitions for a MEOW recipe based off of python code,
+along with an appropriate handler for said events.
 
 Author(s): David Marchant
 """
@@ -13,34 +13,24 @@ import sys
 from typing import Any
 
 from core.correctness.validation import check_type, valid_string, \
-    valid_dict, valid_path, valid_existing_dir_path, setup_debugging, \
-    valid_event
+    valid_dict, valid_event, valid_existing_dir_path, setup_debugging
 from core.correctness.vars import VALID_VARIABLE_NAME_CHARS, PYTHON_FUNC, \
     DEBUG_INFO, EVENT_TYPE_WATCHDOG, JOB_HASH, PYTHON_EXECUTION_BASE, \
-    EVENT_PATH, JOB_TYPE_PYTHON, WATCHDOG_HASH, JOB_PARAMETERS, \
+    EVENT_RULE, EVENT_PATH, JOB_TYPE_PYTHON, WATCHDOG_HASH, JOB_PARAMETERS, \
     PYTHON_OUTPUT_DIR, JOB_ID, WATCHDOG_BASE, META_FILE, BASE_FILE, \
-    PARAMS_FILE, JOB_STATUS, STATUS_QUEUED, EVENT_RULE, EVENT_TYPE, EVENT_RULE
+    PARAMS_FILE, JOB_STATUS, STATUS_QUEUED, EVENT_TYPE, EVENT_RULE
 from core.functionality import print_debug, create_job, replace_keywords, \
     make_dir, write_yaml, write_notebook
 from core.meow import BaseRecipe, BaseHandler
 from patterns.file_event_pattern import SWEEP_START, SWEEP_STOP, SWEEP_JUMP
 
 
-class JupyterNotebookRecipe(BaseRecipe):
-    # A path to the jupyter notebook used to create this recipe
-    source:str
+class PythonRecipe(BaseRecipe):
     def __init__(self, name:str, recipe:Any, parameters:dict[str,Any]={}, 
-            requirements:dict[str,Any]={}, source:str=""):
-        """JupyterNotebookRecipe Constructor. This is used to execute analysis 
-        code using the papermill module."""
+            requirements:dict[str,Any]={}):
+        """PythonRecipe Constructor. This is used to execute python analysis 
+        code."""
         super().__init__(name, recipe, parameters, requirements)
-        self._is_valid_source(source)
-        self.source = source
-
-    def _is_valid_source(self, source:str)->None:
-        """Validation check for 'source' variable from main constructor."""
-        if source:
-            valid_path(source, extension=".ipynb", min_length=0)
 
     def _is_valid_recipe(self, recipe:dict[str,Any])->None:
         """Validation check for 'recipe' variable from main constructor. 
@@ -62,7 +52,8 @@ class JupyterNotebookRecipe(BaseRecipe):
         for k in requirements.keys():
             valid_string(k, VALID_VARIABLE_NAME_CHARS)
 
-class PapermillHandler(BaseHandler):
+class PythonHandler(BaseHandler):
+    # TODO move me to base handler
     # handler directory to setup jobs in
     handler_base:str
     # TODO move me to conductor?
@@ -74,8 +65,8 @@ class PapermillHandler(BaseHandler):
     _print_target:Any
     def __init__(self, handler_base:str, output_dir:str, print:Any=sys.stdout, 
             logging:int=0)->None:
-        """PapermillHandler Constructor. This creats jobs to be executed using 
-        the papermill module. This does not run as a continuous thread to 
+        """PythonHandler Constructor. This creates jobs to be executed as 
+        python functions. This does not run as a continuous thread to 
         handle execution, but is invoked according to a factory pattern using 
         the handle function."""
         super().__init__()
@@ -85,7 +76,7 @@ class PapermillHandler(BaseHandler):
         self.output_dir = output_dir
         self._print_target, self.debug_level = setup_debugging(print, logging)
         print_debug(self._print_target, self.debug_level, 
-            "Created new PapermillHandler instance", DEBUG_INFO)
+            "Created new PythonHandler instance", DEBUG_INFO)
 
     def handle(self, event:dict[str,Any])->None:
         """Function called to handle a given event."""
@@ -126,16 +117,15 @@ class PapermillHandler(BaseHandler):
     def valid_handle_criteria(self, event:dict[str,Any])->bool:
         """Function to determine given an event defintion, if this handler can 
         process it or not. This handler accepts events from watchdog with 
-        jupyter notebook recipes."""
+        Python recipes"""
         try:
             valid_event(event)
-            if type(event[EVENT_RULE].recipe) == JupyterNotebookRecipe \
-                    and event[EVENT_TYPE] == EVENT_TYPE_WATCHDOG:
+            if event[EVENT_TYPE] == EVENT_TYPE_WATCHDOG \
+                    and type(event[EVENT_RULE].recipe) == PythonRecipe:
                 return True
         except:
             pass
         return False
-
 
     def _is_valid_handler_base(self, handler_base)->None:
         """Validation check for 'handler_base' variable from main 

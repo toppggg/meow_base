@@ -27,9 +27,9 @@ class MeowRunner:
     # A collection of all monitors in the runner
     monitors:list[BaseMonitor]
     # A collection of all handlers in the runner
-    handlers:dict[str:BaseHandler]
+    handlers:list[BaseHandler]
     # A collection of all conductors in the runner
-    conductors:dict[str:BaseConductor]
+    conductors:list[BaseConductor]
     # A collection of all channels from each monitor
     from_monitors: list[VALID_CHANNELS]
     # A collection of all channels from each handler
@@ -46,48 +46,19 @@ class MeowRunner:
         # If conductors isn't a list, make it one
         if not type(conductors) == list:
             conductors = [conductors]
-        self.conductors = {}
-        # Create a dictionary of conductors, keyed by job type, and valued by a
-        # list of conductors for that job type
-        for conductor in conductors:
-            conductor_jobs = conductor.valid_job_types()
-            if not conductor_jobs:
-                raise ValueError(
-                    "Cannot start runner with conductor that does not "
-                    f"implement '{BaseConductor.valid_job_types.__name__}"
-                    f"({signature(BaseConductor.valid_job_types)})' and "
-                    "return a list of at least one conductable job.")
-            for job in conductor_jobs:
-                if job in self.conductors.keys():
-                    self.conductors[job].append(conductor)
-                else:
-                    self.conductors[job] = [conductor]
+        self.conductors = conductors
 
         self._is_valid_handlers(handlers)
         # If handlers isn't a list, make it one
         if not type(handlers) == list:
             handlers = [handlers]
-        self.handlers = {}
         self.from_handlers = []
-        # Create a dictionary of handlers, keyed by event type, and valued by a
-        # list of handlers for that event type
-        for handler in handlers:
-            handler_events = handler.valid_event_types()
-            if not handler_events:
-                raise ValueError(
-                    "Cannot start runner with handler that does not "
-                    f"implement '{BaseHandler.valid_event_types.__name__}"
-                    f"({signature(BaseHandler.valid_event_types)})' and "
-                    "return a list of at least one handlable event.")
-            for event in handler_events:
-                if event in self.handlers.keys():
-                    self.handlers[event].append(handler)
-                else:
-                    self.handlers[event] = [handler]
+        for handler in handlers:            
             # Create a channel from the handler back to this runner
             handler_to_runner_reader, handler_to_runner_writer = Pipe()
             handler.to_runner = handler_to_runner_writer
             self.from_handlers.append(handler_to_runner_reader)
+        self.handlers = handlers
 
         self._is_valid_monitors(monitors)
         # If monitors isn't a list, make it one
@@ -129,21 +100,30 @@ class MeowRunner:
                         # Read event from the monitor channel
                         message = from_monitor.recv()
                         event = message
-                        # Abort if we don't have a relevent handler.
-                        if not self.handlers[event[EVENT_TYPE]]:
-                            print_debug(self._print_target, self.debug_level, 
-                                "Could not process event as no relevent "
-                                f"handler for '{event[EVENT_TYPE]}'", 
-                                DEBUG_INFO)
-                            continue
+
+                        valid_handlers = []
+                        for handler in self.handlers:
+                            try:
+                                valid = handler.valid_handle_criteria(event)
+                                if valid:
+                                    valid_handlers.append(handler)
+                            except Exception as e:
+                                print_debug(
+                                    self._print_target, 
+                                    self.debug_level, 
+                                    "Could not determine validity of event "
+                                    f"for handler. {e}", 
+                                    DEBUG_INFO
+                                )
+
                         # If we've only one handler, use that
-                        if len(self.handlers[event[EVENT_TYPE]]) == 1:
-                            handler = self.handlers[event[EVENT_TYPE]][0]
+                        if len(valid_handlers) == 1:
+                            handler = valid_handlers[0]
                             self.handle_event(handler, event)
                         # If multiple handlers then randomly pick one
                         else:
-                            handler = self.handlers[event[EVENT_TYPE]][
-                                randrange(len(self.handlers[event[EVENT_TYPE]]))
+                            handler = valid_handlers[
+                                randrange(len(valid_handlers))
                             ]
                             self.handle_event(handler, event)
 
@@ -172,20 +152,29 @@ class MeowRunner:
                                 f"job at '{job_dir}'. {e}", DEBUG_INFO)
                             continue
 
-                        # Abort if we don't have a relevent conductor.
-                        if not self.conductors[job[JOB_TYPE]]:
-                            print_debug(self._print_target, self.debug_level, 
-                                "Could not process job as no relevent "
-                                f"conductor for '{job[JOB_TYPE]}'", DEBUG_INFO)
-                            continue
+                        valid_conductors = []
+                        for conductor in self.conductors:
+                            try:
+                                valid = conductor.valid_execute_criteria(job)
+                                if valid:
+                                    valid_conductors.append(conductor)
+                            except Exception as e:
+                                print_debug(
+                                    self._print_target, 
+                                    self.debug_level, 
+                                    "Could not determine validity of job "
+                                    f"for conductor. {e}", 
+                                    DEBUG_INFO
+                                )
+
                         # If we've only one conductor, use that
-                        if len(self.conductors[job[JOB_TYPE]]) == 1:
-                            conductor = self.conductors[job[JOB_TYPE]][0] 
+                        if len(valid_conductors) == 1:
+                            conductor = valid_conductors[0]
                             self.execute_job(conductor, job)
-                        # If multiple conductors then randomly pick one
+                        # If multiple handlers then randomly pick one
                         else:
-                            conductor = self.conductors[job[JOB_TYPE]][
-                                randrange(len(self.conductors[job[JOB_TYPE]]))
+                            conductor = valid_conductors[
+                                randrange(len(valid_conductors))
                             ]
                             self.execute_job(conductor, job)
    
@@ -227,15 +216,13 @@ class MeowRunner:
             monitor.start()
         startable = []
         # Start all handlers, if they need it
-        for handler_list in self.handlers.values():
-            for handler in handler_list:
-                if hasattr(handler, "start") and handler not in startable:
-                    startable.append()
+        for handler in self.handlers:
+            if hasattr(handler, "start") and handler not in startable:
+                startable.append()
         # Start all conductors, if they need it
-        for conductor_list in self.conductors.values():
-            for conductor in conductor_list:
-                if hasattr(conductor, "start") and conductor not in startable:
-                    startable.append()
+        for conductor in self.conductors:
+            if hasattr(conductor, "start") and conductor not in startable:
+                startable.append()
         for starting in startable:
             starting.start()
         
@@ -283,15 +270,13 @@ class MeowRunner:
 
         stopable = []
         # Stop all handlers, if they need it
-        for handler_list in self.handlers.values():
-            for handler in handler_list:
-                if hasattr(handler, "stop") and handler not in stopable:
-                    stopable.append()
+        for handler in self.handlers:
+            if hasattr(handler, "stop") and handler not in stopable:
+                stopable.append()
         # Stop all conductors, if they need it
-        for conductor_list in self.conductors.values():
-            for conductor in conductor_list:
-                if hasattr(conductor, "stop") and conductor not in stopable:
-                    stopable.append()
+        for conductor in self.conductors:
+            if hasattr(conductor, "stop") and conductor not in stopable:
+                stopable.append()
         for stopping in stopable:
             stopping.stop()
 

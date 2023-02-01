@@ -6,7 +6,7 @@ import unittest
 from multiprocessing import Pipe
 
 from core.correctness.vars import FILE_CREATE_EVENT, EVENT_TYPE, \
-    WATCHDOG_RULE, WATCHDOG_BASE, WATCHDOG_TYPE, EVENT_PATH
+    EVENT_RULE, WATCHDOG_BASE, EVENT_TYPE_WATCHDOG, EVENT_PATH
 from core.functionality import make_dir
 from patterns.file_event_pattern import FileEventPattern, WatchdogMonitor, \
     _DEFAULT_MASK, SWEEP_START, SWEEP_STOP, SWEEP_JUMP
@@ -15,24 +15,24 @@ from shared import setup, teardown, BAREBONES_NOTEBOOK, TEST_MONITOR_BASE
 
 
 def patterns_equal(tester, pattern_one, pattern_two):
-        tester.assertEqual(pattern_one.name, pattern_two.name)
-        tester.assertEqual(pattern_one.recipe, pattern_two.recipe)
-        tester.assertEqual(pattern_one.parameters, pattern_two.parameters)
-        tester.assertEqual(pattern_one.outputs, pattern_two.outputs)
-        tester.assertEqual(pattern_one.triggering_path, 
-            pattern_two.triggering_path)
-        tester.assertEqual(pattern_one.triggering_file, 
-            pattern_two.triggering_file)
-        tester.assertEqual(pattern_one.event_mask, pattern_two.event_mask)
-        tester.assertEqual(pattern_one.sweep, pattern_two.sweep)
+    tester.assertEqual(pattern_one.name, pattern_two.name)
+    tester.assertEqual(pattern_one.recipe, pattern_two.recipe)
+    tester.assertEqual(pattern_one.parameters, pattern_two.parameters)
+    tester.assertEqual(pattern_one.outputs, pattern_two.outputs)
+    tester.assertEqual(pattern_one.triggering_path, 
+        pattern_two.triggering_path)
+    tester.assertEqual(pattern_one.triggering_file, 
+        pattern_two.triggering_file)
+    tester.assertEqual(pattern_one.event_mask, pattern_two.event_mask)
+    tester.assertEqual(pattern_one.sweep, pattern_two.sweep)
 
 
 def recipes_equal(tester, recipe_one, recipe_two):
-        tester.assertEqual(recipe_one.name, recipe_two.name)
-        tester.assertEqual(recipe_one.recipe, recipe_two.recipe)
-        tester.assertEqual(recipe_one.parameters, recipe_two.parameters)
-        tester.assertEqual(recipe_one.requirements, recipe_two.requirements)
-        tester.assertEqual(recipe_one.source, recipe_two.source)
+    tester.assertEqual(recipe_one.name, recipe_two.name)
+    tester.assertEqual(recipe_one.recipe, recipe_two.recipe)
+    tester.assertEqual(recipe_one.parameters, recipe_two.parameters)
+    tester.assertEqual(recipe_one.requirements, recipe_two.requirements)
+    tester.assertEqual(recipe_one.source, recipe_two.source)
 
 
 class CorrectnessTests(unittest.TestCase):
@@ -225,12 +225,12 @@ class CorrectnessTests(unittest.TestCase):
         self.assertTrue(EVENT_TYPE in event.keys())        
         self.assertTrue(EVENT_PATH in event.keys())        
         self.assertTrue(WATCHDOG_BASE in event.keys())        
-        self.assertTrue(WATCHDOG_RULE in event.keys())        
-        self.assertEqual(event[EVENT_TYPE], WATCHDOG_TYPE)
+        self.assertTrue(EVENT_RULE in event.keys())        
+        self.assertEqual(event[EVENT_TYPE], EVENT_TYPE_WATCHDOG)
         self.assertEqual(event[EVENT_PATH], 
             os.path.join(TEST_MONITOR_BASE, "A"))
         self.assertEqual(event[WATCHDOG_BASE], TEST_MONITOR_BASE)
-        self.assertEqual(event[WATCHDOG_RULE].name, rule.name)
+        self.assertEqual(event[EVENT_RULE].name, rule.name)
 
         open(os.path.join(TEST_MONITOR_BASE, "B"), "w")
         if from_monitor_reader.poll(3):
@@ -289,14 +289,14 @@ class CorrectnessTests(unittest.TestCase):
 
         self.assertEqual(type(message), dict)
         self.assertIn(EVENT_TYPE, message)
-        self.assertEqual(message[EVENT_TYPE], WATCHDOG_TYPE)
+        self.assertEqual(message[EVENT_TYPE], EVENT_TYPE_WATCHDOG)
         self.assertIn(WATCHDOG_BASE, message)
         self.assertEqual(message[WATCHDOG_BASE], TEST_MONITOR_BASE)
         self.assertIn(EVENT_PATH, message)
         self.assertEqual(message[EVENT_PATH], 
             os.path.join(start_dir, "A.txt"))
-        self.assertIn(WATCHDOG_RULE, message)
-        self.assertEqual(message[WATCHDOG_RULE].name, rule.name)
+        self.assertIn(EVENT_RULE, message)
+        self.assertEqual(message[EVENT_RULE].name, rule.name)
 
         wm.stop()
 
@@ -353,14 +353,14 @@ class CorrectnessTests(unittest.TestCase):
 
         self.assertEqual(type(message), dict)
         self.assertIn(EVENT_TYPE, message)
-        self.assertEqual(message[EVENT_TYPE], WATCHDOG_TYPE)
+        self.assertEqual(message[EVENT_TYPE], EVENT_TYPE_WATCHDOG)
         self.assertIn(WATCHDOG_BASE, message)
         self.assertEqual(message[WATCHDOG_BASE], TEST_MONITOR_BASE)
         self.assertIn(EVENT_PATH, message)
         self.assertEqual(message[EVENT_PATH], 
             os.path.join(start_dir, "A.txt"))
-        self.assertIn(WATCHDOG_RULE, message)
-        self.assertEqual(message[WATCHDOG_RULE].name, rule.name)
+        self.assertIn(EVENT_RULE, message)
+        self.assertEqual(message[EVENT_RULE].name, rule.name)
 
         wm.stop()
 

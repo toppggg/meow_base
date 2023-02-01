@@ -5,11 +5,11 @@ import unittest
 
 from multiprocessing import Pipe
 
-from core.correctness.vars import EVENT_TYPE, WATCHDOG_BASE, WATCHDOG_RULE, \
-    WATCHDOG_TYPE, EVENT_PATH, SHA256, WATCHDOG_HASH, JOB_ID, PYTHON_TYPE, \
-    JOB_PARAMETERS, JOB_HASH, PYTHON_FUNC, PYTHON_OUTPUT_DIR, \
-    PYTHON_EXECUTION_BASE, META_FILE, BASE_FILE, PARAMS_FILE, JOB_FILE, \
-    RESULT_FILE
+from core.correctness.vars import EVENT_TYPE, WATCHDOG_BASE, EVENT_RULE, \
+    EVENT_TYPE_WATCHDOG, EVENT_PATH, SHA256, WATCHDOG_HASH, JOB_ID, \
+    JOB_TYPE_PYTHON, JOB_PARAMETERS, JOB_HASH, PYTHON_FUNC, \
+    PYTHON_OUTPUT_DIR, PYTHON_EXECUTION_BASE, META_FILE, BASE_FILE, \
+    PARAMS_FILE, JOB_FILE, RESULT_FILE
 from core.correctness.validation import valid_job
 from core.functionality import get_file_hash, create_job, create_event, \
     make_dir, write_yaml, write_notebook, read_yaml
@@ -22,7 +22,7 @@ from rules.file_event_jupyter_notebook_rule import FileEventJupyterNotebookRule
 from shared import setup, teardown, TEST_HANDLER_BASE, TEST_MONITOR_BASE, \
     TEST_JOB_OUTPUT, BAREBONES_NOTEBOOK, APPENDING_NOTEBOOK, COMPLETE_NOTEBOOK
 
-class CorrectnessTests(unittest.TestCase):
+class JupyterNotebookTests(unittest.TestCase):
     def setUp(self)->None:
         super().setUp()
         setup()
@@ -144,10 +144,10 @@ class CorrectnessTests(unittest.TestCase):
         self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), 0)
 
         event = {
-            EVENT_TYPE: WATCHDOG_TYPE,
+            EVENT_TYPE: EVENT_TYPE_WATCHDOG,
             EVENT_PATH: os.path.join(TEST_MONITOR_BASE, "A"),
             WATCHDOG_BASE: TEST_MONITOR_BASE,
-            WATCHDOG_RULE: rule,
+            EVENT_RULE: rule,
             WATCHDOG_HASH: get_file_hash(
                 os.path.join(TEST_MONITOR_BASE, "A"), SHA256
             )
@@ -198,10 +198,10 @@ class CorrectnessTests(unittest.TestCase):
         self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), 0)
 
         event = {
-            EVENT_TYPE: WATCHDOG_TYPE,
+            EVENT_TYPE: EVENT_TYPE_WATCHDOG,
             EVENT_PATH: os.path.join(TEST_MONITOR_BASE, "A"),
             WATCHDOG_BASE: TEST_MONITOR_BASE,
-            WATCHDOG_RULE: rule,
+            EVENT_RULE: rule,
             WATCHDOG_HASH: get_file_hash(
                 os.path.join(TEST_MONITOR_BASE, "A"), SHA256
             )
@@ -271,10 +271,10 @@ class CorrectnessTests(unittest.TestCase):
         self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), 0)
 
         event = {
-            EVENT_TYPE: WATCHDOG_TYPE,
+            EVENT_TYPE: EVENT_TYPE_WATCHDOG,
             EVENT_PATH: os.path.join(TEST_MONITOR_BASE, "A"),
             WATCHDOG_BASE: TEST_MONITOR_BASE,
-            WATCHDOG_RULE: rule,
+            EVENT_RULE: rule,
             WATCHDOG_HASH: get_file_hash(
                 os.path.join(TEST_MONITOR_BASE, "A"), SHA256
             )
@@ -350,13 +350,14 @@ class CorrectnessTests(unittest.TestCase):
         }
 
         job_dict = create_job(
-            PYTHON_TYPE,
+            JOB_TYPE_PYTHON,
             create_event(
-                WATCHDOG_TYPE,
+                EVENT_TYPE_WATCHDOG,
                 file_path,
+                rule,
                 {
                     WATCHDOG_BASE: TEST_MONITOR_BASE,
-                    WATCHDOG_RULE: rule,
+                    EVENT_RULE: rule,
                     WATCHDOG_HASH: file_hash
                 }
             ),
@@ -403,3 +404,15 @@ class CorrectnessTests(unittest.TestCase):
 
         self.assertEqual(len(os.listdir(TEST_HANDLER_BASE)), 0)
         self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), 0)
+
+    #TODO Test handling criteria function
+
+# TODO implement me
+class PythonTests(unittest.TestCase):
+    def setUp(self)->None:
+        super().setUp()
+        setup()
+
+    def tearDown(self)->None:
+        super().tearDown()
+        teardown()

@@ -58,20 +58,13 @@ class MeowTests(unittest.TestCase):
         self.assertIsNotNone(message)
         self.assertEqual(message, "monitor test message")
 
-        self.assertIsInstance(runner.handlers, dict)
-        for handler_list in runner.handlers.values():
-            for h in handler_list:
-                self.assertIsInstance(h, BaseHandler)
-        self.assertEqual(
-            len(runner.handlers.keys()), len(handler_one.valid_event_types()))
-        for event_type in handler_one.valid_event_types():
-            self.assertIn(event_type, runner.handlers.keys())
-            self.assertEqual(len(runner.handlers[event_type]), 1)
-            self.assertEqual(runner.handlers[event_type][0], handler_one)
+        self.assertIsInstance(runner.handlers, list)
+        for handler in runner.handlers:
+            self.assertIsInstance(handler, BaseHandler)
 
         self.assertIsInstance(runner.from_handlers, list)
         self.assertEqual(len(runner.from_handlers), 1)
-        runner.handlers[handler_one.valid_event_types()[0]][0].to_runner.send(
+        runner.handlers[0].to_runner.send(
             "handler test message")
         message = None
         if runner.from_handlers[0].poll(3):
@@ -79,16 +72,9 @@ class MeowTests(unittest.TestCase):
         self.assertIsNotNone(message)
         self.assertEqual(message, "handler test message")
 
-        self.assertIsInstance(runner.conductors, dict)        
-        for conductor_list in runner.conductors.values():
-            for c in conductor_list:
-                self.assertIsInstance(c, BaseConductor)
-        self.assertEqual(
-            len(runner.conductors.keys()), len(conductor_one.valid_job_types()))
-        for job_type in conductor_one.valid_job_types():
-            self.assertIn(job_type, runner.conductors.keys())
-            self.assertEqual(len(runner.conductors[job_type]), 1)
-            self.assertEqual(runner.conductors[job_type][0], conductor_one)
+        self.assertIsInstance(runner.conductors, list)        
+        for conductor in runner.conductors:
+            self.assertIsInstance(conductor, BaseConductor)
 
         runner = MeowRunner(monitors, handlers, conductors)
 
@@ -111,35 +97,13 @@ class MeowTests(unittest.TestCase):
             self.assertIsNotNone(m)
             self.assertEqual(m, "monitor test message")
 
-        self.assertIsInstance(runner.handlers, dict)
-        for handler_list in runner.handlers.values():
-            for h in handler_list:
-                self.assertIsInstance(h, BaseHandler)
-        all_events = []
-        for h in handlers:
-            for e in h.valid_event_types():
-                if e not in all_events:
-                    all_events.append(e)
-        self.assertEqual(len(runner.handlers.keys()), len(all_events))
-        for handler in handlers:
-            for event_type in handler.valid_event_types():
-                relevent_handlers = [h for h in handlers 
-                    if event_type in h.valid_event_types()]
-                self.assertIn(event_type, runner.handlers.keys())
-                self.assertEqual(len(runner.handlers[event_type]), 
-                    len(relevent_handlers))
-                for rh in relevent_handlers:
-                    self.assertIn(rh, runner.handlers[event_type])
+        self.assertIsInstance(runner.handlers, list)
+        for handler in runner.handlers:
+            self.assertIsInstance(handler, BaseHandler)
 
         self.assertIsInstance(runner.from_handlers, list)
         self.assertEqual(len(runner.from_handlers), len(handlers))
-        runner_handlers = []
-        for handler_list in runner.handlers.values():
-            for h in handler_list:
-                runner_handlers.append(h)
-        runner_handlers = [h for h in handler_list for 
-            handler_list in runner.handlers.values()]
-        for rh in handler_list:
+        for rh in runner.handlers:
             rh.to_runner.send("handler test message")
         message = None
         if runner.from_handlers[0].poll(3):
@@ -147,25 +111,9 @@ class MeowTests(unittest.TestCase):
         self.assertIsNotNone(message)
         self.assertEqual(message, "handler test message")
 
-        self.assertIsInstance(runner.conductors, dict)
-        for conductor_list in runner.conductors.values():
-            for c in conductor_list:
-                self.assertIsInstance(c, BaseConductor)
-        all_jobs = []
-        for c in conductors:
-            for j in c.valid_job_types():
-                if j not in all_jobs:
-                    all_jobs.append(j)
-        self.assertEqual(len(runner.conductors.keys()), len(all_jobs))
-        for conductor in conductors:
-            for job_type in conductor.valid_job_types():
-                relevent_conductors = [c for c in conductors 
-                    if job_type in c.valid_job_types()]
-                self.assertIn(job_type, runner.conductors.keys())
-                self.assertEqual(len(runner.conductors[job_type]), 
-                    len(relevent_conductors))
-                for rc in relevent_conductors:
-                    self.assertIn(rc, runner.conductors[job_type])
+        self.assertIsInstance(runner.conductors, list)
+        for conductor in runner.conductors:
+            self.assertIsInstance(conductor, BaseConductor)
 
     # Test single meow job execution
     def testMeowRunnerExecution(self)->None:
@@ -361,3 +309,9 @@ class MeowTests(unittest.TestCase):
     # TODO adding tests with numpy
     # TODO test getting job cannot handle
     # TODO test getting event cannot handle
+    # TODO test with several matched monitors
+    # TODO test with several mismatched monitors
+    # TODO test with several matched handlers
+    # TODO test with several mismatched handlers
+    # TODO test with several matched conductors
+    # TODO test with several mismatched conductors

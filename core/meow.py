@@ -313,7 +313,7 @@ class BaseHandler:
         """BaseHandler Constructor. This will check that any class inheriting 
         from it implements its validation functions."""
         check_implementation(type(self).handle, BaseHandler)
-        check_implementation(type(self).valid_event_types, BaseHandler)
+        check_implementation(type(self).valid_handle_criteria, BaseHandler)
 
     def __new__(cls, *args, **kwargs):
         """A check that this base class is not instantiated itself, only 
@@ -323,9 +323,10 @@ class BaseHandler:
             raise TypeError(msg)
         return object.__new__(cls)
 
-    def valid_event_types(self)->list[str]:
-        """Function to provide a list of the types of events this handler can 
-        process. Must be implemented by any child process."""
+    # TODO also implement something like me from conductor
+    def valid_handle_criteria(self, event:dict[str,Any])->bool:
+        """Function to determine given an event defintion, if this handler can 
+        process it or not. Must be implemented by any child process."""
         pass
 
     def handle(self, event:dict[str,Any])->None:
@@ -339,7 +340,7 @@ class BaseConductor:
         """BaseConductor Constructor. This will check that any class inheriting
         from it implements its validation functions."""
         check_implementation(type(self).execute, BaseConductor)
-        check_implementation(type(self).valid_job_types, BaseConductor)
+        check_implementation(type(self).valid_execute_criteria, BaseConductor)
 
     def __new__(cls, *args, **kwargs):
         """A check that this base class is not instantiated itself, only 
@@ -349,9 +350,9 @@ class BaseConductor:
             raise TypeError(msg)
         return object.__new__(cls)
 
-    def valid_job_types(self)->list[str]:
-        """Function to provide a list of the types of jobs this conductor can 
-        process. Must be implemented by any child process."""
+    def valid_execute_criteria(self, job:dict[str,Any])->bool:
+        """Function to determine given an job defintion, if this conductor can 
+        process it or not. Must be implemented by any child process."""
         pass
 
     def execute(self, job:dict[str,Any])->None:

@@ -12,12 +12,15 @@ from typing import Any, _SpecialForm, Union, Tuple, get_origin, get_args
 
 from core.correctness.vars import VALID_PATH_CHARS, get_not_imp_msg, \
     EVENT_TYPE, EVENT_PATH, JOB_EVENT, JOB_TYPE, JOB_ID, JOB_PATTERN, \
-    JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME
+    JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, EVENT_RULE
 
 # Required keys in event dict
 EVENT_KEYS = {
     EVENT_TYPE: str,
-    EVENT_PATH: str
+    EVENT_PATH: str,
+    # TODO sort this
+    # Should be a Rule but can't import here due to circular dependencies
+    EVENT_RULE: Any
 }
 
 # Required keys in job dict
