@@ -363,6 +363,9 @@ class CorrectnessTests(unittest.TestCase):
             job_dict[PYTHON_EXECUTION_BASE], job_dict[JOB_ID])
         make_dir(job_dir)
 
+        meta_file = os.path.join(job_dir, META_FILE)
+        write_yaml(job_dict, meta_file)
+
         param_file = os.path.join(job_dir, PARAMS_FILE)
         write_yaml(params_dict, param_file)
 
@@ -372,15 +375,12 @@ class CorrectnessTests(unittest.TestCase):
         job_func(job_dict)
 
         job_dir = os.path.join(TEST_HANDLER_BASE, job_dict[JOB_ID])
-        self.assertFalse(os.path.exists(job_dir))
-        
-        output_dir = os.path.join(TEST_JOB_OUTPUT, job_dict[JOB_ID])
-        self.assertTrue(os.path.exists(output_dir))
-        self.assertTrue(os.path.exists(os.path.join(output_dir, META_FILE)))
-        self.assertTrue(os.path.exists(os.path.join(output_dir, BASE_FILE)))
-        self.assertTrue(os.path.exists(os.path.join(output_dir, PARAMS_FILE)))
-        self.assertTrue(os.path.exists(os.path.join(output_dir, JOB_FILE)))
-        self.assertTrue(os.path.exists(os.path.join(output_dir, RESULT_FILE)))
+        self.assertTrue(os.path.exists(job_dir))
+        self.assertTrue(os.path.exists(os.path.join(job_dir, META_FILE)))
+        self.assertTrue(os.path.exists(os.path.join(job_dir, BASE_FILE)))
+        self.assertTrue(os.path.exists(os.path.join(job_dir, PARAMS_FILE)))
+        self.assertTrue(os.path.exists(os.path.join(job_dir, JOB_FILE)))
+        self.assertTrue(os.path.exists(os.path.join(job_dir, RESULT_FILE)))
 
         self.assertTrue(os.path.exists(result_path))
 

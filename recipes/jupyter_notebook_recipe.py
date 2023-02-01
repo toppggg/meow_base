@@ -140,7 +140,6 @@ class PapermillHandler(BaseHandler):
     def setup_job(self, event:dict[str,Any], yaml_dict:dict[str,Any])->None:
         """Function to set up new job dict and send it to the runner to be 
         executed."""
-        # TODO finish me so execution completed in conductor
         meow_job = create_job(PYTHON_TYPE, event, {
             JOB_PARAMETERS:yaml_dict,
             JOB_HASH: event[WATCHDOG_HASH],
@@ -187,16 +186,14 @@ class PapermillHandler(BaseHandler):
 def job_func(job):
     # Requires own imports as will be run in its own execution environment
     import os
-    import shutil
     import papermill
     from datetime import datetime
     from core.functionality import write_yaml, read_yaml, write_notebook, \
         get_file_hash, parameterize_jupyter_notebook
     from core.correctness.vars import JOB_EVENT, WATCHDOG_RULE, JOB_ID, \
         EVENT_PATH, META_FILE, PARAMS_FILE, JOB_FILE, RESULT_FILE, \
-        JOB_STATUS, JOB_START_TIME, STATUS_RUNNING, JOB_HASH, SHA256, \
-        STATUS_SKIPPED, STATUS_DONE, JOB_END_TIME, JOB_ERROR, STATUS_FAILED, \
-        PYTHON_EXECUTION_BASE, PYTHON_OUTPUT_DIR
+        JOB_STATUS, JOB_HASH, SHA256, STATUS_SKIPPED, JOB_END_TIME, \
+        JOB_ERROR, STATUS_FAILED, PYTHON_EXECUTION_BASE
 
     event = job[JOB_EVENT]
 
@@ -206,12 +203,6 @@ def job_func(job):
     job_file = os.path.join(job_dir, JOB_FILE)
     result_file = os.path.join(job_dir, RESULT_FILE)
     param_file = os.path.join(job_dir, PARAMS_FILE)
-
-    job[JOB_STATUS] = STATUS_RUNNING
-    job[JOB_START_TIME] = datetime.now()
-
-    # update the status file with running status
-    write_yaml(job, meta_file)
 
     yaml_dict = read_yaml(param_file)
 
@@ -259,13 +250,3 @@ def job_func(job):
         job[JOB_ERROR] = msg
         write_yaml(job, meta_file)
         return
-
-    # Update the status file with the finalised status
-    job[JOB_STATUS] = STATUS_DONE
-    job[JOB_END_TIME] = datetime.now()
-    write_yaml(job, meta_file)
-
-    # Move the contents of the execution directory to the final output 
-    # directory. 
-    job_output_dir = os.path.join(job[PYTHON_OUTPUT_DIR], job[JOB_ID])
-    shutil.move(job_dir, job_output_dir)
