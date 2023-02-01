@@ -140,12 +140,17 @@ class PapermillHandler(BaseHandler):
     def setup_job(self, event:dict[str,Any], yaml_dict:dict[str,Any])->None:
         """Function to set up new job dict and send it to the runner to be 
         executed."""
-        meow_job = create_job(PYTHON_TYPE, event, {
-            JOB_PARAMETERS:yaml_dict,
-            JOB_HASH: event[WATCHDOG_HASH],
-            PYTHON_FUNC:job_func,
-            PYTHON_OUTPUT_DIR:self.output_dir,
-            PYTHON_EXECUTION_BASE:self.handler_base,})
+        meow_job = create_job(
+            PYTHON_TYPE, 
+            event, 
+            {
+                JOB_PARAMETERS:yaml_dict,
+                JOB_HASH: event[WATCHDOG_HASH],
+                PYTHON_FUNC:job_func,
+                PYTHON_OUTPUT_DIR:self.output_dir,
+                PYTHON_EXECUTION_BASE:self.handler_base
+            }
+        )
         print_debug(self._print_target, self.debug_level,  
             f"Creating job from event at {event[EVENT_PATH]} of type "
             f"{PYTHON_TYPE}.", DEBUG_INFO)
@@ -180,7 +185,8 @@ class PapermillHandler(BaseHandler):
         # update the status file with queued status
         write_yaml(meow_job, meta_file)
         
-        self.to_runner.send(meow_job)
+        # Send job directory, as actual definitons will be read from within it
+        self.to_runner.send(job_dir)
 
 # Papermill job execution code, to be run within the conductor
 def job_func(job):

@@ -359,3 +359,5 @@ class MeowTests(unittest.TestCase):
 
     # TODO sweep tests
     # TODO adding tests with numpy
+    # TODO test getting job cannot handle
+    # TODO test getting event cannot handle

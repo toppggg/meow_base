@@ -270,3 +270,7 @@ class MeowTests(unittest.TestCase):
 
         with self.assertRaises(Exception):
             lpc.execute(job_dict)
+
+    # TODO test job status funcs
+    # TODO test mangled status file reads
+    # TODO test missing input files

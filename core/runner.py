@@ -6,6 +6,7 @@ with monitors, handlers, and conductors being swappable at initialisation.
 
 Author(s): David Marchant
 """
+import os
 import sys
 import threading
 
@@ -15,10 +16,10 @@ from random import randrange
 from typing import Any, Union
 
 from core.correctness.vars import DEBUG_WARNING, DEBUG_INFO, EVENT_TYPE, \
-    VALID_CHANNELS, JOB_TYPE, JOB_ID
+    VALID_CHANNELS, JOB_TYPE, JOB_ID, META_FILE
 from core.correctness.validation import setup_debugging, check_type, \
     valid_list
-from core.functionality import  print_debug, wait
+from core.functionality import  print_debug, wait, read_yaml
 from core.meow import BaseHandler, BaseMonitor, BaseConductor
 
 
@@ -134,7 +135,7 @@ class MeowRunner:
                                 "Could not process event as no relevent "
                                 f"handler for '{event[EVENT_TYPE]}'", 
                                 DEBUG_INFO)
-                            return
+                            continue
                         # If we've only one handler, use that
                         if len(self.handlers[event[EVENT_TYPE]]) == 1:
                             handler = self.handlers[event[EVENT_TYPE]][0]
@@ -160,15 +161,23 @@ class MeowRunner:
             else:
                 for from_handler in self.from_handlers:
                     if from_handler in ready:
-                        # Read event from the handler channel
-                        message = from_handler.recv()
-                        job = message
+                        # Read job directory from the handler channel
+                        job_dir = from_handler.recv()
+                        try:
+                            metafile = os.path.join(job_dir, META_FILE)
+                            job = read_yaml(metafile)
+                        except Exception as e:
+                            print_debug(self._print_target, self.debug_level, 
+                                "Could not load necessary job definitions for "
+                                f"job at '{job_dir}'. {e}", DEBUG_INFO)
+                            continue
+
                         # Abort if we don't have a relevent conductor.
                         if not self.conductors[job[JOB_TYPE]]:
                             print_debug(self._print_target, self.debug_level, 
                                 "Could not process job as no relevent "
                                 f"conductor for '{job[JOB_TYPE]}'", DEBUG_INFO)
-                            return
+                            continue
                         # If we've only one conductor, use that
                         if len(self.conductors[job[JOB_TYPE]]) == 1:
                             conductor = self.conductors[job[JOB_TYPE]][0] 

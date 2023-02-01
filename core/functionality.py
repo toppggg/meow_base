@@ -290,12 +290,12 @@ def create_event(event_type:str, path:str, source:dict[Any,Any]={}
 def create_job(job_type:str, event:dict[str,Any], source:dict[Any,Any]={}
         )->dict[Any,Any]:
     job_dict = {
-        #TODO compress pattern, recipe, rule?
+        #TODO compress event?
         JOB_ID: generate_id(prefix="job_"),
         JOB_EVENT: event,
         JOB_TYPE: job_type,
-        JOB_PATTERN: event[WATCHDOG_RULE].pattern,
-        JOB_RECIPE: event[WATCHDOG_RULE].recipe,
+        JOB_PATTERN: event[WATCHDOG_RULE].pattern.name,
+        JOB_RECIPE: event[WATCHDOG_RULE].recipe.name,
         JOB_RULE: event[WATCHDOG_RULE].name,
         JOB_STATUS: STATUS_QUEUED,
         JOB_CREATE_TIME: datetime.now(),

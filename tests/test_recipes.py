@@ -12,7 +12,7 @@ from core.correctness.vars import EVENT_TYPE, WATCHDOG_BASE, WATCHDOG_RULE, \
     RESULT_FILE
 from core.correctness.validation import valid_job
 from core.functionality import get_file_hash, create_job, create_event, \
-    make_dir, write_yaml, write_notebook
+    make_dir, write_yaml, write_notebook, read_yaml
 from core.meow import create_rules, create_rule
 from patterns.file_event_pattern import FileEventPattern, SWEEP_START, \
     SWEEP_STOP, SWEEP_JUMP
@@ -156,10 +156,12 @@ class CorrectnessTests(unittest.TestCase):
         ph.handle(event)
 
         if from_handler_reader.poll(3):
-            job = from_handler_reader.recv()
+            job_dir = from_handler_reader.recv()
 
-        self.assertIsNotNone(job[JOB_ID])
+        self.assertIsInstance(job_dir, str)
+        self.assertTrue(os.path.exists(job_dir))
 
+        job = read_yaml(os.path.join(job_dir, META_FILE))
         valid_job(job)
 
     # Test PapermillHandler will create enough jobs from single sweep
@@ -217,8 +219,13 @@ class CorrectnessTests(unittest.TestCase):
 
         values = [0, 1, 2]
         self.assertEqual(len(jobs), 3)
-        for job in jobs:
+        for job_dir in jobs:
+            self.assertIsInstance(job_dir, str)
+            self.assertTrue(os.path.exists(job_dir))
+
+            job = read_yaml(os.path.join(job_dir, META_FILE))
             valid_job(job)
+
             self.assertIn(JOB_PARAMETERS, job)
             self.assertIn("s", job[JOB_PARAMETERS])
             if job[JOB_PARAMETERS]["s"] in values:
@@ -291,8 +298,13 @@ class CorrectnessTests(unittest.TestCase):
             "s1-0/s2-80", "s1-1/s2-80", "s1-2/s2-80", 
         ]
         self.assertEqual(len(jobs), 15)
-        for job in jobs:
+        for job_dir in jobs:
+            self.assertIsInstance(job_dir, str)
+            self.assertTrue(os.path.exists(job_dir))
+
+            job = read_yaml(os.path.join(job_dir, META_FILE))
             valid_job(job)
+
             self.assertIn(JOB_PARAMETERS, job)
             val1 = None
             val2 = None
@@ -305,8 +317,6 @@ class CorrectnessTests(unittest.TestCase):
                 val = f"{val1}/{val2}"
             if val and val in values:
                 values.remove(val)
-        print([j[JOB_PARAMETERS] for j in jobs])
-        print(values)
         self.assertEqual(len(values), 0)
 
     # Test jobFunc performs as expected
