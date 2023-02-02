@@ -11,7 +11,7 @@ import inspect
 import sys
 
 from copy import deepcopy
-from typing import Any, Union
+from typing import Any, Union, Tuple
 
 from core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
     VALID_PATTERN_NAME_CHARS, VALID_RULE_NAME_CHARS, VALID_CHANNELS, \
@@ -323,8 +323,7 @@ class BaseHandler:
             raise TypeError(msg)
         return object.__new__(cls)
 
-    # TODO also implement something like me from conductor
-    def valid_handle_criteria(self, event:dict[str,Any])->bool:
+    def valid_handle_criteria(self, event:dict[str,Any])->Tuple[bool,str]:
         """Function to determine given an event defintion, if this handler can 
         process it or not. Must be implemented by any child process."""
         pass
@@ -350,7 +349,7 @@ class BaseConductor:
             raise TypeError(msg)
         return object.__new__(cls)
 
-    def valid_execute_criteria(self, job:dict[str,Any])->bool:
+    def valid_execute_criteria(self, job:dict[str,Any])->Tuple[bool,str]:
         """Function to determine given an job defintion, if this conductor can 
         process it or not. Must be implemented by any child process."""
         pass

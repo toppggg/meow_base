@@ -10,7 +10,7 @@ import itertools
 import nbformat
 import sys
 
-from typing import Any
+from typing import Any, Tuple
 
 from core.correctness.validation import check_type, valid_string, \
     valid_dict, valid_event, valid_existing_dir_path, setup_debugging
@@ -114,7 +114,7 @@ class PythonHandler(BaseHandler):
                     yaml_dict[value[0]] = value[1]
                 self.setup_job(event, yaml_dict)
 
-    def valid_handle_criteria(self, event:dict[str,Any])->bool:
+    def valid_handle_criteria(self, event:dict[str,Any])->Tuple[bool,str]:
         """Function to determine given an event defintion, if this handler can 
         process it or not. This handler accepts events from watchdog with 
         Python recipes"""
@@ -122,10 +122,10 @@ class PythonHandler(BaseHandler):
             valid_event(event)
             if event[EVENT_TYPE] == EVENT_TYPE_WATCHDOG \
                     and type(event[EVENT_RULE].recipe) == PythonRecipe:
-                return True
-        except:
+                return True, ""
+        except Exception as e:
             pass
-        return False
+        return False, str(e)
 
     def _is_valid_handler_base(self, handler_base)->None:
         """Validation check for 'handler_base' variable from main 
@@ -143,7 +143,7 @@ class PythonHandler(BaseHandler):
         meow_job = create_job(
             JOB_TYPE_PYTHON, 
             event, 
-            {
+            extras={
                 JOB_PARAMETERS:yaml_dict,
                 JOB_HASH: event[WATCHDOG_HASH],
                 PYTHON_FUNC:job_func,

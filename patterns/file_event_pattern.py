@@ -25,7 +25,8 @@ from core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
     VALID_VARIABLE_NAME_CHARS, FILE_EVENTS, FILE_CREATE_EVENT, \
     FILE_MODIFY_EVENT, FILE_MOVED_EVENT, DEBUG_INFO, EVENT_TYPE_WATCHDOG, \
     WATCHDOG_BASE, FILE_RETROACTIVE_EVENT, WATCHDOG_HASH, SHA256
-from core.functionality import print_debug, create_event, get_file_hash
+from core.functionality import print_debug, create_watchdog_event, \
+    get_file_hash, create_fake_watchdog_event
 from core.meow import BasePattern, BaseMonitor, BaseRule, BaseRecipe, \
     create_rule
 
@@ -236,17 +237,11 @@ class WatchdogMonitor(BaseMonitor):
 
                 # If matched, the create a watchdog event
                 if direct_hit or recursive_hit:
-                    meow_event = create_event(
-                        EVENT_TYPE_WATCHDOG, 
+                    meow_event = create_watchdog_event(
                         event.src_path,
                         rule,
-                        { 
-                            WATCHDOG_BASE: self.base_dir, 
-                            WATCHDOG_HASH: get_file_hash(
-                                event.src_path, 
-                                SHA256
-                            ) 
-                        }
+                        self.base_dir,
+                        get_file_hash(event.src_path, SHA256) 
                     )
                     print_debug(self._print_target, self.debug_level,  
                         f"Event at {src_path} of type {event_type} hit rule "
@@ -534,11 +529,10 @@ class WatchdogMonitor(BaseMonitor):
                 # For each file create a fake event.
                 for globble in globbed:
 
-                    meow_event = create_event(
-                        EVENT_TYPE_WATCHDOG, 
+                    meow_event = create_fake_watchdog_event(
                         globble,
                         rule,
-                        { WATCHDOG_BASE: self.base_dir }
+                        self.base_dir
                     )
                     print_debug(self._print_target, self.debug_level,  
                         f"Retroactive event for file at at {globble} hit rule "

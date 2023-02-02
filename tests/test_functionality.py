@@ -16,6 +16,7 @@ from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
 from core.functionality import generate_id, wait, get_file_hash, rmtree, \
     make_dir, parameterize_jupyter_notebook, create_event, create_job, \
     replace_keywords, write_yaml, write_notebook, read_yaml, read_notebook, \
+    create_watchdog_event, create_fake_watchdog_event, \
     KEYWORD_PATH, KEYWORD_REL_PATH, KEYWORD_DIR, KEYWORD_REL_DIR, \
     KEYWORD_FILENAME, KEYWORD_PREFIX, KEYWORD_BASE, KEYWORD_EXTENSION, \
     KEYWORD_JOB
@@ -266,7 +267,7 @@ class CorrectnessTests(unittest.TestCase):
         self.assertEqual(event[EVENT_PATH], "path")
         self.assertEqual(event[EVENT_RULE], rule)
 
-        event2 = create_event("test2", "path2", rule, {"a":1})
+        event2 = create_event("test2", "path2", rule, extras={"a":1})
 
         self.assertEqual(type(event2), dict)
         self.assertTrue(EVENT_TYPE in event2.keys())
@@ -298,7 +299,7 @@ class CorrectnessTests(unittest.TestCase):
             EVENT_TYPE_WATCHDOG,
             "file_path",
             rule,
-            {
+            extras={
                 WATCHDOG_BASE: TEST_MONITOR_BASE,
                 EVENT_RULE: rule,
                 WATCHDOG_HASH: "file_hash"
@@ -308,7 +309,7 @@ class CorrectnessTests(unittest.TestCase):
         job_dict = create_job(
             JOB_TYPE_PYTHON,
             event,
-            {
+            extras={
                 JOB_PARAMETERS:{
                     "extra":"extra",
                     "infile":"file_path",
@@ -560,3 +561,101 @@ class CorrectnessTests(unittest.TestCase):
         self.assertFalse(os.path.exists(os.path.join(TEST_MONITOR_BASE, "A")))
         self.assertFalse(os.path.exists(
             os.path.join(TEST_MONITOR_BASE, "A", "B")))
+
+    def testCreateWatchdogEvent(self)->None:
+        pattern = FileEventPattern(
+            "pattern", 
+            "file_path", 
+            "recipe_one", 
+            "infile", 
+            parameters={
+                "extra":"A line from a test Pattern",
+                "outfile":"result_path"
+            })
+        recipe = JupyterNotebookRecipe(
+            "recipe_one", APPENDING_NOTEBOOK)
+
+        rule = create_rule(pattern, recipe)
+
+        with self.assertRaises(TypeError):
+            event = create_watchdog_event("path", rule)
+
+        event = create_watchdog_event("path", rule, "base", "hash")
+
+        self.assertEqual(type(event), dict)
+        self.assertEqual(len(event.keys()), 5)
+        self.assertTrue(EVENT_TYPE in event.keys())
+        self.assertTrue(EVENT_PATH in event.keys())
+        self.assertTrue(EVENT_RULE in event.keys())
+        self.assertTrue(WATCHDOG_BASE in event.keys())
+        self.assertTrue(WATCHDOG_HASH in event.keys())
+        self.assertEqual(event[EVENT_TYPE], EVENT_TYPE_WATCHDOG)
+        self.assertEqual(event[EVENT_PATH], "path")
+        self.assertEqual(event[EVENT_RULE], rule)
+        self.assertEqual(event[WATCHDOG_BASE], "base")
+        self.assertEqual(event[WATCHDOG_HASH], "hash")
+
+        event = create_watchdog_event(
+            "path2", rule, "base", "hash", extras={"a":1}
+        )
+
+        self.assertEqual(type(event), dict)
+        self.assertTrue(EVENT_TYPE in event.keys())
+        self.assertTrue(EVENT_PATH in event.keys())
+        self.assertTrue(EVENT_RULE in event.keys())
+        self.assertTrue(WATCHDOG_BASE in event.keys())
+        self.assertTrue(WATCHDOG_HASH in event.keys())
+        self.assertEqual(len(event.keys()), 6)
+        self.assertEqual(event[EVENT_TYPE], EVENT_TYPE_WATCHDOG)
+        self.assertEqual(event[EVENT_PATH], "path2")
+        self.assertEqual(event[EVENT_RULE], rule)
+        self.assertEqual(event["a"], 1)
+        self.assertEqual(event[WATCHDOG_BASE], "base")
+        self.assertEqual(event[WATCHDOG_HASH], "hash")
+
+    def testCreateFakeWatchdogEvent(self)->None:
+        pattern = FileEventPattern(
+            "pattern", 
+            "file_path", 
+            "recipe_one", 
+            "infile", 
+            parameters={
+                "extra":"A line from a test Pattern",
+                "outfile":"result_path"
+            })
+        recipe = JupyterNotebookRecipe(
+            "recipe_one", APPENDING_NOTEBOOK)
+
+        rule = create_rule(pattern, recipe)
+
+        with self.assertRaises(TypeError):
+            event = create_fake_watchdog_event("path", rule)
+
+        event = create_fake_watchdog_event("path", rule, "base")
+
+        self.assertEqual(type(event), dict)
+        self.assertEqual(len(event.keys()), 4)
+        self.assertTrue(EVENT_TYPE in event.keys())
+        self.assertTrue(EVENT_PATH in event.keys())
+        self.assertTrue(EVENT_RULE in event.keys())
+        self.assertTrue(WATCHDOG_BASE in event.keys())
+        self.assertEqual(event[EVENT_TYPE], EVENT_TYPE_WATCHDOG)
+        self.assertEqual(event[EVENT_PATH], "path")
+        self.assertEqual(event[EVENT_RULE], rule)
+        self.assertEqual(event[WATCHDOG_BASE], "base")
+
+        event = create_fake_watchdog_event(
+            "path2", rule, "base", extras={"a":1}
+        )
+
+        self.assertEqual(type(event), dict)
+        self.assertTrue(EVENT_TYPE in event.keys())
+        self.assertTrue(EVENT_PATH in event.keys())
+        self.assertTrue(EVENT_RULE in event.keys())
+        self.assertTrue(WATCHDOG_BASE in event.keys())
+        self.assertEqual(len(event.keys()), 5)
+        self.assertEqual(event[EVENT_TYPE], EVENT_TYPE_WATCHDOG)
+        self.assertEqual(event[EVENT_PATH], "path2")
+        self.assertEqual(event[EVENT_RULE], rule)
+        self.assertEqual(event["a"], 1)
+        self.assertEqual(event[WATCHDOG_BASE], "base")

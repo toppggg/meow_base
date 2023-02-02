@@ -1,7 +1,7 @@
 
 import unittest
  
-from typing import Any, Union
+from typing import Any, Union, Tuple
 
 from core.meow import BasePattern, BaseRecipe, BaseRule, BaseMonitor, \
     BaseHandler, BaseConductor, create_rules, create_rule
@@ -198,7 +198,8 @@ class MeowTests(unittest.TestCase):
                 pass
             def _is_valid_inputs(self, inputs:Any)->None:
                 pass
-            def valid_handle_criteria(self, event:dict[str,Any])->bool:
+            def valid_handle_criteria(self, event:dict[str,Any]
+                    )->Tuple[bool,str]:
                 pass
 
         FullTestHandler()
@@ -218,7 +219,8 @@ class MeowTests(unittest.TestCase):
             def execute(self, job:dict[str,Any])->None:
                 pass
 
-            def valid_execute_criteria(self, job:dict[str,Any])->bool:
+            def valid_execute_criteria(self, job:dict[str,Any]
+                    )->Tuple[bool,str]:
                 pass
 
         FullTestConductor()

@@ -20,7 +20,8 @@ from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
     VALID_CHANNELS, HASH_BUFFER_SIZE, SHA256, DEBUG_WARNING, DEBUG_INFO, \
     EVENT_TYPE, EVENT_PATH, JOB_EVENT, JOB_TYPE, JOB_ID, JOB_PATTERN, \
     JOB_RECIPE, JOB_RULE, EVENT_RULE, JOB_STATUS, STATUS_QUEUED, \
-    JOB_CREATE_TIME, JOB_REQUIREMENTS
+    JOB_CREATE_TIME, JOB_REQUIREMENTS, WATCHDOG_BASE, WATCHDOG_HASH, \
+    EVENT_TYPE_WATCHDOG, JOB_TYPE_PYTHON
 
 # mig trigger keyword replacements
 KEYWORD_PATH = "{PATH}"
@@ -283,16 +284,45 @@ def replace_keywords(old_dict:dict[str,str], job_id:str, src_path:str,
 
         return new_dict
 
-def create_event(event_type:str, path:str, rule:Any, source:dict[Any,Any]={}
+def create_event(event_type:str, path:str, rule:Any, extras:dict[Any,Any]={}
         )->dict[Any,Any]:
     return {
-        **source, 
+        **extras, 
         EVENT_PATH: path, 
         EVENT_TYPE: event_type, 
         EVENT_RULE: rule
     }
 
-def create_job(job_type:str, event:dict[str,Any], source:dict[Any,Any]={}
+def create_watchdog_event(path:str, rule:Any, base:str, hash:str, 
+            extras:dict[Any,Any]={})->dict[Any,Any]:
+    return create_event(
+        EVENT_TYPE_WATCHDOG, 
+        path, 
+        rule,
+        extras={
+            **extras,
+            **{
+                WATCHDOG_HASH: hash,
+                WATCHDOG_BASE: base
+            }
+        }
+    )
+
+def create_fake_watchdog_event(path:str, rule:Any, base:str, 
+            extras:dict[Any,Any]={})->dict[Any,Any]:
+    return create_event(
+        EVENT_TYPE_WATCHDOG, 
+        path, 
+        rule,
+        extras={
+            **extras,
+            **{
+                WATCHDOG_BASE: base
+            }
+        }
+    )
+
+def create_job(job_type:str, event:dict[str,Any], extras:dict[Any,Any]={}
         )->dict[Any,Any]:
     job_dict = {
         #TODO compress event?
@@ -307,4 +337,4 @@ def create_job(job_type:str, event:dict[str,Any], source:dict[Any,Any]={}
         JOB_REQUIREMENTS: event[EVENT_RULE].recipe.requirements
     }
 
-    return {**source, **job_dict}
+    return {**extras, **job_dict}

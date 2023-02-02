@@ -10,13 +10,12 @@ import os
 import sys
 import threading
 
-from inspect import signature
 from multiprocessing import Pipe
 from random import randrange
 from typing import Any, Union
 
 from core.correctness.vars import DEBUG_WARNING, DEBUG_INFO, EVENT_TYPE, \
-    VALID_CHANNELS, JOB_TYPE, JOB_ID, META_FILE
+    VALID_CHANNELS, JOB_ID, META_FILE
 from core.correctness.validation import setup_debugging, check_type, \
     valid_list
 from core.functionality import  print_debug, wait, read_yaml
@@ -104,7 +103,7 @@ class MeowRunner:
                         valid_handlers = []
                         for handler in self.handlers:
                             try:
-                                valid = handler.valid_handle_criteria(event)
+                                valid, _ = handler.valid_handle_criteria(event)
                                 if valid:
                                     valid_handlers.append(handler)
                             except Exception as e:
@@ -155,7 +154,8 @@ class MeowRunner:
                         valid_conductors = []
                         for conductor in self.conductors:
                             try:
-                                valid = conductor.valid_execute_criteria(job)
+                                valid, _ = \
+                                    conductor.valid_execute_criteria(job)
                                 if valid:
                                     valid_conductors.append(conductor)
                             except Exception as e:

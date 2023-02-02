@@ -11,8 +11,8 @@ from core.correctness.vars import EVENT_TYPE, WATCHDOG_BASE, EVENT_RULE, \
     PYTHON_OUTPUT_DIR, PYTHON_EXECUTION_BASE, META_FILE, BASE_FILE, \
     PARAMS_FILE, JOB_FILE, RESULT_FILE
 from core.correctness.validation import valid_job
-from core.functionality import get_file_hash, create_job, create_event, \
-    make_dir, write_yaml, write_notebook, read_yaml
+from core.functionality import get_file_hash, create_job, \
+    create_watchdog_event, make_dir, write_yaml, write_notebook, read_yaml
 from core.meow import create_rules, create_rule
 from patterns.file_event_pattern import FileEventPattern, SWEEP_START, \
     SWEEP_STOP, SWEEP_JUMP
@@ -351,17 +351,13 @@ class JupyterNotebookTests(unittest.TestCase):
 
         job_dict = create_job(
             JOB_TYPE_PYTHON,
-            create_event(
-                EVENT_TYPE_WATCHDOG,
+            create_watchdog_event(
                 file_path,
                 rule,
-                {
-                    WATCHDOG_BASE: TEST_MONITOR_BASE,
-                    EVENT_RULE: rule,
-                    WATCHDOG_HASH: file_hash
-                }
+                TEST_MONITOR_BASE,
+                file_hash
             ),
-            {
+            extras={
                 JOB_PARAMETERS:params_dict,
                 JOB_HASH: file_hash,
                 PYTHON_FUNC:job_func,

@@ -12,7 +12,8 @@ from typing import Any, _SpecialForm, Union, Tuple, get_origin, get_args
 
 from core.correctness.vars import VALID_PATH_CHARS, get_not_imp_msg, \
     EVENT_TYPE, EVENT_PATH, JOB_EVENT, JOB_TYPE, JOB_ID, JOB_PATTERN, \
-    JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, EVENT_RULE
+    JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, EVENT_RULE, \
+    WATCHDOG_BASE
 
 # Required keys in event dict
 EVENT_KEYS = {
@@ -21,6 +22,11 @@ EVENT_KEYS = {
     # TODO sort this
     # Should be a Rule but can't import here due to circular dependencies
     EVENT_RULE: Any
+}
+
+WATCHDOG_EVENT_KEYS = {
+    WATCHDOG_BASE: str,
+    **EVENT_KEYS
 }
 
 # Required keys in job dict
@@ -254,3 +260,6 @@ def valid_event(event:dict[str,Any])->None:
 def valid_job(job:dict[str,Any])->None:
     """Check that a given dict expresses a meow job."""
     valid_meow_dict(job, "Job", JOB_KEYS)
+
+def valid_watchdog_event(event:dict[str,Any])->None:
+    valid_meow_dict(event, "Watchdog event", WATCHDOG_EVENT_KEYS)

@@ -6,8 +6,8 @@ from core.correctness.vars import JOB_TYPE_PYTHON, SHA256, EVENT_TYPE_WATCHDOG, 
     WATCHDOG_BASE, EVENT_RULE, WATCHDOG_HASH, JOB_PARAMETERS, JOB_HASH, \
     PYTHON_FUNC, PYTHON_OUTPUT_DIR, PYTHON_EXECUTION_BASE, JOB_ID, META_FILE, \
     BASE_FILE, PARAMS_FILE, JOB_FILE, RESULT_FILE
-from core.functionality import get_file_hash, create_event, create_job, \
-    make_dir, write_yaml, write_notebook
+from core.functionality import get_file_hash, create_watchdog_event, \
+    create_job, make_dir, write_yaml, write_notebook
 from core.meow import create_rule
 from conductors import LocalPythonConductor
 from patterns import FileEventPattern
@@ -69,17 +69,13 @@ class MeowTests(unittest.TestCase):
 
         job_dict = create_job(
             JOB_TYPE_PYTHON,
-            create_event(
-                EVENT_TYPE_WATCHDOG,
+            create_watchdog_event(
                 file_path,
                 rule,
-                {
-                    WATCHDOG_BASE: TEST_MONITOR_BASE,
-                    EVENT_RULE: rule,
-                    WATCHDOG_HASH: file_hash
-                }
+                TEST_MONITOR_BASE,
+                file_hash
             ),
-            {
+            extras={
                 JOB_PARAMETERS:params_dict,
                 JOB_HASH: file_hash,
                 PYTHON_FUNC:job_func,
@@ -146,17 +142,13 @@ class MeowTests(unittest.TestCase):
 
         bad_job_dict = create_job(
             JOB_TYPE_PYTHON,
-            create_event(
-                EVENT_TYPE_WATCHDOG,
+            create_watchdog_event(
                 file_path,
                 rule,
-                {
-                    WATCHDOG_BASE: TEST_MONITOR_BASE,
-                    EVENT_RULE: rule,
-                    WATCHDOG_HASH: file_hash
-                }
+                TEST_MONITOR_BASE,
+                file_hash
             ),
-            {
+            extras={
                 JOB_PARAMETERS:params_dict,
                 JOB_HASH: file_hash,
                 PYTHON_FUNC:job_func,
@@ -178,17 +170,13 @@ class MeowTests(unittest.TestCase):
         # Ensure execution can continue after one failed job
         good_job_dict = create_job(
             JOB_TYPE_PYTHON,
-            create_event(
-                EVENT_TYPE_WATCHDOG,
+            create_watchdog_event(
                 file_path,
                 rule,
-                {
-                    WATCHDOG_BASE: TEST_MONITOR_BASE,
-                    EVENT_RULE: rule,
-                    WATCHDOG_HASH: file_hash
-                }
+                TEST_MONITOR_BASE,
+                file_hash
             ),
-            {
+            extras={
                 JOB_PARAMETERS:params_dict,
                 JOB_HASH: file_hash,
                 PYTHON_FUNC:job_func,
@@ -249,17 +237,13 @@ class MeowTests(unittest.TestCase):
 
         job_dict = create_job(
             JOB_TYPE_PYTHON,
-            create_event(
-                EVENT_TYPE_WATCHDOG,
+            create_watchdog_event(
                 file_path,
                 rule,
-                {
-                    WATCHDOG_BASE: TEST_MONITOR_BASE,
-                    EVENT_RULE: rule,
-                    WATCHDOG_HASH: file_hash
-                }
+                TEST_MONITOR_BASE,
+                file_hash
             ),
-            {
+            extras={
                 JOB_PARAMETERS:{
                     "extra":"extra",
                     "infile":file_path,
