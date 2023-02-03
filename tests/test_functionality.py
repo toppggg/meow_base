@@ -257,7 +257,7 @@ class CorrectnessTests(unittest.TestCase):
             COMPLETE_PYTHON_SCRIPT, {"num": 50})
 
         self.assertNotEqual(ps, COMPLETE_PYTHON_SCRIPT)
-        self.assertEqual(ps[1], "num = 50")
+        self.assertEqual(ps[2], "num = 50")
 
     # Test that create_event produces valid event dictionary
     def testCreateEvent(self)->None:

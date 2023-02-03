@@ -417,7 +417,6 @@ class JupyterNotebookTests(unittest.TestCase):
 
     #TODO Test handling criteria function
 
-# TODO implement me
 class PythonTests(unittest.TestCase):
     def setUp(self)->None:
         super().setUp()

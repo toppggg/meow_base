@@ -239,17 +239,17 @@ def python_job_func(job):
     std_stdout = sys.stdout
     std_stderr = sys.stderr
     try:
-        redirected_output = sys.stdout
-        redirected_error = sys.stderr
+        redirected_output = sys.stdout = StringIO()
+        redirected_error = sys.stderr = StringIO()
 
         exec(open(job_file).read())        
 
-        write_file(f"""--STDOUT--
-            {redirected_output}
-            
-            --STDERR--
-            {redirected_error}
-            """, 
+        write_file(("--STDOUT--\n"
+            f"{redirected_output.getvalue()}\n"
+            "\n"
+            "--STDERR--\n"
+            f"{redirected_error.getvalue()}\n"
+            ""), 
             result_file)
 
     except Exception as e:

@@ -27,13 +27,14 @@ BAREBONES_PYTHON_SCRIPT = [
     ""
 ]
 COMPLETE_PYTHON_SCRIPT = [
+    "import os",
     "# Setup parameters",
     "num = 1000",
     "infile = 'somehere/particular'",
     "outfile = 'nowhere/particular'",
     "",
     "with open(infile, 'r') as file:",
-    "    s = int(file.read())",
+    "    s = float(file.read())",
     ""
     "for i in range(num):",
     "    s += i",
@@ -43,8 +44,12 @@ COMPLETE_PYTHON_SCRIPT = [
     "",
     "print(result)",
     "",
+    "os.makedirs(os.path.dirname(outfile), exist_ok=True)",
+    "",
     "with open(outfile, 'w') as file:",
-    "    file.write(str(result))"
+    "    file.write(str(result))",
+    "",
+    "print('done')"
 ]
 
 # Jupyter notebooks

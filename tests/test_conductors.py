@@ -37,7 +37,7 @@ class MeowTests(unittest.TestCase):
     def testLocalPythonConductorCreation(self)->None:
         LocalPythonConductor()
 
-    #TODO Test LocalPythonConductor executes valid python jobs
+    # Test LocalPythonConductor executes valid python jobs
     def testLocalPythonConductorValidPythonJob(self)->None:
         lpc = LocalPythonConductor()
 
