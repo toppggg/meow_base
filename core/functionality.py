@@ -289,47 +289,52 @@ def parameterize_python_script(script:list[str], parameters:dict[str,Any],
     return output_script
 
 def print_debug(print_target, debug_level, msg, level)->None:
-        if print_target is None:
-            return
-        else:
-            if level <= debug_level:
-                status = "ERROR"
-                if level == DEBUG_INFO:
-                    status = "INFO"
-                elif level == DEBUG_WARNING:
-                    status = "WARNING"
-                print(f"{status}: {msg}", file=print_target)
+    """Function to print a message to the debug target, if its level exceeds 
+    the given one."""
+    if print_target is None:
+        return
+    else:
+        if level <= debug_level:
+            status = "ERROR"
+            if level == DEBUG_INFO:
+                status = "INFO"
+            elif level == DEBUG_WARNING:
+                status = "WARNING"
+            print(f"{status}: {msg}", file=print_target)
 
 def replace_keywords(old_dict:dict[str,str], job_id:str, src_path:str, 
             monitor_base:str)->dict[str,str]:
-        new_dict = {}
+    """Function to replace all MEOW magic words in a dictionary with dynamic 
+    values."""
+    new_dict = {}
 
-        filename = os.path.basename(src_path)
-        dirname = os.path.dirname(src_path)
-        relpath = os.path.relpath(src_path, monitor_base)
-        reldirname = os.path.dirname(relpath)
-        (prefix, extension) = os.path.splitext(filename)
+    filename = os.path.basename(src_path)
+    dirname = os.path.dirname(src_path)
+    relpath = os.path.relpath(src_path, monitor_base)
+    reldirname = os.path.dirname(relpath)
+    (prefix, extension) = os.path.splitext(filename)
 
-        for var, val in old_dict.items():
-            if isinstance(val, str):
-                val = val.replace(KEYWORD_PATH, src_path)
-                val = val.replace(KEYWORD_REL_PATH, relpath)
-                val = val.replace(KEYWORD_DIR, dirname)
-                val = val.replace(KEYWORD_REL_DIR, reldirname)
-                val = val.replace(KEYWORD_FILENAME, filename)
-                val = val.replace(KEYWORD_PREFIX, prefix)
-                val = val.replace(KEYWORD_BASE, monitor_base)
-                val = val.replace(KEYWORD_EXTENSION, extension)
-                val = val.replace(KEYWORD_JOB, job_id)
+    for var, val in old_dict.items():
+        if isinstance(val, str):
+            val = val.replace(KEYWORD_PATH, src_path)
+            val = val.replace(KEYWORD_REL_PATH, relpath)
+            val = val.replace(KEYWORD_DIR, dirname)
+            val = val.replace(KEYWORD_REL_DIR, reldirname)
+            val = val.replace(KEYWORD_FILENAME, filename)
+            val = val.replace(KEYWORD_PREFIX, prefix)
+            val = val.replace(KEYWORD_BASE, monitor_base)
+            val = val.replace(KEYWORD_EXTENSION, extension)
+            val = val.replace(KEYWORD_JOB, job_id)
 
-                new_dict[var] = val
-            else:
-                new_dict[var] = val
+            new_dict[var] = val
+        else:
+            new_dict[var] = val
 
-        return new_dict
+    return new_dict
 
 def create_event(event_type:str, path:str, rule:Any, extras:dict[Any,Any]={}
         )->dict[Any,Any]:
+    """Function to create a MEOW dictionary."""
     return {
         **extras, 
         EVENT_PATH: path, 
@@ -339,6 +344,7 @@ def create_event(event_type:str, path:str, rule:Any, extras:dict[Any,Any]={}
 
 def create_watchdog_event(path:str, rule:Any, base:str, hash:str, 
             extras:dict[Any,Any]={})->dict[Any,Any]:
+    """Function to create a MEOW event dictionary."""
     return create_event(
         EVENT_TYPE_WATCHDOG, 
         path, 
@@ -354,6 +360,7 @@ def create_watchdog_event(path:str, rule:Any, base:str, hash:str,
 
 def create_job(job_type:str, event:dict[str,Any], extras:dict[Any,Any]={}
         )->dict[Any,Any]:
+    """Function to create a MEOW job dictionary."""
     job_dict = {
         #TODO compress event?
         JOB_ID: generate_id(prefix="job_"),
@@ -370,4 +377,6 @@ def create_job(job_type:str, event:dict[str,Any], extras:dict[Any,Any]={}
     return {**extras, **job_dict}
 
 def lines_to_string(lines:list[str])->str:
+    """Function to convert a list of str lines, into one continuous string 
+    separated by newline characters"""
     return "\n".join(lines)
