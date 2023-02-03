@@ -2,10 +2,9 @@
 import os
 import unittest
 
-from core.correctness.vars import JOB_TYPE_PYTHON, SHA256, EVENT_TYPE_WATCHDOG, \
-    WATCHDOG_BASE, EVENT_RULE, WATCHDOG_HASH, JOB_PARAMETERS, JOB_HASH, \
-    PYTHON_FUNC, PYTHON_OUTPUT_DIR, PYTHON_EXECUTION_BASE, JOB_ID, META_FILE, \
-    BASE_FILE, PARAMS_FILE, JOB_FILE, RESULT_FILE
+from core.correctness.vars import JOB_TYPE_PYTHON, SHA256, JOB_PARAMETERS, \
+    JOB_HASH, PYTHON_FUNC, PYTHON_OUTPUT_DIR, PYTHON_EXECUTION_BASE, JOB_ID, \
+    META_FILE, BASE_FILE, PARAMS_FILE, JOB_FILE, RESULT_FILE
 from core.functionality import get_file_hash, create_watchdog_event, \
     create_job, make_dir, write_yaml, write_notebook
 from core.meow import create_rule
