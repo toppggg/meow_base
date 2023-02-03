@@ -8,7 +8,7 @@ from multiprocessing import Pipe, Queue
 from time import sleep
 
 from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
-    SHA256, EVENT_TYPE, EVENT_PATH, EVENT_TYPE_WATCHDOG, JOB_TYPE_PYTHON, \
+    SHA256, EVENT_TYPE, EVENT_PATH, EVENT_TYPE_WATCHDOG, \
     WATCHDOG_BASE, WATCHDOG_HASH, EVENT_RULE, JOB_PARAMETERS, JOB_HASH, \
     PYTHON_FUNC, PYTHON_OUTPUT_DIR, PYTHON_EXECUTION_BASE, JOB_ID, JOB_EVENT, \
     JOB_TYPE, JOB_PATTERN, JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, \
@@ -16,7 +16,8 @@ from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
 from core.functionality import generate_id, wait, get_file_hash, rmtree, \
     make_dir, parameterize_jupyter_notebook, create_event, create_job, \
     replace_keywords, write_yaml, write_notebook, read_yaml, read_notebook, \
-    create_watchdog_event, create_fake_watchdog_event, \
+    create_watchdog_event, lines_to_string, \
+    parameterize_python_script, write_file, read_file, read_file_lines, \
     KEYWORD_PATH, KEYWORD_REL_PATH, KEYWORD_DIR, KEYWORD_REL_DIR, \
     KEYWORD_FILENAME, KEYWORD_PREFIX, KEYWORD_BASE, KEYWORD_EXTENSION, \
     KEYWORD_JOB
@@ -24,7 +25,7 @@ from core.meow import create_rule
 from patterns import FileEventPattern
 from recipes import JupyterNotebookRecipe
 from shared import setup, teardown, TEST_MONITOR_BASE, COMPLETE_NOTEBOOK, \
-    APPENDING_NOTEBOOK
+    APPENDING_NOTEBOOK, COMPLETE_PYTHON_SCRIPT
 
 class CorrectnessTests(unittest.TestCase):
     def setUp(self)->None:
@@ -240,7 +241,23 @@ class CorrectnessTests(unittest.TestCase):
             pn["cells"][0]["source"], 
             "# The first cell\n\ns = 4\nnum = 1000")
 
-    # TODO Test  that parameterize_python_script parameterises given script
+    # Test that parameterize_python_script parameterises given script
+    def testParameteriseScript(self)->None:
+        ps = parameterize_python_script(
+            COMPLETE_PYTHON_SCRIPT, {})
+        
+        self.assertEqual(ps, COMPLETE_PYTHON_SCRIPT)
+
+        ps = parameterize_python_script(
+            COMPLETE_PYTHON_SCRIPT, {"a": 50})
+        
+        self.assertEqual(ps, COMPLETE_PYTHON_SCRIPT)
+
+        ps = parameterize_python_script(
+            COMPLETE_PYTHON_SCRIPT, {"num": 50})
+
+        self.assertNotEqual(ps, COMPLETE_PYTHON_SCRIPT)
+        self.assertEqual(ps[1], "num = 50")
 
     # Test that create_event produces valid event dictionary
     def testCreateEvent(self)->None:
@@ -390,6 +407,81 @@ class CorrectnessTests(unittest.TestCase):
             "../../src/dir-file.ext-file-base/monitor/dir-.ext-job_id--")
         self.assertEqual(replaced["M"], "A") 
         self.assertEqual(replaced["N"], 1) 
+
+    # Test that write_file can write files 
+    def testWriteFile(self)->None:
+        data = """Some
+short
+data"""
+
+        filepath = os.path.join(TEST_MONITOR_BASE, "test.txt")
+
+        self.assertFalse(os.path.exists(filepath))
+        write_file(data, filepath)
+        self.assertTrue(os.path.exists(filepath))
+
+        with open(filepath, 'r') as f:
+            data = f.readlines()
+        
+        expected_bytes = [
+            'Some\n', 
+            'short\n',
+            'data'
+        ]
+        
+        self.assertEqual(data, expected_bytes)
+
+    # Test that write_file can read files 
+    def testReadFile(self)->None:
+        data = """Some
+short
+data"""
+
+        filepath = os.path.join(TEST_MONITOR_BASE, "test.txt")
+
+        self.assertFalse(os.path.exists(filepath))
+        write_file(data, filepath)
+
+        read_data = read_file(filepath)
+        self.assertEqual(data, read_data)
+
+        with self.assertRaises(FileNotFoundError):
+            read_file("doesNotExist")
+
+        filepath = os.path.join(TEST_MONITOR_BASE, "T.txt")
+        with open(filepath, "w") as f:
+            f.write("Data")
+
+        data = read_file(filepath)
+        self.assertEqual(data, "Data")
+
+    # Test that write_file can read files 
+    def testReadFileLines(self)->None:
+        data = """Some
+short
+data"""
+
+        filepath = os.path.join(TEST_MONITOR_BASE, "test.txt")
+
+        self.assertFalse(os.path.exists(filepath))
+        write_file(data, filepath)
+
+        read_data = read_file_lines(filepath)
+        self.assertEqual(read_data, [
+            'Some\n', 
+            'short\n',
+            'data'
+        ])
+
+        with self.assertRaises(FileNotFoundError):
+            read_file_lines("doesNotExist")
+
+        filepath = os.path.join(TEST_MONITOR_BASE, "T.txt")
+        with open(filepath, "w") as f:
+            f.write("Data")
+
+        data = read_file_lines(filepath)
+        self.assertEqual(data, ["Data"])
 
     # Test that write_notebook can read jupyter notebooks to files
     def testWriteNotebook(self)->None:
@@ -564,6 +656,7 @@ class CorrectnessTests(unittest.TestCase):
         self.assertFalse(os.path.exists(
             os.path.join(TEST_MONITOR_BASE, "A", "B")))
 
+    # Test creation of watchdog event dict
     def testCreateWatchdogEvent(self)->None:
         pattern = FileEventPattern(
             "pattern", 
@@ -615,54 +708,8 @@ class CorrectnessTests(unittest.TestCase):
         self.assertEqual(event[WATCHDOG_BASE], "base")
         self.assertEqual(event[WATCHDOG_HASH], "hash")
 
-    def testCreateFakeWatchdogEvent(self)->None:
-        pattern = FileEventPattern(
-            "pattern", 
-            "file_path", 
-            "recipe_one", 
-            "infile", 
-            parameters={
-                "extra":"A line from a test Pattern",
-                "outfile":"result_path"
-            })
-        recipe = JupyterNotebookRecipe(
-            "recipe_one", APPENDING_NOTEBOOK)
+    # Test lines to str
+    def testLinesToStr(self)->None:
+        l = ["a", "b", "c"]
 
-        rule = create_rule(pattern, recipe)
-
-        with self.assertRaises(TypeError):
-            event = create_fake_watchdog_event("path", rule)
-
-        event = create_fake_watchdog_event("path", rule, "base")
-
-        self.assertEqual(type(event), dict)
-        self.assertEqual(len(event.keys()), 4)
-        self.assertTrue(EVENT_TYPE in event.keys())
-        self.assertTrue(EVENT_PATH in event.keys())
-        self.assertTrue(EVENT_RULE in event.keys())
-        self.assertTrue(WATCHDOG_BASE in event.keys())
-        self.assertEqual(event[EVENT_TYPE], EVENT_TYPE_WATCHDOG)
-        self.assertEqual(event[EVENT_PATH], "path")
-        self.assertEqual(event[EVENT_RULE], rule)
-        self.assertEqual(event[WATCHDOG_BASE], "base")
-
-        event = create_fake_watchdog_event(
-            "path2", rule, "base", extras={"a":1}
-        )
-
-        self.assertEqual(type(event), dict)
-        self.assertTrue(EVENT_TYPE in event.keys())
-        self.assertTrue(EVENT_PATH in event.keys())
-        self.assertTrue(EVENT_RULE in event.keys())
-        self.assertTrue(WATCHDOG_BASE in event.keys())
-        self.assertEqual(len(event.keys()), 5)
-        self.assertEqual(event[EVENT_TYPE], EVENT_TYPE_WATCHDOG)
-        self.assertEqual(event[EVENT_PATH], "path2")
-        self.assertEqual(event[EVENT_RULE], rule)
-        self.assertEqual(event["a"], 1)
-        self.assertEqual(event[WATCHDOG_BASE], "base")
-
-#TODO test read file
-#TODO test readlines file
-#TODO test write file
-#TODO test lines to str
+        self.assertEqual(lines_to_string(l), "a\nb\nc")

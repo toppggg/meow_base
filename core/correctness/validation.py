@@ -13,7 +13,7 @@ from typing import Any, _SpecialForm, Union, Tuple, get_origin, get_args
 from core.correctness.vars import VALID_PATH_CHARS, get_not_imp_msg, \
     EVENT_TYPE, EVENT_PATH, JOB_EVENT, JOB_TYPE, JOB_ID, JOB_PATTERN, \
     JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, EVENT_RULE, \
-    WATCHDOG_BASE
+    WATCHDOG_BASE, WATCHDOG_HASH
 
 # Required keys in event dict
 EVENT_KEYS = {
@@ -26,6 +26,7 @@ EVENT_KEYS = {
 
 WATCHDOG_EVENT_KEYS = {
     WATCHDOG_BASE: str,
+    WATCHDOG_HASH: str,    
     **EVENT_KEYS
 }
 

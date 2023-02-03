@@ -26,7 +26,7 @@ from core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
     FILE_MODIFY_EVENT, FILE_MOVED_EVENT, DEBUG_INFO, \
     FILE_RETROACTIVE_EVENT, SHA256
 from core.functionality import print_debug, create_watchdog_event, \
-    get_file_hash, create_fake_watchdog_event
+    get_file_hash
 from core.meow import BasePattern, BaseMonitor, BaseRule, BaseRecipe, \
     create_rule
 
@@ -487,10 +487,11 @@ class WatchdogMonitor(BaseMonitor):
                 # For each file create a fake event.
                 for globble in globbed:
 
-                    meow_event = create_fake_watchdog_event(
+                    meow_event = create_watchdog_event(
                         globble,
                         rule,
-                        self.base_dir
+                        self.base_dir,
+                        get_file_hash(globble, SHA256)
                     )
                     print_debug(self._print_target, self.debug_level,  
                         f"Retroactive event for file at at {globble} hit rule "

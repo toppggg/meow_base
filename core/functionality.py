@@ -352,20 +352,6 @@ def create_watchdog_event(path:str, rule:Any, base:str, hash:str,
         }
     )
 
-def create_fake_watchdog_event(path:str, rule:Any, base:str, 
-            extras:dict[Any,Any]={})->dict[Any,Any]:
-    return create_event(
-        EVENT_TYPE_WATCHDOG, 
-        path, 
-        rule,
-        extras={
-            **extras,
-            **{
-                WATCHDOG_BASE: base
-            }
-        }
-    )
-
 def create_job(job_type:str, event:dict[str,Any], extras:dict[Any,Any]={}
         )->dict[Any,Any]:
     job_dict = {
