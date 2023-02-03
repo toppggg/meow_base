@@ -80,9 +80,23 @@ DIR_EVENTS = [
 # meow jobs
 JOB_TYPE = "job_type"
 JOB_TYPE_PYTHON = "python"
+JOB_TYPE_PAPERMILL = "papermill"
 PYTHON_FUNC = "func"
 PYTHON_EXECUTION_BASE = "exection_base"
 PYTHON_OUTPUT_DIR = "output_dir"
+
+JOB_TYPES = {
+    JOB_TYPE_PAPERMILL: [
+        "base.ipynb",
+        "job.ipynb",
+        "result.ipynb",
+    ],
+    JOB_TYPE_PYTHON: [
+        "base.py",
+        "job.py",
+        "result.py",
+    ]
+}
 
 # job definitions
 JOB_ID = "id"
@@ -108,10 +122,7 @@ STATUS_DONE = "done"
 
 # job definition files
 META_FILE = "job.yml"
-BASE_FILE = "base.ipynb"
 PARAMS_FILE = "params.yml"
-JOB_FILE = "job.ipynb"
-RESULT_FILE = "result.ipynb"
 
 # Parameter sweep keys
 SWEEP_START = "start"
@@ -132,3 +143,12 @@ def get_not_imp_msg(parent_class, class_function):
     return f"Children of the '{parent_class.__name__}' class must implement " \
         f"the '{class_function.__name__}({signature(class_function)})' " \
         "function"
+
+def get_base_file(job_type:str):
+    return JOB_TYPES[job_type][0]
+
+def get_job_file(job_type:str):
+    return JOB_TYPES[job_type][1]
+
+def get_result_file(job_type:str):
+    return JOB_TYPES[job_type][2]

@@ -12,7 +12,7 @@ from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
     WATCHDOG_BASE, WATCHDOG_HASH, EVENT_RULE, JOB_PARAMETERS, JOB_HASH, \
     PYTHON_FUNC, PYTHON_OUTPUT_DIR, PYTHON_EXECUTION_BASE, JOB_ID, JOB_EVENT, \
     JOB_TYPE, JOB_PATTERN, JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, \
-    JOB_REQUIREMENTS, STATUS_QUEUED
+    JOB_REQUIREMENTS, STATUS_QUEUED, JOB_TYPE_PAPERMILL
 from core.functionality import generate_id, wait, get_file_hash, rmtree, \
     make_dir, parameterize_jupyter_notebook, create_event, create_job, \
     replace_keywords, write_yaml, write_notebook, read_yaml, read_notebook, \
@@ -240,6 +240,8 @@ class CorrectnessTests(unittest.TestCase):
             pn["cells"][0]["source"], 
             "# The first cell\n\ns = 4\nnum = 1000")
 
+    # TODO Test  that parameterize_python_script parameterises given script
+
     # Test that create_event produces valid event dictionary
     def testCreateEvent(self)->None:
         pattern = FileEventPattern(
@@ -307,7 +309,7 @@ class CorrectnessTests(unittest.TestCase):
         )
 
         job_dict = create_job(
-            JOB_TYPE_PYTHON,
+            JOB_TYPE_PAPERMILL,
             event,
             extras={
                 JOB_PARAMETERS:{
@@ -328,7 +330,7 @@ class CorrectnessTests(unittest.TestCase):
         self.assertIn(JOB_EVENT, job_dict)
         self.assertEqual(job_dict[JOB_EVENT], event)
         self.assertIn(JOB_TYPE, job_dict)
-        self.assertEqual(job_dict[JOB_TYPE], JOB_TYPE_PYTHON)
+        self.assertEqual(job_dict[JOB_TYPE], JOB_TYPE_PAPERMILL)
         self.assertIn(JOB_PATTERN, job_dict)
         self.assertEqual(job_dict[JOB_PATTERN], pattern.name)
         self.assertIn(JOB_RECIPE, job_dict)
@@ -659,3 +661,8 @@ class CorrectnessTests(unittest.TestCase):
         self.assertEqual(event[EVENT_RULE], rule)
         self.assertEqual(event["a"], 1)
         self.assertEqual(event[WATCHDOG_BASE], "base")
+
+#TODO test read file
+#TODO test readlines file
+#TODO test write file
+#TODO test lines to str

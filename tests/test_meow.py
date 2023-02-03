@@ -3,6 +3,7 @@ import unittest
  
 from typing import Any, Union, Tuple
 
+from core.correctness.vars import SWEEP_STOP, SWEEP_JUMP, SWEEP_START
 from core.meow import BasePattern, BaseRecipe, BaseRule, BaseMonitor, \
     BaseHandler, BaseConductor, create_rules, create_rule
 from patterns import FileEventPattern
@@ -70,6 +71,78 @@ class MeowTests(unittest.TestCase):
                 pass
         FullPattern("name", "", "", "", "")
 
+    # Test expansion of parameter sweeps
+    def testBasePatternExpandSweeps(self)->None:
+        pattern_one = FileEventPattern(
+            "pattern_one", "A", "recipe_one", "file_one", sweep={
+                "s1":{
+                    SWEEP_START: 10, SWEEP_STOP: 20, SWEEP_JUMP:5
+                }
+            })
+
+        es = pattern_one.expand_sweeps()
+
+        self.assertIsInstance(es, list)
+        self.assertEqual(len(es), 3)
+
+        values = [
+            "s1-10", "s1-15", "s1-20", 
+        ]
+
+        for sweep_vals in es:
+            self.assertIsInstance(sweep_vals, tuple)
+            self.assertEqual(len(sweep_vals), 1)
+
+            val1 = None
+            for sweep_val in sweep_vals:
+                self.assertIsInstance(sweep_val, tuple)
+                self.assertEqual(len(sweep_val), 2)
+                if sweep_val[0] == "s1":
+                    val1 = f"s1-{sweep_val[1]}"
+            if val1:
+                values.remove(val1)
+        self.assertEqual(len(values), 0)
+
+        pattern_one = FileEventPattern(
+            "pattern_one", "A", "recipe_one", "file_one", sweep={
+                "s1":{
+                    SWEEP_START: 0, SWEEP_STOP: 2, SWEEP_JUMP:1
+                },
+                "s2":{
+                    SWEEP_START: 20, SWEEP_STOP: 80, SWEEP_JUMP:15
+                }
+            })
+
+        es = pattern_one.expand_sweeps()
+
+        self.assertIsInstance(es, list)
+        self.assertEqual(len(es), 15)
+
+        values = [
+            "s1-0/s2-20", "s1-1/s2-20", "s1-2/s2-20", 
+            "s1-0/s2-35", "s1-1/s2-35", "s1-2/s2-35", 
+            "s1-0/s2-50", "s1-1/s2-50", "s1-2/s2-50", 
+            "s1-0/s2-65", "s1-1/s2-65", "s1-2/s2-65", 
+            "s1-0/s2-80", "s1-1/s2-80", "s1-2/s2-80", 
+        ]
+
+        for sweep_vals in es:
+            self.assertIsInstance(sweep_vals, tuple)
+            self.assertEqual(len(sweep_vals), 2)
+
+            val1 = None
+            val2 = None
+            for sweep_val in sweep_vals:
+                self.assertIsInstance(sweep_val, tuple)
+                self.assertEqual(len(sweep_val), 2)
+                if sweep_val[0] == "s1":
+                    val1 = f"s1-{sweep_val[1]}"
+                if sweep_val[0] == "s2":
+                    val2 = f"s2-{sweep_val[1]}"
+            if val1 and val2:
+                values.remove(f"{val1}/{val2}")
+        self.assertEqual(len(values), 0)
+
     # Test that BaseRecipe instantiation
     def testBaseRule(self)->None:
         with self.assertRaises(TypeError):
@@ -87,7 +160,7 @@ class MeowTests(unittest.TestCase):
                 pass
             def _is_valid_pattern(self, pattern:Any)->None:
                 pass
-        FullRule("name", "", "")
+        FullRule("name", valid_pattern_one, valid_recipe_one)
 
     # Test that create_rule creates a rule from pattern and recipe
     def testCreateRule(self)->None:
@@ -227,5 +300,3 @@ class MeowTests(unittest.TestCase):
                 pass
 
         FullTestConductor()
-
-    # TODO Test expansion of parameter sweeps

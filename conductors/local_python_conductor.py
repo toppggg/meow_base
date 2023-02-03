@@ -14,7 +14,7 @@ from typing import Any, Tuple
 from core.correctness.vars import JOB_TYPE_PYTHON, PYTHON_FUNC, JOB_STATUS, \
     STATUS_RUNNING, JOB_START_TIME, PYTHON_EXECUTION_BASE, JOB_ID, META_FILE, \
     STATUS_DONE, JOB_END_TIME, STATUS_FAILED, JOB_ERROR, PYTHON_OUTPUT_DIR, \
-    JOB_TYPE
+    JOB_TYPE, JOB_TYPE_PAPERMILL
 from core.correctness.validation import valid_job
 from core.functionality import read_yaml, write_yaml
 from core.meow import BaseConductor
@@ -30,7 +30,7 @@ class LocalPythonConductor(BaseConductor):
         process it or not. This conductor will accept any Python job type"""
         try:
             valid_job(job)
-            if job[JOB_TYPE] == JOB_TYPE_PYTHON:
+            if job[JOB_TYPE] in [JOB_TYPE_PYTHON, JOB_TYPE_PAPERMILL]:
                 return True, ""
         except Exception as e:
             pass

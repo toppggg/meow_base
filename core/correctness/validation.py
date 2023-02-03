@@ -72,6 +72,12 @@ def check_type(variable:Any, expected_type:type, alt_types:list[type]=[],
             % (get_args(expected_type), type(variable))
         )
 
+def check_callable(call:Any)->None:
+    """Checks if a given variable is a callable function. Raises TypeError if 
+    not."""
+    if not callable(call):
+        raise TypeError(f"Given object '{call}' is not a callable function")
+
 def check_implementation(child_func, parent_class):
     """Checks if the given function has been overridden from the one inherited
     from the parent class. Raises a NotImplementedError if this is the case."""
@@ -93,6 +99,14 @@ def check_implementation(child_func, parent_class):
     if child_sig.keys() != parent_sig.keys():
         msg = get_not_imp_msg(parent_class, parent_func)
         raise NotImplementedError(msg)
+
+def check_script(script:Any):
+    """Checks if a given variable is a valid script. Raises TypeError if 
+    not."""
+    # TODO investigate more robust check here
+    check_type(script, list)
+    for line in script:
+        check_type(line, str)
 
 def valid_string(variable:str, valid_chars:str, min_length:int=1)->None:
     """Checks that all characters in a given string are present in a provided

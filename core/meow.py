@@ -98,7 +98,6 @@ class BasePattern:
         check_implementation(type(self)._is_valid_recipe, BasePattern)
         check_implementation(type(self)._is_valid_parameters, BasePattern)
         check_implementation(type(self)._is_valid_output, BasePattern)
-        check_implementation(type(self)._is_valid_sweep, BasePattern)
         self._is_valid_name(name)
         self.name = name
         self._is_valid_recipe(recipe)
@@ -140,8 +139,9 @@ class BasePattern:
         pass
 
     def _is_valid_sweep(self, sweep:dict[str,Union[int,float,complex]])->None:
-        """Validation check for 'sweep' variable from main constructor. Must 
-        be implemented by any child class."""
+        """Validation check for 'sweep' variable from main constructor. This 
+        function is implemented to check for the types given in the signature, 
+        and must be overridden if these differ."""
         check_type(sweep, dict)
         if not sweep:
             return
@@ -208,13 +208,19 @@ class BaseRule:
         the input parameters."""
         check_implementation(type(self)._is_valid_pattern, BaseRule)
         check_implementation(type(self)._is_valid_recipe, BaseRule)
+        self.__check_types_set()
         self._is_valid_name(name)
         self.name = name
         self._is_valid_pattern(pattern)
         self.pattern = pattern
         self._is_valid_recipe(recipe)
         self.recipe = recipe
-        self.__check_types_set()
+        check_type(pattern, BasePattern)
+        check_type(recipe, BaseRecipe)
+        if pattern.recipe != recipe.name:
+            raise ValueError(f"Cannot create Rule {name}. Pattern "
+                f"{pattern.name} does not identify Recipe {recipe.name}. It "
+                f"uses {pattern.recipe}")
 
     def __new__(cls, *args, **kwargs):
         """A check that this base class is not instantiated itself, only 

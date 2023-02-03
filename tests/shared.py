@@ -22,6 +22,31 @@ def teardown():
     rmtree(TEST_JOB_OUTPUT)
     rmtree("first")
 
+# Recipe funcs
+BAREBONES_PYTHON_SCRIPT = [
+    ""
+]
+COMPLETE_PYTHON_SCRIPT = [
+    "# Setup parameters",
+    "num = 1000",
+    "infile = 'somehere/particular'",
+    "outfile = 'nowhere/particular'",
+    "",
+    "with open(infile, 'r') as file:",
+    "    s = int(file.read())",
+    ""
+    "for i in range(num):",
+    "    s += i",
+    "",
+    "div_by = 4",
+    "result = s / div_by",
+    "",
+    "print(result)",
+    "",
+    "with open(outfile, 'w') as file:",
+    "    file.write(str(result))"
+]
+
 # Jupyter notebooks
 BAREBONES_NOTEBOOK = {
     "cells": [],

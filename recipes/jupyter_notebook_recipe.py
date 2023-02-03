@@ -6,7 +6,6 @@ notebooks, along with an appropriate handler for said events.
 Author(s): David Marchant
 """
 import os
-import itertools
 import nbformat
 import sys
 
@@ -17,12 +16,12 @@ from core.correctness.validation import check_type, valid_string, \
     valid_event
 from core.correctness.vars import VALID_VARIABLE_NAME_CHARS, PYTHON_FUNC, \
     DEBUG_INFO, EVENT_TYPE_WATCHDOG, JOB_HASH, PYTHON_EXECUTION_BASE, \
-    EVENT_PATH, JOB_TYPE_PYTHON, WATCHDOG_HASH, JOB_PARAMETERS, \
-    PYTHON_OUTPUT_DIR, JOB_ID, WATCHDOG_BASE, META_FILE, BASE_FILE, \
+    EVENT_PATH, JOB_TYPE_PAPERMILL, WATCHDOG_HASH, JOB_PARAMETERS, \
+    PYTHON_OUTPUT_DIR, JOB_ID, WATCHDOG_BASE, META_FILE, \
     PARAMS_FILE, JOB_STATUS, STATUS_QUEUED, EVENT_RULE, EVENT_TYPE, \
-    EVENT_RULE
+    EVENT_RULE, get_base_file, get_job_file, get_result_file
 from core.functionality import print_debug, create_job, replace_keywords, \
-    make_dir, write_yaml, write_notebook
+    make_dir, write_yaml, write_notebook, read_notebook
 from core.meow import BaseRecipe, BaseHandler
 
 
@@ -140,19 +139,19 @@ class PapermillHandler(BaseHandler):
         """Function to set up new job dict and send it to the runner to be 
         executed."""
         meow_job = create_job(
-            JOB_TYPE_PYTHON, 
+            JOB_TYPE_PAPERMILL, 
             event, 
             extras={
                 JOB_PARAMETERS:yaml_dict,
                 JOB_HASH: event[WATCHDOG_HASH],
-                PYTHON_FUNC:job_func,
+                PYTHON_FUNC:papermill_job_func,
                 PYTHON_OUTPUT_DIR:self.output_dir,
                 PYTHON_EXECUTION_BASE:self.handler_base
             }
         )
         print_debug(self._print_target, self.debug_level,  
             f"Creating job from event at {event[EVENT_PATH]} of type "
-            f"{JOB_TYPE_PYTHON}.", DEBUG_INFO)
+            f"{JOB_TYPE_PAPERMILL}.", DEBUG_INFO)
 
         # replace MEOW keyworks within variables dict
         yaml_dict = replace_keywords(
@@ -172,7 +171,7 @@ class PapermillHandler(BaseHandler):
         write_yaml(meow_job, meta_file)
 
         # write an executable notebook to the job directory
-        base_file = os.path.join(job_dir, BASE_FILE)
+        base_file = os.path.join(job_dir, get_base_file(JOB_TYPE_PAPERMILL))
         write_notebook(event[EVENT_RULE].recipe.recipe, base_file)
 
         # write a parameter file to the job directory
@@ -188,25 +187,26 @@ class PapermillHandler(BaseHandler):
         self.to_runner.send(job_dir)
 
 # Papermill job execution code, to be run within the conductor
-def job_func(job):
+def papermill_job_func(job):
     # Requires own imports as will be run in its own execution environment
     import os
     import papermill
     from datetime import datetime
     from core.functionality import write_yaml, read_yaml, write_notebook, \
         get_file_hash, parameterize_jupyter_notebook
-    from core.correctness.vars import JOB_EVENT, EVENT_RULE, JOB_ID, \
-        EVENT_PATH, META_FILE, PARAMS_FILE, JOB_FILE, RESULT_FILE, \
+    from core.correctness.vars import JOB_EVENT, JOB_ID, \
+        EVENT_PATH, META_FILE, PARAMS_FILE, \
         JOB_STATUS, JOB_HASH, SHA256, STATUS_SKIPPED, JOB_END_TIME, \
-        JOB_ERROR, STATUS_FAILED, PYTHON_EXECUTION_BASE
-
-    event = job[JOB_EVENT]
+        JOB_ERROR, STATUS_FAILED, PYTHON_EXECUTION_BASE, get_job_file, \
+        get_result_file
 
     # Identify job files
     job_dir = os.path.join(job[PYTHON_EXECUTION_BASE], job[JOB_ID])
     meta_file = os.path.join(job_dir, META_FILE)
-    job_file = os.path.join(job_dir, JOB_FILE)
-    result_file = os.path.join(job_dir, RESULT_FILE)
+    # TODO fix these paths so they are dynamic
+    base_file = os.path.join(job_dir, get_base_file(JOB_TYPE_PAPERMILL))
+    job_file = os.path.join(job_dir, get_job_file(JOB_TYPE_PAPERMILL))
+    result_file = os.path.join(job_dir, get_result_file(JOB_TYPE_PAPERMILL))
     param_file = os.path.join(job_dir, PARAMS_FILE)
 
     yaml_dict = read_yaml(param_file)
@@ -233,8 +233,10 @@ def job_func(job):
 
     # Create a parameterised version of the executable notebook
     try:
+        base_notebook = read_notebook(base_file)
+        # TODO read notebook from already written file rather than event
         job_notebook = parameterize_jupyter_notebook(
-            event[EVENT_RULE].recipe.recipe, yaml_dict
+            base_notebook, yaml_dict
         )
         write_notebook(job_notebook, job_file)
     except Exception as e:

@@ -9,7 +9,7 @@ from typing import Any, Union
 from core.correctness.validation import check_type, check_implementation, \
     valid_string, valid_dict, valid_list, valid_existing_file_path, \
     valid_existing_dir_path, valid_non_existing_path, valid_event, valid_job, \
-    setup_debugging, valid_watchdog_event
+    setup_debugging, valid_watchdog_event, check_callable
 from core.correctness.vars import VALID_NAME_CHARS, SHA256, EVENT_TYPE, \
     EVENT_PATH, JOB_TYPE, JOB_EVENT, JOB_ID, JOB_PATTERN, JOB_RECIPE, \
     JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, EVENT_RULE, WATCHDOG_BASE, \
@@ -304,7 +304,7 @@ class CorrectnessTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             setup_debugging(stream, "1")
 
-    #Test watchdog event dict
+    # Test watchdog event dict
     def testWatchdogEventValidation(self)->None:
         valid_watchdog_event({
             EVENT_TYPE: "test", 
@@ -337,3 +337,10 @@ class CorrectnessTests(unittest.TestCase):
 
         with self.assertRaises(KeyError):
             valid_event({})
+
+    # Test check_callable 
+    def testCheckCallable(self)->None:
+        check_callable(make_dir)
+        
+        with self.assertRaises(TypeError):
+            check_callable("a")

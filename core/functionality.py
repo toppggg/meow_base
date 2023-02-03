@@ -1,4 +1,4 @@
-
+# TODO comments
 import copy
 import hashlib
 import json
@@ -15,7 +15,7 @@ from typing import Any
 from random import SystemRandom
 
 from core.correctness.validation import check_type, valid_existing_file_path, \
-    valid_path
+    valid_path, check_script
 from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
     VALID_CHANNELS, HASH_BUFFER_SIZE, SHA256, DEBUG_WARNING, DEBUG_INFO, \
     EVENT_TYPE, EVENT_PATH, JOB_EVENT, JOB_TYPE, JOB_ID, JOB_PATTERN, \
@@ -128,6 +128,18 @@ def make_dir(path:str, can_exist:bool=True, ensure_clean:bool=False):
                 
     os.makedirs(path, exist_ok=can_exist)
     
+def read_file(filepath:str):
+    with open(filepath, 'r') as file:
+        return file.read()
+
+def read_file_lines(filepath:str):
+    with open(filepath, 'r') as file:
+        return file.readlines()
+
+def write_file(source:str, filename:str):
+    with open(filename, 'w') as file:
+        file.write(source)
+
 def read_yaml(filepath:str):
     """
     Reads a file path as a yaml object.
@@ -171,7 +183,7 @@ def write_notebook(source:dict[str,Any], filename:str):
         json.dump(source, job_file)
 
 # Adapted from: https://github.com/rasmunk/notebook_parameterizer
-def parameterize_jupyter_notebook( jupyter_notebook:dict[str,Any], 
+def parameterize_jupyter_notebook(jupyter_notebook:dict[str,Any], 
         parameters:dict[str,Any], expand_env_values:bool=False)->dict[str,Any]:
     nbformat.validate(jupyter_notebook)
     check_type(parameters, dict)
@@ -243,6 +255,38 @@ def parameterize_jupyter_notebook( jupyter_notebook:dict[str,Any],
     nbformat.validate(output_notebook, version=4)
 
     return output_notebook
+
+def parameterize_python_script(script:list[str], parameters:dict[str,Any], 
+        expand_env_values:bool=False)->dict[str,Any]:
+    check_script(script)
+    check_type(parameters, dict)
+
+    output_script = copy.deepcopy(script)
+
+    for i, line in enumerate(output_script):
+        if "=" in line:
+            d_line = list(map(lambda x: x.replace(" ", ""), 
+                line.split("=")))
+            # Matching parameter name
+            if len(d_line) == 2 and d_line[0] in parameters:
+                value = parameters[d_line[0]]
+                # Whether to expand value from os env
+                if (
+                    expand_env_values
+                    and isinstance(value, str)
+                    and value.startswith("ENV_")
+                ):
+                    env_var = value.replace("ENV_", "")
+                    value = os.getenv(
+                        env_var, 
+                        "MISSING ENVIRONMENT VARIABLE: {}".format(env_var)
+                    )
+                output_script[i] = f"{d_line[0]} = {repr(value)}"
+                
+    # Validate that the parameterized notebook is still valid
+    check_script(output_script)
+
+    return output_script
 
 def print_debug(print_target, debug_level, msg, level)->None:
         if print_target is None:
@@ -338,3 +382,6 @@ def create_job(job_type:str, event:dict[str,Any], extras:dict[Any,Any]={}
     }
 
     return {**extras, **job_dict}
+
+def lines_to_string(lines:list[str])->str:
+    return "\n".join(lines)

@@ -6,36 +6,34 @@ along with an appropriate handler for said events.
 Author(s): David Marchant
 """
 import os
-import itertools
-import nbformat
 import sys
 
 from typing import Any, Tuple
 
-from core.correctness.validation import check_type, valid_string, \
+from core.correctness.validation import check_script, valid_string, \
     valid_dict, valid_event, valid_existing_dir_path, setup_debugging
 from core.correctness.vars import VALID_VARIABLE_NAME_CHARS, PYTHON_FUNC, \
     DEBUG_INFO, EVENT_TYPE_WATCHDOG, JOB_HASH, PYTHON_EXECUTION_BASE, \
     EVENT_RULE, EVENT_PATH, JOB_TYPE_PYTHON, WATCHDOG_HASH, JOB_PARAMETERS, \
-    PYTHON_OUTPUT_DIR, JOB_ID, WATCHDOG_BASE, META_FILE, BASE_FILE, \
-    PARAMS_FILE, JOB_STATUS, STATUS_QUEUED, EVENT_TYPE, EVENT_RULE
+    PYTHON_OUTPUT_DIR, JOB_ID, WATCHDOG_BASE, META_FILE, \
+    PARAMS_FILE, JOB_STATUS, STATUS_QUEUED, EVENT_TYPE, EVENT_RULE, \
+    get_job_file, get_base_file, get_result_file
 from core.functionality import print_debug, create_job, replace_keywords, \
-    make_dir, write_yaml, write_notebook
+    make_dir, write_yaml, write_file, lines_to_string, read_file_lines
 from core.meow import BaseRecipe, BaseHandler
 
 
 class PythonRecipe(BaseRecipe):
-    def __init__(self, name:str, recipe:Any, parameters:dict[str,Any]={}, 
+    def __init__(self, name:str, recipe:list[str], parameters:dict[str,Any]={}, 
             requirements:dict[str,Any]={}):
         """PythonRecipe Constructor. This is used to execute python analysis 
         code."""
         super().__init__(name, recipe, parameters, requirements)
 
-    def _is_valid_recipe(self, recipe:dict[str,Any])->None:
+    def _is_valid_recipe(self, recipe:list[str])->None:
         """Validation check for 'recipe' variable from main constructor. 
         Called within parent BaseRecipe constructor."""
-        check_type(recipe, dict)
-        nbformat.validate(recipe)
+        check_script(recipe)
 
     def _is_valid_parameters(self, parameters:dict[str,Any])->None:
         """Validation check for 'parameters' variable from main constructor. 
@@ -135,7 +133,7 @@ class PythonHandler(BaseHandler):
             extras={
                 JOB_PARAMETERS:yaml_dict,
                 JOB_HASH: event[WATCHDOG_HASH],
-                PYTHON_FUNC:job_func,
+                PYTHON_FUNC:python_job_func,
                 PYTHON_OUTPUT_DIR:self.output_dir,
                 PYTHON_EXECUTION_BASE:self.handler_base
             }
@@ -161,9 +159,9 @@ class PythonHandler(BaseHandler):
         meta_file = os.path.join(job_dir, META_FILE)
         write_yaml(meow_job, meta_file)
 
-        # write an executable notebook to the job directory
-        base_file = os.path.join(job_dir, BASE_FILE)
-        write_notebook(event[EVENT_RULE].recipe.recipe, base_file)
+        # write an executable script to the job directory
+        base_file = os.path.join(job_dir, get_base_file(JOB_TYPE_PYTHON))
+        write_file(lines_to_string(event[EVENT_RULE].recipe.recipe), base_file)
 
         # write a parameter file to the job directory
         param_file = os.path.join(job_dir, PARAMS_FILE)
@@ -178,25 +176,26 @@ class PythonHandler(BaseHandler):
         self.to_runner.send(job_dir)
 
 # Papermill job execution code, to be run within the conductor
-def job_func(job):
+def python_job_func(job):
     # Requires own imports as will be run in its own execution environment
+    import sys
     import os
-    import papermill
     from datetime import datetime
-    from core.functionality import write_yaml, read_yaml, write_notebook, \
-        get_file_hash, parameterize_jupyter_notebook
-    from core.correctness.vars import JOB_EVENT, EVENT_RULE, JOB_ID, \
-        EVENT_PATH, META_FILE, PARAMS_FILE, JOB_FILE, RESULT_FILE, \
+    from io import StringIO
+    from core.functionality import write_yaml, read_yaml, \
+        get_file_hash, parameterize_python_script
+    from core.correctness.vars import JOB_EVENT, JOB_ID, \
+        EVENT_PATH, META_FILE, PARAMS_FILE, \
         JOB_STATUS, JOB_HASH, SHA256, STATUS_SKIPPED, JOB_END_TIME, \
-        JOB_ERROR, STATUS_FAILED, PYTHON_EXECUTION_BASE
-
-    event = job[JOB_EVENT]
+        JOB_ERROR, STATUS_FAILED, PYTHON_EXECUTION_BASE, get_base_file, \
+        get_job_file, get_result_file
 
     # Identify job files
     job_dir = os.path.join(job[PYTHON_EXECUTION_BASE], job[JOB_ID])
     meta_file = os.path.join(job_dir, META_FILE)
-    job_file = os.path.join(job_dir, JOB_FILE)
-    result_file = os.path.join(job_dir, RESULT_FILE)
+    base_file = os.path.join(job_dir, get_base_file(JOB_TYPE_PYTHON))
+    job_file = os.path.join(job_dir, get_job_file(JOB_TYPE_PYTHON))
+    result_file = os.path.join(job_dir, get_result_file(JOB_TYPE_PYTHON))
     param_file = os.path.join(job_dir, PARAMS_FILE)
 
     yaml_dict = read_yaml(param_file)
@@ -221,12 +220,13 @@ def job_func(job):
             write_yaml(job, meta_file)
             return
 
-    # Create a parameterised version of the executable notebook
+    # Create a parameterised version of the executable script
     try:
-        job_notebook = parameterize_jupyter_notebook(
-            event[EVENT_RULE].recipe.recipe, yaml_dict
+        base_script = read_file_lines(base_file)
+        job_script = parameterize_python_script(
+            base_script, yaml_dict
         )
-        write_notebook(job_notebook, job_file)
+        write_file(lines_to_string(job_script), job_file)
     except Exception as e:
         job[JOB_STATUS] = STATUS_FAILED
         job[JOB_END_TIME] = datetime.now()
@@ -235,13 +235,33 @@ def job_func(job):
         write_yaml(job, meta_file)
         return
 
-    # Execute the parameterised notebook
+    # Execute the parameterised script
+    std_stdout = sys.stdout
+    std_stderr = sys.stderr
     try:
-        papermill.execute_notebook(job_file, result_file, {})
+        redirected_output = sys.stdout
+        redirected_error = sys.stderr
+
+        exec(open(job_file).read())        
+
+        write_file(f"""--STDOUT--
+            {redirected_output}
+            
+            --STDERR--
+            {redirected_error}
+            """, 
+            result_file)
+
     except Exception as e:
+        sys.stdout = std_stdout
+        sys.stderr = std_stderr
+
         job[JOB_STATUS] = STATUS_FAILED
         job[JOB_END_TIME] = datetime.now()
         msg = f"Result file {result_file} was not created successfully. {e}"
         job[JOB_ERROR] = msg
         write_yaml(job, meta_file)
         return
+
+    sys.stdout = std_stdout
+    sys.stderr = std_stderr

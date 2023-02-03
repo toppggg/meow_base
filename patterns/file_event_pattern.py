@@ -23,8 +23,8 @@ from core.correctness.validation import check_type, valid_string, \
     setup_debugging
 from core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
     VALID_VARIABLE_NAME_CHARS, FILE_EVENTS, FILE_CREATE_EVENT, \
-    FILE_MODIFY_EVENT, FILE_MOVED_EVENT, DEBUG_INFO, EVENT_TYPE_WATCHDOG, \
-    WATCHDOG_BASE, FILE_RETROACTIVE_EVENT, WATCHDOG_HASH, SHA256
+    FILE_MODIFY_EVENT, FILE_MOVED_EVENT, DEBUG_INFO, \
+    FILE_RETROACTIVE_EVENT, SHA256
 from core.functionality import print_debug, create_watchdog_event, \
     get_file_hash, create_fake_watchdog_event
 from core.meow import BasePattern, BaseMonitor, BaseRule, BaseRecipe, \

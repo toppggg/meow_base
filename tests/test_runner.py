@@ -6,7 +6,7 @@ import unittest
 from time import sleep
 
 from conductors import LocalPythonConductor
-from core.correctness.vars import RESULT_FILE
+from core.correctness.vars import get_result_file, JOB_TYPE_PAPERMILL
 from core.functionality import make_dir, read_notebook
 from core.meow import BaseMonitor, BaseHandler, BaseConductor
 from core.runner import MeowRunner
@@ -187,7 +187,8 @@ class MeowTests(unittest.TestCase):
         job_dir = os.path.join(TEST_JOB_OUTPUT, job_id)
         self.assertEqual(len(os.listdir(job_dir)), 5)
 
-        result = read_notebook(os.path.join(job_dir, RESULT_FILE))
+        result = read_notebook(
+            os.path.join(job_dir, get_result_file(JOB_TYPE_PAPERMILL)))
         self.assertIsNotNone(result)
 
         output_path = os.path.join(TEST_MONITOR_BASE, "output", "A.txt")
@@ -279,7 +280,8 @@ class MeowTests(unittest.TestCase):
         mid_job_dir = os.path.join(TEST_JOB_OUTPUT, job_id)
         self.assertEqual(len(os.listdir(mid_job_dir)), 5)
 
-        result = read_notebook(os.path.join(mid_job_dir, RESULT_FILE))
+        result = read_notebook(
+            os.path.join(mid_job_dir, get_result_file(JOB_TYPE_PAPERMILL)))
         self.assertIsNotNone(result)
 
         mid_output_path = os.path.join(TEST_MONITOR_BASE, "middle", "A.txt")
@@ -293,7 +295,8 @@ class MeowTests(unittest.TestCase):
         final_job_dir = os.path.join(TEST_JOB_OUTPUT, job_id)
         self.assertEqual(len(os.listdir(final_job_dir)), 5)
 
-        result = read_notebook(os.path.join(final_job_dir, RESULT_FILE))
+        result = read_notebook(os.path.join(final_job_dir, 
+            get_result_file(JOB_TYPE_PAPERMILL)))
         self.assertIsNotNone(result)
 
         final_output_path = os.path.join(TEST_MONITOR_BASE, "output", "A.txt")
@@ -305,8 +308,8 @@ class MeowTests(unittest.TestCase):
         self.assertEqual(data, 
             "Initial Data\nA line from Pattern 1\nA line from Pattern 2")
 
-    # TODO sweep tests
-    # TODO adding tests with numpy
+    # TODO sweep execution test
+    # TODO adding tests with numpy or other external dependency
     # TODO test getting job cannot handle
     # TODO test getting event cannot handle
     # TODO test with several matched monitors
