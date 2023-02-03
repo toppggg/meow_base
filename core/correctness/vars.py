@@ -113,6 +113,11 @@ PARAMS_FILE = "params.yml"
 JOB_FILE = "job.ipynb"
 RESULT_FILE = "result.ipynb"
 
+# Parameter sweep keys
+SWEEP_START = "start"
+SWEEP_STOP = "stop"
+SWEEP_JUMP = "jump"
+
 # debug printing levels
 DEBUG_ERROR = 1
 DEBUG_WARNING = 2

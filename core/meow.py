@@ -8,6 +8,7 @@ processing.
 Author(s): David Marchant
 """
 import inspect
+import itertools
 import sys
 
 from copy import deepcopy
@@ -15,7 +16,7 @@ from typing import Any, Union, Tuple
 
 from core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
     VALID_PATTERN_NAME_CHARS, VALID_RULE_NAME_CHARS, VALID_CHANNELS, \
-    get_drt_imp_msg
+    SWEEP_JUMP, SWEEP_START, SWEEP_STOP, get_drt_imp_msg
 from core.correctness.validation import valid_string, check_type, \
     check_implementation, valid_list, valid_dict
 from core.functionality import generate_id
@@ -86,14 +87,18 @@ class BasePattern:
     parameters:dict[str,Any]
     # Parameters showing the potential outputs of a recipe
     outputs:dict[str,Any]
+    # A collection of variables to be swept over for job scheduling
+    sweep:dict[str,Any]
+
     def __init__(self, name:str, recipe:str, parameters:dict[str,Any]={}, 
-            outputs:dict[str,Any]={}):
+            outputs:dict[str,Any]={}, sweep:dict[str,Any]={}):
         """BasePattern Constructor. This will check that any class inheriting 
         from it implements its validation functions. It will then call these on
         the input parameters."""
         check_implementation(type(self)._is_valid_recipe, BasePattern)
         check_implementation(type(self)._is_valid_parameters, BasePattern)
         check_implementation(type(self)._is_valid_output, BasePattern)
+        check_implementation(type(self)._is_valid_sweep, BasePattern)
         self._is_valid_name(name)
         self.name = name
         self._is_valid_recipe(recipe)
@@ -102,6 +107,8 @@ class BasePattern:
         self.parameters = parameters
         self._is_valid_output(outputs)
         self.outputs = outputs
+        self._is_valid_sweep(sweep)
+        self.sweep = sweep
 
     def __new__(cls, *args, **kwargs):
         """A check that this base class is not instantiated itself, only 
@@ -131,6 +138,57 @@ class BasePattern:
         """Validation check for 'outputs' variable from main constructor. Must 
         be implemented by any child class."""
         pass
+
+    def _is_valid_sweep(self, sweep:dict[str,Union[int,float,complex]])->None:
+        """Validation check for 'sweep' variable from main constructor. Must 
+        be implemented by any child class."""
+        check_type(sweep, dict)
+        if not sweep:
+            return
+        for _, v in sweep.items():
+            valid_dict(
+                v, str, Any, [
+                    SWEEP_START, SWEEP_STOP, SWEEP_JUMP
+                ], strict=True)
+
+            check_type(
+                v[SWEEP_START], expected_type=int, alt_types=[float, complex])
+            check_type(
+                v[SWEEP_STOP], expected_type=int, alt_types=[float, complex])
+            check_type(
+                v[SWEEP_JUMP], expected_type=int, alt_types=[float, complex])
+            # Try to check that this loop is not infinite
+            if v[SWEEP_JUMP] == 0:
+                raise ValueError(
+                    f"Cannot create sweep with a '{SWEEP_JUMP}' value of zero"
+                )
+            elif v[SWEEP_JUMP] > 0:
+                if not v[SWEEP_STOP] > v[SWEEP_START]:
+                    raise ValueError(
+                        f"Cannot create sweep with a positive '{SWEEP_JUMP}' "
+                        "value where the end point is smaller than the start."
+                    )
+            elif v[SWEEP_JUMP] < 0:
+                if not v[SWEEP_STOP] < v[SWEEP_START]:
+                    raise ValueError(
+                        f"Cannot create sweep with a negative '{SWEEP_JUMP}' "
+                        "value where the end point is smaller than the start."
+                    )
+
+    def expand_sweeps(self)->list[Tuple[str,Any]]:
+        """Function to get all combinations of sweep parameters"""
+        values_dict = {}
+        # get a collection of a individual sweep values
+        for var, val in self.sweep.items():
+            values_dict[var] = []
+            par_val = val[SWEEP_START]
+            while par_val <= val[SWEEP_STOP]:
+                values_dict[var].append((var, par_val))
+                par_val += val[SWEEP_JUMP]
+
+        # combine all combinations of sweep values
+        return list(itertools.product(
+            *[v for v in values_dict.values()]))
 
 
 class BaseRule:

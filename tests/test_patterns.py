@@ -6,10 +6,11 @@ import unittest
 from multiprocessing import Pipe
 
 from core.correctness.vars import FILE_CREATE_EVENT, EVENT_TYPE, \
-    EVENT_RULE, WATCHDOG_BASE, EVENT_TYPE_WATCHDOG, EVENT_PATH
+    EVENT_RULE, WATCHDOG_BASE, EVENT_TYPE_WATCHDOG, EVENT_PATH, SWEEP_START, \
+    SWEEP_JUMP, SWEEP_STOP
 from core.functionality import make_dir
 from patterns.file_event_pattern import FileEventPattern, WatchdogMonitor, \
-    _DEFAULT_MASK, SWEEP_START, SWEEP_STOP, SWEEP_JUMP
+    _DEFAULT_MASK
 from recipes import JupyterNotebookRecipe
 from shared import setup, teardown, BAREBONES_NOTEBOOK, TEST_MONITOR_BASE
 

@@ -22,7 +22,6 @@ from core.correctness.vars import VALID_VARIABLE_NAME_CHARS, PYTHON_FUNC, \
 from core.functionality import print_debug, create_job, replace_keywords, \
     make_dir, write_yaml, write_notebook
 from core.meow import BaseRecipe, BaseHandler
-from patterns.file_event_pattern import SWEEP_START, SWEEP_STOP, SWEEP_JUMP
 
 
 class PythonRecipe(BaseRecipe):
@@ -98,17 +97,7 @@ class PythonHandler(BaseHandler):
             self.setup_job(event, yaml_dict)
         else:
             # If parameter sweeps, then many jobs created
-            values_dict = {}
-            for var, val in rule.pattern.sweep.items():
-                values_dict[var] = []
-                par_val = val[SWEEP_START]
-                while par_val <= val[SWEEP_STOP]:
-                    values_dict[var].append((var, par_val))
-                    par_val += val[SWEEP_JUMP]
-
-            # combine all combinations of sweep values
-            values_list = list(itertools.product(
-                *[v for v in values_dict.values()]))
+            values_list = rule.pattern.expand_sweeps()
             for values in values_list:
                 for value in values:
                     yaml_dict[value[0]] = value[1]

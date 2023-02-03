@@ -9,13 +9,12 @@ from core.correctness.vars import EVENT_TYPE, WATCHDOG_BASE, EVENT_RULE, \
     EVENT_TYPE_WATCHDOG, EVENT_PATH, SHA256, WATCHDOG_HASH, JOB_ID, \
     JOB_TYPE_PYTHON, JOB_PARAMETERS, JOB_HASH, PYTHON_FUNC, \
     PYTHON_OUTPUT_DIR, PYTHON_EXECUTION_BASE, META_FILE, BASE_FILE, \
-    PARAMS_FILE, JOB_FILE, RESULT_FILE
+    PARAMS_FILE, JOB_FILE, RESULT_FILE, SWEEP_STOP, SWEEP_JUMP, SWEEP_START
 from core.correctness.validation import valid_job
 from core.functionality import get_file_hash, create_job, \
     create_watchdog_event, make_dir, write_yaml, write_notebook, read_yaml
 from core.meow import create_rules, create_rule
-from patterns.file_event_pattern import FileEventPattern, SWEEP_START, \
-    SWEEP_STOP, SWEEP_JUMP
+from patterns.file_event_pattern import FileEventPattern
 from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe, \
     PapermillHandler, job_func
 from rules.file_event_jupyter_notebook_rule import FileEventJupyterNotebookRule

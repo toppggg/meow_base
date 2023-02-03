@@ -65,7 +65,10 @@ class MeowTests(unittest.TestCase):
                 pass
             def _is_valid_output(self, outputs:Any)->None:
                 pass
-        FullPattern("name", "", "", "")
+            def _is_valid_sweep(self, 
+                    sweep:dict[str,Union[int,float,complex]])->None:
+                pass
+        FullPattern("name", "", "", "", "")
 
     # Test that BaseRecipe instantiation
     def testBaseRule(self)->None:
@@ -224,3 +227,5 @@ class MeowTests(unittest.TestCase):
                 pass
 
         FullTestConductor()
+
+    # TODO Test expansion of parameter sweeps

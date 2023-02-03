@@ -38,11 +38,6 @@ _DEFAULT_MASK = [
     FILE_RETROACTIVE_EVENT
 ]
 
-# Parameter sweep keys
-SWEEP_START = "start"
-SWEEP_STOP = "stop"
-SWEEP_JUMP = "jump"
-
 class FileEventPattern(BasePattern):
     # The path at which events will trigger this pattern
     triggering_path:str
@@ -50,25 +45,19 @@ class FileEventPattern(BasePattern):
     triggering_file:str
     # Which types of event the pattern responds to
     event_mask:list[str]
-    # TODO move me to BasePattern defintion
-    # A collection of variables to be swept over for job scheduling
-    sweep:dict[str,Any]
-
     def __init__(self, name:str, triggering_path:str, recipe:str, 
             triggering_file:str, event_mask:list[str]=_DEFAULT_MASK, 
             parameters:dict[str,Any]={}, outputs:dict[str,Any]={}, 
             sweep:dict[str,Any]={}):
         """FileEventPattern Constructor. This is used to match against file 
         system events, as caught by the python watchdog module."""
-        super().__init__(name, recipe, parameters, outputs)
+        super().__init__(name, recipe, parameters, outputs, sweep)
         self._is_valid_triggering_path(triggering_path)
         self.triggering_path = triggering_path
         self._is_valid_triggering_file(triggering_file)
         self.triggering_file = triggering_file
         self._is_valid_event_mask(event_mask)
         self.event_mask = event_mask
-        self._is_valid_sweep(sweep)
-        self.sweep = sweep
 
     def _is_valid_triggering_path(self, triggering_path:str)->None:
         """Validation check for 'triggering_path' variable from main 
@@ -112,40 +101,9 @@ class FileEventPattern(BasePattern):
                 raise ValueError(f"Invalid event mask '{mask}'. Valid are: "
                     f"{FILE_EVENTS}")
 
-    def _is_valid_sweep(self, sweep)->None:
+    def _is_valid_sweep(self, sweep: dict[str,Union[int,float,complex]]) -> None:
         """Validation check for 'sweep' variable from main constructor."""
-        check_type(sweep, dict)
-        if not sweep:
-            return
-        for k, v in sweep.items():
-            valid_dict(
-                v, str, Any, [
-                    SWEEP_START, SWEEP_STOP, SWEEP_JUMP
-                ], strict=True)
-
-            check_type(
-                v[SWEEP_START], expected_type=int, alt_types=[float, complex])
-            check_type(
-                v[SWEEP_STOP], expected_type=int, alt_types=[float, complex])
-            check_type(
-                v[SWEEP_JUMP], expected_type=int, alt_types=[float, complex])
-            # Try to check that this loop is not infinite
-            if v[SWEEP_JUMP] == 0:
-                raise ValueError(
-                    f"Cannot create sweep with a '{SWEEP_JUMP}' value of zero"
-                )
-            elif v[SWEEP_JUMP] > 0:
-                if not v[SWEEP_STOP] > v[SWEEP_START]:
-                    raise ValueError(
-                        f"Cannot create sweep with a positive '{SWEEP_JUMP}' "
-                        "value where the end point is smaller than the start."
-                    )
-            elif v[SWEEP_JUMP] < 0:
-                if not v[SWEEP_STOP] < v[SWEEP_START]:
-                    raise ValueError(
-                        f"Cannot create sweep with a negative '{SWEEP_JUMP}' "
-                        "value where the end point is smaller than the start."
-                    )
+        return super()._is_valid_sweep(sweep)
 
 
 class WatchdogMonitor(BaseMonitor):

@@ -19,11 +19,11 @@ from core.correctness.vars import VALID_VARIABLE_NAME_CHARS, PYTHON_FUNC, \
     DEBUG_INFO, EVENT_TYPE_WATCHDOG, JOB_HASH, PYTHON_EXECUTION_BASE, \
     EVENT_PATH, JOB_TYPE_PYTHON, WATCHDOG_HASH, JOB_PARAMETERS, \
     PYTHON_OUTPUT_DIR, JOB_ID, WATCHDOG_BASE, META_FILE, BASE_FILE, \
-    PARAMS_FILE, JOB_STATUS, STATUS_QUEUED, EVENT_RULE, EVENT_TYPE, EVENT_RULE
+    PARAMS_FILE, JOB_STATUS, STATUS_QUEUED, EVENT_RULE, EVENT_TYPE, \
+    EVENT_RULE
 from core.functionality import print_debug, create_job, replace_keywords, \
     make_dir, write_yaml, write_notebook
 from core.meow import BaseRecipe, BaseHandler
-from patterns.file_event_pattern import SWEEP_START, SWEEP_STOP, SWEEP_JUMP
 
 
 class JupyterNotebookRecipe(BaseRecipe):
@@ -107,17 +107,7 @@ class PapermillHandler(BaseHandler):
             self.setup_job(event, yaml_dict)
         else:
             # If parameter sweeps, then many jobs created
-            values_dict = {}
-            for var, val in rule.pattern.sweep.items():
-                values_dict[var] = []
-                par_val = val[SWEEP_START]
-                while par_val <= val[SWEEP_STOP]:
-                    values_dict[var].append((var, par_val))
-                    par_val += val[SWEEP_JUMP]
-
-            # combine all combinations of sweep values
-            values_list = list(itertools.product(
-                *[v for v in values_dict.values()]))
+            values_list = rule.pattern.expand_sweeps()
             for values in values_list:
                 for value in values:
                     yaml_dict[value[0]] = value[1]
@@ -135,7 +125,6 @@ class PapermillHandler(BaseHandler):
         except Exception as e:
             pass
         return False, str(e)
-
 
     def _is_valid_handler_base(self, handler_base)->None:
         """Validation check for 'handler_base' variable from main 
