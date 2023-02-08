@@ -409,13 +409,19 @@ class MeowTests(unittest.TestCase):
     # Test meow python job chaining within runner
     def testMeowRunnerLinkedPythonExecution(self)->None:
         pattern_one = FileEventPattern(
-            "pattern_one", os.path.join("start", "A.txt"), "recipe_one", "infile", 
+            "pattern_one", 
+            os.path.join("start", "A.txt"), 
+            "recipe_one", 
+            "infile", 
             parameters={
                 "num":250,
                 "outfile":os.path.join("{VGRID}", "middle", "{FILENAME}")
             })
         pattern_two = FileEventPattern(
-            "pattern_two", os.path.join("middle", "A.txt"), "recipe_one", "infile", 
+            "pattern_two", 
+            os.path.join("middle", "A.txt"), 
+            "recipe_one", 
+            "infile", 
             parameters={
                 "num":40,
                 "outfile":os.path.join("{VGRID}", "output", "{FILENAME}")
