@@ -76,38 +76,24 @@ class CorrectnessTests(unittest.TestCase):
         pipe_one_writer.send(1)
         readables = wait(inputs)
 
-#        raise EnvironmentError
-
-#        if pipe_one_reader.poll(3):
-#            print(pipe_one_reader.recv())
-
         self.assertIn(pipe_one_reader, readables)
-        print("assert1")
         self.assertEqual(len(readables), 1)
-        print("assert2")
         msg = readables[0].recv()
         self.assertEqual(msg, 1)
-        print("assert3")
 
         pipe_one_writer.send(1)
         pipe_two_writer.send(2)
         readables = wait(inputs)
 
         self.assertIn(pipe_one_reader, readables)
-        print("assert4")
-        self.assertIn(pipe_two_reader, readables)
-        print("assert5")
         self.assertEqual(len(readables), 2)
-        print("assert6")
         for readable in readables:
             if readable == pipe_one_reader:
                 msg = readable.recv()        
                 self.assertEqual(msg, 1)
-                print("assertloop if")
             elif readable == pipe_two_reader:
                 msg = readable.recv()        
                 self.assertEqual(msg, 2)
-                print("assert loop elif")
 
     # Test that wait can wait on multiple queues
     def testWaitQueues(self)->None:
