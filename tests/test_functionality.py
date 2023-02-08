@@ -86,6 +86,7 @@ class CorrectnessTests(unittest.TestCase):
         readables = wait(inputs)
 
         self.assertIn(pipe_one_reader, readables)
+        self.assertIn(pipe_two_reader, readables)
         self.assertEqual(len(readables), 2)
         for readable in readables:
             if readable == pipe_one_reader:
