@@ -8,7 +8,7 @@ import yaml
 
 from datetime import datetime
 
-from multiprocessing.connection import Connection, wait as multi_wait
+from multiprocessing.connection import Connection, PipeConnection, wait as multi_wait
 from multiprocessing.queues import Queue
 from papermill.translators import papermill_translators
 from typing import Any
@@ -49,11 +49,12 @@ def generate_id(prefix:str="", length:int=16, existing_ids:list[str]=[],
 
 def wait(inputs:list[VALID_CHANNELS])->list[VALID_CHANNELS]:
     all_connections = [i for i in inputs if type(i) is Connection] \
+        + [i for i in inputs if type(i) is PipeConnection] \
         + [i._reader for i in inputs if type(i) is Queue]
-
     ready = multi_wait(all_connections)
     ready_inputs = [i for i in inputs if \
         (type(i) is Connection and i in ready) \
+        or (type(i) is PipeConnection and i in ready) \
         or (type(i) is Queue and i._reader in ready)]
     return ready_inputs
 
