@@ -20,9 +20,11 @@ from core.functionality import read_yaml, write_yaml
 from core.meow import BaseConductor
 
 
-# TODO add comments to me
 class LocalPythonConductor(BaseConductor):
     def __init__(self)->None:
+        """LocalPythonConductor Constructor. This should be used to execute 
+        Python jobs, and will then pass any internal job runner files to the 
+        output directory."""
         super().__init__()
 
     def valid_execute_criteria(self, job:Dict[str,Any])->Tuple[bool,str]:
@@ -37,6 +39,11 @@ class LocalPythonConductor(BaseConductor):
         return False, str(e)
 
     def execute(self, job:Dict[str,Any])->None:
+        """Function to actually execute a Python job. This will read job 
+        defintions from its meta file, update the meta file and attempt to 
+        execute. Some unspecific feedback will be given on execution failure, 
+        but depending on what it is it may be up to the job itself to provide 
+        more detailed feedback."""
         valid_job(job)
 
         job_dir = os.path.join(job[PYTHON_EXECUTION_BASE], job[JOB_ID])
@@ -64,11 +71,14 @@ class LocalPythonConductor(BaseConductor):
             # get up to date job data
             job = read_yaml(meta_file)
 
-            # Update the status file with the error status
-            job[JOB_STATUS] = STATUS_FAILED
-            job[JOB_END_TIME] = datetime.now()
-            msg = f"Job execution failed. {e}"
-            job[JOB_ERROR] = msg
+            # Update the status file with the error status. Don't overwrite any
+            # more specific error messages already created
+            if JOB_STATUS not in job:
+                job[JOB_STATUS] = STATUS_FAILED
+            if JOB_END_TIME not in job:
+                job[JOB_END_TIME] = datetime.now()
+            if JOB_ERROR not in job:
+                job[JOB_ERROR] = f"Job execution failed. {e}"
             write_yaml(job, meta_file)
 
         # Move the contents of the execution directory to the final output 
