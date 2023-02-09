@@ -2,13 +2,15 @@
 import os
 import unittest
 
+from datetime import datetime
 from typing import Dict
 
 from core.correctness.vars import JOB_TYPE_PYTHON, SHA256, JOB_PARAMETERS, \
-    JOB_HASH, PYTHON_FUNC, JOB_ID, BACKUP_JOB_ERROR_FILE, \
-    META_FILE, PARAMS_FILE, JOB_STATUS, JOB_ERROR, \
-    STATUS_DONE, JOB_TYPE_PAPERMILL, get_base_file, get_result_file, \
-    get_job_file
+    JOB_HASH, PYTHON_FUNC, JOB_ID, BACKUP_JOB_ERROR_FILE, JOB_EVENT, \
+    META_FILE, PARAMS_FILE, JOB_STATUS, JOB_ERROR, JOB_TYPE, JOB_PATTERN, \
+    STATUS_DONE, JOB_TYPE_PAPERMILL, JOB_RECIPE, JOB_RULE, JOB_CREATE_TIME, \
+    JOB_REQUIREMENTS, EVENT_PATH, EVENT_RULE, EVENT_TYPE, \
+    EVENT_TYPE_WATCHDOG, get_base_file, get_result_file, get_job_file
 from core.functionality import get_file_hash, create_watchdog_event, \
     create_job, make_dir, write_yaml, write_notebook, read_yaml, write_file, \
     lines_to_string, read_file
@@ -19,7 +21,8 @@ from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe, \
     papermill_job_func
 from recipes.python_recipe import PythonRecipe, python_job_func
 from shared import setup, teardown, TEST_MONITOR_BASE, APPENDING_NOTEBOOK, \
-    TEST_JOB_OUTPUT, TEST_JOB_QUEUE, COMPLETE_PYTHON_SCRIPT
+    TEST_JOB_OUTPUT, TEST_JOB_QUEUE, COMPLETE_PYTHON_SCRIPT, \
+    BAREBONES_PYTHON_SCRIPT, BAREBONES_NOTEBOOK
 
 
 def failing_func():
@@ -622,6 +625,96 @@ class MeowTests(unittest.TestCase):
             "Recieved incorrectly setup job.\n\n\"Job require key "
             "'job_type'\"")
 
+   # Test execute criteria function
+    def testValidExecuteCriteria(self)->None:
+        lpc = LocalPythonConductor()
+
+        pattern_python = FileEventPattern(
+            "pattern_python", "A", "recipe_python", "file_one")
+        recipe_python = PythonRecipe(
+            "recipe_python", BAREBONES_PYTHON_SCRIPT
+        )
+
+        pattern_papermill = FileEventPattern(
+            "pattern_papermill", "A", "recipe_papermill", "file_one")
+        recipe_papermill = JupyterNotebookRecipe(
+            "recipe_papermill", BAREBONES_NOTEBOOK
+        )
+
+        python_rule = create_rule(pattern_python, recipe_python)
+        papermill_rule = create_rule(pattern_papermill, recipe_papermill)
+
+        status, _ = lpc.valid_execute_criteria({})
+        self.assertFalse(status)
+
+        status, _ = lpc.valid_execute_criteria("")
+        self.assertFalse(status)
+
+        status, _ = lpc.valid_execute_criteria({
+            JOB_ID: "path",
+            JOB_EVENT: "type",
+            JOB_TYPE: "rule",
+            JOB_PATTERN: "pattern",
+            JOB_RECIPE: "recipe",
+            JOB_RULE: "rule",
+            JOB_STATUS: "status",
+            JOB_CREATE_TIME: "create",
+            JOB_REQUIREMENTS: "requirements"
+        })
+        self.assertFalse(status)
+
+        status, s = lpc.valid_execute_criteria({
+            JOB_ID: "path",
+            JOB_EVENT: {
+                EVENT_PATH: "path",
+                EVENT_TYPE: EVENT_TYPE_WATCHDOG,
+                EVENT_RULE: python_rule
+            },
+            JOB_TYPE: "type",
+            JOB_PATTERN: python_rule.pattern.name,
+            JOB_RECIPE: python_rule.recipe.name,
+            JOB_RULE: python_rule.name,
+            JOB_STATUS: "status",
+            JOB_CREATE_TIME: datetime.now(),
+            JOB_REQUIREMENTS: python_rule.recipe.requirements
+        })
+        print(s)
+        self.assertFalse(status)
+
+        status, s = lpc.valid_execute_criteria({
+            JOB_ID: "path",
+            JOB_EVENT: {
+                EVENT_PATH: "path",
+                EVENT_TYPE: EVENT_TYPE_WATCHDOG,
+                EVENT_RULE: python_rule
+            },
+            JOB_TYPE: JOB_TYPE_PYTHON,
+            JOB_PATTERN: python_rule.pattern.name,
+            JOB_RECIPE: python_rule.recipe.name,
+            JOB_RULE: python_rule.name,
+            JOB_STATUS: "status",
+            JOB_CREATE_TIME: datetime.now(),
+            JOB_REQUIREMENTS: python_rule.recipe.requirements
+        })
+        print(s)
+        self.assertTrue(status)
+
+        status, s = lpc.valid_execute_criteria({
+            JOB_ID: "path",
+            JOB_EVENT: {
+                EVENT_PATH: "path",
+                EVENT_TYPE: EVENT_TYPE_WATCHDOG,
+                EVENT_RULE: papermill_rule
+            },
+            JOB_TYPE: JOB_TYPE_PYTHON,
+            JOB_PATTERN: papermill_rule.pattern.name,
+            JOB_RECIPE: papermill_rule.recipe.name,
+            JOB_RULE: papermill_rule.name,
+            JOB_STATUS: "status",
+            JOB_CREATE_TIME: datetime.now(),
+            JOB_REQUIREMENTS: papermill_rule.recipe.requirements
+        })
+        print(s)
+        self.assertTrue(status)
+
     # TODO test job status funcs
-    # TODO test mangled status file reads
-    # TODO test missing input files

@@ -38,11 +38,15 @@ class LocalPythonConductor(BaseConductor):
         process it or not. This conductor will accept any Python job type"""
         try:
             valid_job(job)
-            if job[JOB_TYPE] in [JOB_TYPE_PYTHON, JOB_TYPE_PAPERMILL]:
+            msg = ""
+            if job[JOB_TYPE] not in [JOB_TYPE_PYTHON, JOB_TYPE_PAPERMILL]:
+                msg = "Job type was not in python or papermill. "
+            if msg:
+                return False, msg
+            else:
                 return True, ""
         except Exception as e:
-            pass
-        return False, str(e)
+            return False, str(e)
 
     def execute(self, job_dir:str)->None:
         """Function to actually execute a Python job. This will read job 

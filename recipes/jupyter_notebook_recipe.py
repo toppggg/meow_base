@@ -112,12 +112,17 @@ class PapermillHandler(BaseHandler):
         jupyter notebook recipes."""
         try:
             valid_event(event)
-            if type(event[EVENT_RULE].recipe) == JupyterNotebookRecipe \
-                    and event[EVENT_TYPE] == EVENT_TYPE_WATCHDOG:
+            msg = ""
+            if type(event[EVENT_RULE].recipe) != JupyterNotebookRecipe: 
+                msg = "Recipe is not a JupyterNotebookRecipe. "
+            if event[EVENT_TYPE] != EVENT_TYPE_WATCHDOG:
+                msg += f"Event type is not {EVENT_TYPE_WATCHDOG}."
+            if msg:
+                return False, msg
+            else:
                 return True, ""
         except Exception as e:
-            pass
-        return False, str(e)
+            return False, str(e)
 
     def _is_valid_job_queue_dir(self, job_queue_dir)->None:
         """Validation check for 'job_queue_dir' variable from main 
