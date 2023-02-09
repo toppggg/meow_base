@@ -17,7 +17,7 @@ from core.correctness.vars import VALID_VARIABLE_NAME_CHARS, PYTHON_FUNC, \
     EVENT_RULE, EVENT_PATH, JOB_TYPE_PYTHON, WATCHDOG_HASH, JOB_PARAMETERS, \
     PYTHON_OUTPUT_DIR, JOB_ID, WATCHDOG_BASE, META_FILE, \
     PARAMS_FILE, JOB_STATUS, STATUS_QUEUED, EVENT_TYPE, EVENT_RULE, \
-    get_job_file, get_base_file, get_result_file
+    get_base_file
 from core.functionality import print_debug, create_job, replace_keywords, \
     make_dir, write_yaml, write_file, lines_to_string, read_file_lines
 from core.meow import BaseRecipe, BaseHandler

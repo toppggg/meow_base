@@ -53,11 +53,6 @@ def check_type(variable:Any, expected_type:Type, alt_types:List[Type]=[],
     if get_origin(expected_type) is Union:
         type_list = list(get_args(expected_type))
     type_list = type_list + alt_types
-#    # If we have any types from typing, then update to allow checks against 
-#    # their base types too
-#    for t in type_list:
-#        if get_origin(t):
-#            type_list.append(get_origin(t))
 
     # Only accept None if explicitly allowed
     if variable is None:
