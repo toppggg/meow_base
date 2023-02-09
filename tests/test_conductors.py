@@ -5,13 +5,13 @@ import unittest
 from typing import Dict
 
 from core.correctness.vars import JOB_TYPE_PYTHON, SHA256, JOB_PARAMETERS, \
-    JOB_HASH, PYTHON_FUNC, JOB_ID, \
+    JOB_HASH, PYTHON_FUNC, JOB_ID, BACKUP_JOB_ERROR_FILE, \
     META_FILE, PARAMS_FILE, JOB_STATUS, JOB_ERROR, \
     STATUS_DONE, JOB_TYPE_PAPERMILL, get_base_file, get_result_file, \
     get_job_file
 from core.functionality import get_file_hash, create_watchdog_event, \
     create_job, make_dir, write_yaml, write_notebook, read_yaml, write_file, \
-    lines_to_string
+    lines_to_string, read_file
 from core.meow import create_rule
 from conductors import LocalPythonConductor
 from patterns import FileEventPattern
@@ -391,8 +391,20 @@ class MeowTests(unittest.TestCase):
         job_dir = os.path.join(TEST_JOB_QUEUE, job_dict[JOB_ID])
         make_dir(job_dir)
 
-        with self.assertRaises(FileNotFoundError):
-            lpc.execute(job_dir)
+        lpc.execute(job_dir)
+
+        output_dir = os.path.join(TEST_JOB_OUTPUT, job_dict[JOB_ID])
+
+        self.assertFalse(os.path.exists(job_dir))
+        self.assertTrue(os.path.exists(output_dir))
+
+        error_file = os.path.join(output_dir, BACKUP_JOB_ERROR_FILE)
+        self.assertTrue(os.path.exists(error_file))
+
+        error = read_file(error_file)
+        self.assertEqual(error, 
+            "Recieved incorrectly setup job.\n\n[Errno 2] No such file or "
+            f"directory: 'test_job_queue_dir/{job_dict[JOB_ID]}/job.yml'")
 
     # Test LocalPythonConductor does not execute jobs with bad functions
     def testLocalPythonConductorBadFunc(self)->None:
@@ -465,6 +477,150 @@ class MeowTests(unittest.TestCase):
         job = read_yaml(meta_path)
         self.assertIsInstance(job, dict)
         self.assertIn(JOB_ERROR, job)
+
+    # Test LocalPythonConductor does not execute jobs with invalid metafile
+    def testLocalPythonConductorInvalidMetafile(self)->None:
+        lpc = LocalPythonConductor(
+            job_queue_dir=TEST_JOB_QUEUE,
+            job_output_dir=TEST_JOB_OUTPUT
+        )
+
+        file_path = os.path.join(TEST_MONITOR_BASE, "test")
+        result_path = os.path.join(TEST_MONITOR_BASE, "output", "test")
+
+        with open(file_path, "w") as f:
+            f.write("Data")
+
+        file_hash = get_file_hash(file_path, SHA256)
+
+        pattern = FileEventPattern(
+            "pattern", 
+            file_path, 
+            "recipe_one", 
+            "infile", 
+            parameters={
+                "extra":"A line from a test Pattern",
+                "outfile":result_path
+            })
+        recipe = JupyterNotebookRecipe(
+            "recipe_one", APPENDING_NOTEBOOK)
+
+        rule = create_rule(pattern, recipe)
+
+        job_dict = create_job(
+            JOB_TYPE_PAPERMILL,
+            create_watchdog_event(
+                file_path,
+                rule,
+                TEST_MONITOR_BASE,
+                file_hash
+            ),
+            extras={
+                JOB_PARAMETERS:{
+                    "extra":"extra",
+                    "infile":file_path,
+                    "outfile":result_path
+                },
+                JOB_HASH: file_hash,
+                PYTHON_FUNC:failing_func,
+            }
+        )
+
+        job_dir = os.path.join(TEST_JOB_QUEUE, job_dict[JOB_ID])
+        make_dir(job_dir)
+
+        meta_path = os.path.join(job_dir, META_FILE)
+        write_file("This is not a metafile dict", meta_path)
+
+        lpc.execute(job_dir)
+
+        output_dir = os.path.join(TEST_JOB_OUTPUT, job_dict[JOB_ID])
+
+        self.assertFalse(os.path.exists(job_dir))
+        self.assertTrue(os.path.exists(output_dir))
+
+        error_file = os.path.join(output_dir, BACKUP_JOB_ERROR_FILE)
+        self.assertTrue(os.path.exists(error_file))
+
+        error = read_file(error_file)
+        self.assertEqual(error, 
+            "Recieved incorrectly setup job.\n\nExpected type(s) are "
+            "'[typing.Dict]', got <class 'str'>")
+
+    # Test LocalPythonConductor does not execute jobs with mangled metafile
+    def testLocalPythonConductorMangledMetafile(self)->None:
+        lpc = LocalPythonConductor(
+            job_queue_dir=TEST_JOB_QUEUE,
+            job_output_dir=TEST_JOB_OUTPUT
+        )
+
+        file_path = os.path.join(TEST_MONITOR_BASE, "test")
+        result_path = os.path.join(TEST_MONITOR_BASE, "output", "test")
+
+        with open(file_path, "w") as f:
+            f.write("Data")
+
+        file_hash = get_file_hash(file_path, SHA256)
+
+        pattern = FileEventPattern(
+            "pattern", 
+            file_path, 
+            "recipe_one", 
+            "infile", 
+            parameters={
+                "extra":"A line from a test Pattern",
+                "outfile":result_path
+            })
+        recipe = JupyterNotebookRecipe(
+            "recipe_one", APPENDING_NOTEBOOK)
+
+        rule = create_rule(pattern, recipe)
+
+        job_dict = create_job(
+            JOB_TYPE_PAPERMILL,
+            create_watchdog_event(
+                file_path,
+                rule,
+                TEST_MONITOR_BASE,
+                file_hash
+            ),
+            extras={
+                JOB_PARAMETERS:{
+                    "extra":"extra",
+                    "infile":file_path,
+                    "outfile":result_path
+                },
+                JOB_HASH: file_hash,
+                PYTHON_FUNC:failing_func,
+            }
+        )
+
+        job_dir = os.path.join(TEST_JOB_QUEUE, job_dict[JOB_ID])
+        make_dir(job_dir)
+
+        meta_path = os.path.join(job_dir, META_FILE)
+        write_yaml({
+            "This": "is",
+            "a": "dictionary",
+            "but": "not",
+            "valid": "job",
+            "definitons": "file"
+        }, meta_path)
+
+        lpc.execute(job_dir)
+
+        output_dir = os.path.join(TEST_JOB_OUTPUT, job_dict[JOB_ID])
+
+        self.assertFalse(os.path.exists(job_dir))
+        self.assertTrue(os.path.exists(output_dir))
+
+        error_file = os.path.join(output_dir, BACKUP_JOB_ERROR_FILE)
+        self.assertTrue(os.path.exists(error_file))
+
+        error = read_file(error_file)
+        self.assertEqual(error, 
+            "Recieved incorrectly setup job.\n\n\"Job require key "
+            "'job_type'\"")
 
     # TODO test job status funcs
     # TODO test mangled status file reads

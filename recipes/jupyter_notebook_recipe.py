@@ -191,7 +191,6 @@ def papermill_job_func(job_dir):
 
     # Identify job files
     meta_file = os.path.join(job_dir, META_FILE)
-    # TODO fix these paths so they are dynamic
     base_file = os.path.join(job_dir, get_base_file(JOB_TYPE_PAPERMILL))
     job_file = os.path.join(job_dir, get_job_file(JOB_TYPE_PAPERMILL))
     result_file = os.path.join(job_dir, get_result_file(JOB_TYPE_PAPERMILL))
