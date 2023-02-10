@@ -14,10 +14,12 @@ from multiprocessing import Pipe
 from random import randrange
 from typing import Any, Union, Dict, List
 
+from core.base_conductor import BaseConductor
+from core.base_handler import BaseHandler
+from core.base_monitor import BaseMonitor
 from core.correctness.vars import DEBUG_WARNING, DEBUG_INFO, EVENT_TYPE, \
     VALID_CHANNELS, META_FILE, DEFAULT_JOB_OUTPUT_DIR, DEFAULT_JOB_QUEUE_DIR
 from core.correctness.validation import check_type, valid_list, valid_dir_path
-from core.meow import BaseHandler, BaseMonitor, BaseConductor
 from functionality.debug import setup_debugging, print_debug
 from functionality.file_io import make_dir, read_yaml
 from functionality.process_io import wait

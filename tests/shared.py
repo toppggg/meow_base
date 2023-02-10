@@ -7,13 +7,15 @@ import os
 
 from core.correctness.vars import DEFAULT_JOB_OUTPUT_DIR, DEFAULT_JOB_QUEUE_DIR
 from functionality.file_io import make_dir, rmtree
-
+from patterns import FileEventPattern
+from recipes import JupyterNotebookRecipe
 
 # testing 
 TEST_DIR = "test_files"
 TEST_MONITOR_BASE = "test_monitor_base"
 TEST_JOB_QUEUE = "test_job_queue_dir"
 TEST_JOB_OUTPUT = "test_job_output"
+
 
 def setup():
     make_dir(TEST_DIR, ensure_clean=True)
@@ -302,3 +304,13 @@ ADDING_NOTEBOOK = {
  "nbformat": 4,
  "nbformat_minor": 4
 }
+
+valid_pattern_one = FileEventPattern(
+    "pattern_one", "path_one", "recipe_one", "file_one")
+valid_pattern_two = FileEventPattern(
+    "pattern_two", "path_two", "recipe_two", "file_two")
+
+valid_recipe_one = JupyterNotebookRecipe(
+    "recipe_one", BAREBONES_NOTEBOOK)
+valid_recipe_two = JupyterNotebookRecipe(
+    "recipe_two", BAREBONES_NOTEBOOK)

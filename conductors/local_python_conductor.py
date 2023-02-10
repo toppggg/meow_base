@@ -11,12 +11,12 @@ import shutil
 from datetime import datetime
 from typing import Any, Tuple, Dict
 
+from core.base_conductor import BaseConductor
 from core.correctness.vars import JOB_TYPE_PYTHON, PYTHON_FUNC, JOB_STATUS, \
     STATUS_RUNNING, JOB_START_TIME, META_FILE, BACKUP_JOB_ERROR_FILE, \
     STATUS_DONE, JOB_END_TIME, STATUS_FAILED, JOB_ERROR, \
     JOB_TYPE, JOB_TYPE_PAPERMILL, DEFAULT_JOB_QUEUE_DIR, DEFAULT_JOB_OUTPUT_DIR
 from core.correctness.validation import valid_job, valid_dir_path
-from core.meow import BaseConductor
 from functionality.file_io import make_dir, read_yaml, write_file, write_yaml
 
 class LocalPythonConductor(BaseConductor):

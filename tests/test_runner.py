@@ -5,10 +5,12 @@ import unittest
  
 from time import sleep
 
+from core.base_conductor import BaseConductor
+from core.base_handler import BaseHandler
+from core.base_monitor import BaseMonitor
 from conductors import LocalPythonConductor
 from core.correctness.vars import get_result_file, \
     JOB_TYPE_PAPERMILL, JOB_ERROR, META_FILE, JOB_TYPE_PYTHON, JOB_CREATE_TIME
-from core.meow import BaseMonitor, BaseHandler, BaseConductor
 from core.runner import MeowRunner
 from functionality.file_io import make_dir, read_file, read_notebook, read_yaml
 from patterns.file_event_pattern import WatchdogMonitor, FileEventPattern

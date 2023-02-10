@@ -6,20 +6,21 @@ import os
 from datetime import datetime
 from multiprocessing import Pipe, Queue
 from time import sleep
+from typing import Dict
 
+from core.base_rule import BaseRule
 from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
     SHA256, EVENT_TYPE, EVENT_PATH, EVENT_TYPE_WATCHDOG, \
     WATCHDOG_BASE, WATCHDOG_HASH, EVENT_RULE, JOB_PARAMETERS, JOB_HASH, \
     PYTHON_FUNC, JOB_ID, JOB_EVENT, \
     JOB_TYPE, JOB_PATTERN, JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, \
     JOB_REQUIREMENTS, STATUS_QUEUED, JOB_TYPE_PAPERMILL
-from core.meow import create_rule
 from functionality.file_io import lines_to_string, make_dir, read_file, \
     read_file_lines, read_notebook, read_yaml, rmtree, write_file, \
     write_notebook, write_yaml    
 from functionality.hashing import get_file_hash
-from functionality.meow import create_event, create_job, \
-    create_watchdog_event, replace_keywords, \
+from functionality.meow import create_event, create_job, create_rule, \
+    create_rules, create_watchdog_event, replace_keywords, \
     KEYWORD_BASE, KEYWORD_DIR, KEYWORD_EXTENSION, KEYWORD_FILENAME, \
     KEYWORD_JOB, KEYWORD_PATH, KEYWORD_PREFIX, KEYWORD_REL_DIR, \
     KEYWORD_REL_PATH
@@ -29,8 +30,9 @@ from functionality.parameterisation import parameterize_jupyter_notebook, \
 from functionality.process_io import wait
 from patterns import FileEventPattern
 from recipes import JupyterNotebookRecipe
-from shared import setup, teardown, TEST_MONITOR_BASE, COMPLETE_NOTEBOOK, \
-    APPENDING_NOTEBOOK, COMPLETE_PYTHON_SCRIPT
+from shared import setup, teardown, valid_recipe_two, valid_recipe_one, \
+    valid_pattern_one, valid_pattern_two, TEST_MONITOR_BASE, \
+    COMPLETE_NOTEBOOK, APPENDING_NOTEBOOK, COMPLETE_PYTHON_SCRIPT
 
 class DebugTests(unittest.TestCase):
     def setUp(self)->None:
@@ -552,6 +554,58 @@ class MeowTests(unittest.TestCase):
             "..", "..", "src", "dir-file.ext-file-base", "monitor", "dir-.ext-job_id--"))
         self.assertEqual(replaced["M"], "A") 
         self.assertEqual(replaced["N"], 1) 
+
+    # Test that create_rule creates a rule from pattern and recipe
+    def testCreateRule(self)->None:
+        rule = create_rule(valid_pattern_one, valid_recipe_one)
+
+        self.assertIsInstance(rule, BaseRule)
+
+        with self.assertRaises(ValueError):
+            rule = create_rule(valid_pattern_one, valid_recipe_two)
+    
+    # Test that create_rules creates nothing from nothing
+    def testCreateRulesMinimum(self)->None:
+        rules = create_rules({}, {})
+
+        self.assertEqual(len(rules), 0)
+
+    # Test that create_rules creates rules from patterns and recipes
+    def testCreateRulesPatternsAndRecipesDicts(self)->None:
+        patterns = {
+            valid_pattern_one.name: valid_pattern_one,
+            valid_pattern_two.name: valid_pattern_two
+        }
+        recipes = {
+            valid_recipe_one.name: valid_recipe_one,
+            valid_recipe_two.name: valid_recipe_two
+        }
+        rules = create_rules(patterns, recipes)
+        self.assertIsInstance(rules, Dict)
+        self.assertEqual(len(rules), 2)
+        for k, rule in rules.items():
+            self.assertIsInstance(k, str)
+            self.assertIsInstance(rule, BaseRule)
+            self.assertEqual(k, rule.name)
+
+    # Test that create_rules creates nothing from invalid pattern inputs
+    def testCreateRulesMisindexedPatterns(self)->None:
+        patterns = {
+            valid_pattern_two.name: valid_pattern_one,
+            valid_pattern_one.name: valid_pattern_two
+        }
+        with self.assertRaises(KeyError):
+            create_rules(patterns, {})
+
+    # Test that create_rules creates nothing from invalid recipe inputs
+    def testCreateRulesMisindexedRecipes(self)->None:
+        recipes = {
+            valid_recipe_two.name: valid_recipe_one,
+            valid_recipe_one.name: valid_recipe_two
+        }
+        with self.assertRaises(KeyError):
+            create_rules({}, recipes)
+
 
 
 class NamingTests(unittest.TestCase):

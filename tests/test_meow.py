@@ -3,24 +3,18 @@ import unittest
  
 from typing import Any, Union, Tuple, Dict
 
+from core.base_conductor import BaseConductor
+from core.base_handler import BaseHandler
+from core.base_monitor import BaseMonitor
+from core.base_pattern import BasePattern
+from core.base_recipe import BaseRecipe
+from core.base_rule import BaseRule
 from core.correctness.vars import SWEEP_STOP, SWEEP_JUMP, SWEEP_START
-from core.meow import BasePattern, BaseRecipe, BaseRule, BaseMonitor, \
-    BaseHandler, BaseConductor, create_rules, create_rule
 from patterns import FileEventPattern
-from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
-from shared import setup, teardown, BAREBONES_NOTEBOOK
-
-valid_pattern_one = FileEventPattern(
-    "pattern_one", "path_one", "recipe_one", "file_one")
-valid_pattern_two = FileEventPattern(
-    "pattern_two", "path_two", "recipe_two", "file_two")
-
-valid_recipe_one = JupyterNotebookRecipe(
-    "recipe_one", BAREBONES_NOTEBOOK)
-valid_recipe_two = JupyterNotebookRecipe(
-    "recipe_two", BAREBONES_NOTEBOOK)
+from shared import setup, teardown, valid_pattern_one, valid_recipe_one
 
 
+# TODO split me
 class MeowTests(unittest.TestCase):
     def setUp(self)->None:
         super().setUp()
@@ -161,57 +155,6 @@ class MeowTests(unittest.TestCase):
             def _is_valid_pattern(self, pattern:Any)->None:
                 pass
         FullRule("name", valid_pattern_one, valid_recipe_one)
-
-    # Test that create_rule creates a rule from pattern and recipe
-    def testCreateRule(self)->None:
-        rule = create_rule(valid_pattern_one, valid_recipe_one)
-
-        self.assertIsInstance(rule, BaseRule)
-
-        with self.assertRaises(ValueError):
-            rule = create_rule(valid_pattern_one, valid_recipe_two)
-    
-    # Test that create_rules creates nothing from nothing
-    def testCreateRulesMinimum(self)->None:
-        rules = create_rules({}, {})
-
-        self.assertEqual(len(rules), 0)
-
-    # Test that create_rules creates rules from patterns and recipes
-    def testCreateRulesPatternsAndRecipesDicts(self)->None:
-        patterns = {
-            valid_pattern_one.name: valid_pattern_one,
-            valid_pattern_two.name: valid_pattern_two
-        }
-        recipes = {
-            valid_recipe_one.name: valid_recipe_one,
-            valid_recipe_two.name: valid_recipe_two
-        }
-        rules = create_rules(patterns, recipes)
-        self.assertIsInstance(rules, Dict)
-        self.assertEqual(len(rules), 2)
-        for k, rule in rules.items():
-            self.assertIsInstance(k, str)
-            self.assertIsInstance(rule, BaseRule)
-            self.assertEqual(k, rule.name)
-
-    # Test that create_rules creates nothing from invalid pattern inputs
-    def testCreateRulesMisindexedPatterns(self)->None:
-        patterns = {
-            valid_pattern_two.name: valid_pattern_one,
-            valid_pattern_one.name: valid_pattern_two
-        }
-        with self.assertRaises(KeyError):
-            create_rules(patterns, {})
-
-    # Test that create_rules creates nothing from invalid recipe inputs
-    def testCreateRulesMisindexedRecipes(self)->None:
-        recipes = {
-            valid_recipe_two.name: valid_recipe_one,
-            valid_recipe_one.name: valid_recipe_two
-        }
-        with self.assertRaises(KeyError):
-            create_rules({}, recipes)
 
     # Test that BaseMonitor instantiation
     def testBaseMonitor(self)->None:

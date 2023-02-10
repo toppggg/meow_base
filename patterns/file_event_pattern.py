@@ -18,17 +18,19 @@ from typing import Any, Union, Dict, List
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 
+from core.base_recipe import BaseRecipe
+from core.base_monitor import BaseMonitor
+from core.base_pattern import BasePattern
+from core.base_rule import BaseRule
 from core.correctness.validation import check_type, valid_string, \
     valid_dict, valid_list, valid_path, valid_dir_path
 from core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
     VALID_VARIABLE_NAME_CHARS, FILE_EVENTS, FILE_CREATE_EVENT, \
     FILE_MODIFY_EVENT, FILE_MOVED_EVENT, DEBUG_INFO, \
     FILE_RETROACTIVE_EVENT, SHA256
-from core.meow import BasePattern, BaseMonitor, BaseRule, BaseRecipe, \
-    create_rule
 from functionality.debug import setup_debugging, print_debug
 from functionality.hashing import get_file_hash
-from functionality.meow import create_watchdog_event
+from functionality.meow import create_rule, create_watchdog_event
 
 # Events that are monitored by default
 _DEFAULT_MASK = [

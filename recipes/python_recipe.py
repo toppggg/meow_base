@@ -10,6 +10,8 @@ import sys
 
 from typing import Any, Tuple, Dict, List
 
+from core.base_recipe import BaseRecipe
+from core.base_handler import BaseHandler
 from core.correctness.validation import check_script, valid_string, \
     valid_dict, valid_event, valid_dir_path
 from core.correctness.vars import VALID_VARIABLE_NAME_CHARS, PYTHON_FUNC, \
@@ -18,7 +20,6 @@ from core.correctness.vars import VALID_VARIABLE_NAME_CHARS, PYTHON_FUNC, \
     JOB_ID, WATCHDOG_BASE, META_FILE, \
     PARAMS_FILE, JOB_STATUS, STATUS_QUEUED, EVENT_TYPE, EVENT_RULE, \
     get_base_file
-from core.meow import BaseRecipe, BaseHandler
 from functionality.debug import setup_debugging, print_debug
 from functionality.file_io import make_dir, read_file_lines, write_file, \
     write_yaml, lines_to_string
