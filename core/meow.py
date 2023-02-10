@@ -507,7 +507,9 @@ def create_rule(pattern:BasePattern, recipe:BaseRecipe,
     through the 'new_rules' variable."""
     check_type(pattern, BasePattern, hint="create_rule.pattern")
     check_type(recipe, BaseRecipe, hint="create_rule.recipe")
-    valid_list(new_rules, BaseRule, min_length=0)
+    valid_list(new_rules, BaseRule, min_length=0, hint="create_rule.new_rules")
+
+    print("passed initial check")
 
     # Imported here to avoid circular imports at top of file
     import rules
@@ -516,18 +518,24 @@ def create_rule(pattern:BasePattern, recipe:BaseRecipe,
         for r in inspect.getmembers(sys.modules["rules"], inspect.isclass) \
         if (issubclass(r[1], BaseRule))]}
 
+    print("got base rules")
+
     # Add in new rules
     for rule in new_rules:
         all_rules[(rule.pattern_type, rule.recipe_type)] = rule
 
+    print("got new rules")
+
     # Find appropriate rule type from pattern and recipe types
     key = (type(pattern).__name__, type(recipe).__name__)
+    print("got key")
     if (key) in all_rules:
         return all_rules[key](
             generate_rule_id(), 
             pattern, 
             recipe
         )
+    print("no key")
     # Raise error if not valid rule type can be found
     raise TypeError(f"No valid rule for Pattern '{pattern}' and Recipe "
         f"'{recipe}' could be found.")

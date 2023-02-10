@@ -23,7 +23,7 @@ def _generate_id(prefix:str="", length:int=16, existing_ids:List[str]=[],
         f"using values '{charset}' and length of '{length}'.")
 
 def generate_rule_id():
-    _generate_id(prefix="rule_")
+    return _generate_id(prefix="rule_")
 
 def generate_job_id():
-    _generate_id(prefix="job_")
+    return _generate_id(prefix="job_")

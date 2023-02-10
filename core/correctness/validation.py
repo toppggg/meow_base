@@ -178,10 +178,10 @@ def valid_dict(variable:Dict[Any, Any], key_type:Type, value_type:Type,
                     f"in dict '{variable}'")
 
 def valid_list(variable:List[Any], entry_type:Type,
-        alt_types:List[Type]=[], min_length:int=1)->None:
+        alt_types:List[Type]=[], min_length:int=1, hint:str="")->None:
     """Checks that a given list is valid. Value types are checked and a 
     ValueError or TypeError is raised if a problem is encountered."""
-    check_type(variable, List)
+    check_type(variable, List, hint=hint)
 
     # Check length meets minimum
     if len(variable) < min_length:
@@ -189,8 +189,12 @@ def valid_list(variable:List[Any], entry_type:Type,
             f"of length {min_length}")
     
     # Check type of each value
-    for entry in variable:
-        check_type(entry, entry_type, alt_types=alt_types)
+    for n, entry in enumerate(variable):
+        if hint:
+            check_type(entry, entry_type, alt_types=alt_types,
+                hint=f"{hint}[{n}]")
+        else:
+            check_type(entry, entry_type, alt_types=alt_types)
 
 def valid_path(variable:str, allow_base:bool=False, extension:str="", 
         min_length:int=1):
