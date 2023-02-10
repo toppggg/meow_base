@@ -678,7 +678,6 @@ class MeowTests(unittest.TestCase):
             JOB_CREATE_TIME: datetime.now(),
             JOB_REQUIREMENTS: python_rule.recipe.requirements
         })
-        print(s)
         self.assertFalse(status)
 
         status, s = lpc.valid_execute_criteria({
@@ -696,7 +695,6 @@ class MeowTests(unittest.TestCase):
             JOB_CREATE_TIME: datetime.now(),
             JOB_REQUIREMENTS: python_rule.recipe.requirements
         })
-        print(s)
         self.assertTrue(status)
 
         status, s = lpc.valid_execute_criteria({
@@ -714,7 +712,6 @@ class MeowTests(unittest.TestCase):
             JOB_CREATE_TIME: datetime.now(),
             JOB_REQUIREMENTS: papermill_rule.recipe.requirements
         })
-        print(s)
         self.assertTrue(status)
 
     # TODO test job status funcs
