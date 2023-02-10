@@ -13,15 +13,20 @@ from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
     PYTHON_FUNC, JOB_ID, JOB_EVENT, \
     JOB_TYPE, JOB_PATTERN, JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, \
     JOB_REQUIREMENTS, STATUS_QUEUED, JOB_TYPE_PAPERMILL
-from core.functionality import generate_id, wait, get_file_hash, rmtree, \
-    make_dir, parameterize_jupyter_notebook, create_event, create_job, \
-    replace_keywords, write_yaml, write_notebook, read_yaml, read_notebook, \
-    create_watchdog_event, lines_to_string, \
-    parameterize_python_script, write_file, read_file, read_file_lines, \
-    KEYWORD_PATH, KEYWORD_REL_PATH, KEYWORD_DIR, KEYWORD_REL_DIR, \
-    KEYWORD_FILENAME, KEYWORD_PREFIX, KEYWORD_BASE, KEYWORD_EXTENSION, \
-    KEYWORD_JOB
 from core.meow import create_rule
+from functionality.file_io import lines_to_string, make_dir, read_file, \
+    read_file_lines, read_notebook, read_yaml, rmtree, write_file, \
+    write_notebook, write_yaml    
+from functionality.hashing import get_file_hash
+from functionality.meow import create_event, create_job, \
+    create_watchdog_event, replace_keywords, \
+    KEYWORD_BASE, KEYWORD_DIR, KEYWORD_EXTENSION, KEYWORD_FILENAME, \
+    KEYWORD_JOB, KEYWORD_PATH, KEYWORD_PREFIX, KEYWORD_REL_DIR, \
+    KEYWORD_REL_PATH
+from functionality.naming import generate_id
+from functionality.parameterisation import parameterize_jupyter_notebook, \
+    parameterize_python_script
+from functionality.process_io import wait
 from patterns import FileEventPattern
 from recipes import JupyterNotebookRecipe
 from shared import setup, teardown, TEST_MONITOR_BASE, COMPLETE_NOTEBOOK, \

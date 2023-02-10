@@ -19,7 +19,7 @@ from core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
     SWEEP_JUMP, SWEEP_START, SWEEP_STOP, get_drt_imp_msg
 from core.correctness.validation import valid_string, check_type, \
     check_implementation, valid_list, valid_dict
-from core.functionality import generate_id
+from functionality.naming import generate_id
 
 
 class BaseRecipe:

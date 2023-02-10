@@ -8,7 +8,7 @@ Author(s): David Marchant
 from datetime import datetime
 from inspect import signature
 from os.path import sep, exists, isfile, isdir, dirname
-from typing import Any, _SpecialForm, Union, Tuple, Type, Dict, List, \
+from typing import Any, _SpecialForm, Union, Type, Dict, List, \
     get_origin, get_args
 
 from core.correctness.vars import VALID_PATH_CHARS, get_not_imp_msg, \
@@ -247,22 +247,6 @@ def valid_non_existing_path(variable:str, allow_base:bool=False):
     if dirname(variable) and not exists(dirname(variable)):
         raise ValueError(
             f"Route to requested path '{variable}' does not exist.")
-
-def setup_debugging(print:Any=None, logging:int=0)->Tuple[Any,int]:
-    """Create a place for debug messages to be sent. Always returns a place, 
-    along with a logging level."""
-    check_type(logging, int)
-    if print is None:
-        return None, 0
-    else:
-        if not isinstance(print, object):
-            raise TypeError(f"Invalid print location provided")
-        writeable = getattr(print, "write", None)
-        if not writeable or not callable(writeable):
-            raise TypeError(f"Print object does not implement required "
-                "'write' function")
-
-    return print, logging
 
 def valid_meow_dict(meow_dict:Dict[str,Any], msg:str, 
         keys:Dict[str,Type])->None:

@@ -11,11 +11,12 @@ from core.correctness.vars import JOB_TYPE_PYTHON, SHA256, JOB_PARAMETERS, \
     STATUS_DONE, JOB_TYPE_PAPERMILL, JOB_RECIPE, JOB_RULE, JOB_CREATE_TIME, \
     JOB_REQUIREMENTS, EVENT_PATH, EVENT_RULE, EVENT_TYPE, \
     EVENT_TYPE_WATCHDOG, get_base_file, get_result_file, get_job_file
-from core.functionality import get_file_hash, create_watchdog_event, \
-    create_job, make_dir, write_yaml, write_notebook, read_yaml, write_file, \
-    lines_to_string, read_file
 from core.meow import create_rule
 from conductors import LocalPythonConductor
+from functionality.file_io import read_file, read_yaml, write_file, \
+    write_notebook, write_yaml, lines_to_string, make_dir
+from functionality.hashing import get_file_hash
+from functionality.meow import create_watchdog_event, create_job
 from patterns import FileEventPattern
 from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe, \
     papermill_job_func
@@ -23,7 +24,6 @@ from recipes.python_recipe import PythonRecipe, python_job_func
 from shared import setup, teardown, TEST_MONITOR_BASE, APPENDING_NOTEBOOK, \
     TEST_JOB_OUTPUT, TEST_JOB_QUEUE, COMPLETE_PYTHON_SCRIPT, \
     BAREBONES_PYTHON_SCRIPT, BAREBONES_NOTEBOOK
-
 
 def failing_func():
     raise Exception("bad function")

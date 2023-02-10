@@ -6,7 +6,7 @@ Author(s): David Marchant
 import os
 
 from core.correctness.vars import DEFAULT_JOB_OUTPUT_DIR, DEFAULT_JOB_QUEUE_DIR
-from core.functionality import make_dir, rmtree
+from functionality.file_io import make_dir, rmtree
 
 
 # testing 
