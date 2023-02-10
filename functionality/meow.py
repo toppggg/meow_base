@@ -12,7 +12,7 @@ from core.correctness.vars import EVENT_PATH, EVENT_RULE, EVENT_TYPE, \
     EVENT_TYPE_WATCHDOG, JOB_CREATE_TIME, JOB_EVENT, JOB_ID, JOB_PATTERN, \
     JOB_RECIPE, JOB_REQUIREMENTS, JOB_RULE, JOB_STATUS, JOB_TYPE, \
     STATUS_QUEUED, WATCHDOG_BASE, WATCHDOG_HASH
-from functionality.naming import generate_id
+from functionality.naming import generate_job_id
 
 
 # mig trigger keyword replacements
@@ -88,7 +88,7 @@ def create_job(job_type:str, event:Dict[str,Any], extras:Dict[Any,Any]={}
     """Function to create a MEOW job dictionary."""
     job_dict = {
         #TODO compress event?
-        JOB_ID: generate_id(prefix="job_"),
+        JOB_ID: generate_job_id(),
         JOB_EVENT: event,
         JOB_TYPE: job_type,
         JOB_PATTERN: event[EVENT_RULE].pattern.name,

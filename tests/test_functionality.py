@@ -23,7 +23,7 @@ from functionality.meow import create_event, create_job, \
     KEYWORD_BASE, KEYWORD_DIR, KEYWORD_EXTENSION, KEYWORD_FILENAME, \
     KEYWORD_JOB, KEYWORD_PATH, KEYWORD_PREFIX, KEYWORD_REL_DIR, \
     KEYWORD_REL_PATH
-from functionality.naming import generate_id
+from functionality.naming import _generate_id
 from functionality.parameterisation import parameterize_jupyter_notebook, \
     parameterize_python_script
 from functionality.process_io import wait
@@ -565,29 +565,29 @@ class NamingTests(unittest.TestCase):
 
     # Test that generate_id creates unique ids    
     def testGenerateIDWorking(self)->None:
-        id = generate_id()
+        id = _generate_id()
         self.assertEqual(len(id), 16)
         for i in range(len(id)):
             self.assertIn(id[i], CHAR_UPPERCASE+CHAR_LOWERCASE)
 
         # In extrememly rare cases this may fail due to randomness in algorithm
-        new_id = generate_id(existing_ids=[id])
+        new_id = _generate_id(existing_ids=[id])
         self.assertNotEqual(id, new_id)
 
-        another_id = generate_id(length=32)
+        another_id = _generate_id(length=32)
         self.assertEqual(len(another_id), 32)
 
-        again_id = generate_id(charset="a")
+        again_id = _generate_id(charset="a")
         for i in range(len(again_id)):
             self.assertIn(again_id[i], "a")
 
         with self.assertRaises(ValueError):
-            generate_id(length=2, charset="a", existing_ids=["aa"])
+            _generate_id(length=2, charset="a", existing_ids=["aa"])
 
-        prefix_id = generate_id(length=4, prefix="Test")
+        prefix_id = _generate_id(length=4, prefix="Test")
         self.assertEqual(prefix_id, "Test")
 
-        prefix_id = generate_id(prefix="Test")
+        prefix_id = _generate_id(prefix="Test")
         self.assertEqual(len(prefix_id), 16)
         self.assertTrue(prefix_id.startswith("Test"))
 

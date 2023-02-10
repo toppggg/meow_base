@@ -19,7 +19,7 @@ from core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
     SWEEP_JUMP, SWEEP_START, SWEEP_STOP, get_drt_imp_msg
 from core.correctness.validation import valid_string, check_type, \
     check_implementation, valid_list, valid_dict
-from functionality.naming import generate_id
+from functionality.naming import generate_rule_id
 
 
 class BaseRecipe:
@@ -524,7 +524,7 @@ def create_rule(pattern:BasePattern, recipe:BaseRecipe,
     key = (type(pattern).__name__, type(recipe).__name__)
     if (key) in all_rules:
         return all_rules[key](
-            generate_id(prefix="Rule_"), 
+            generate_rule_id(), 
             pattern, 
             recipe
         )

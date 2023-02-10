@@ -11,7 +11,7 @@ from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE
 
 
 #TODO Make this guaranteed unique
-def generate_id(prefix:str="", length:int=16, existing_ids:List[str]=[], 
+def _generate_id(prefix:str="", length:int=16, existing_ids:List[str]=[], 
         charset:str=CHAR_UPPERCASE+CHAR_LOWERCASE, attempts:int=24):
     random_length = max(length - len(prefix), 0)
     for _ in range(attempts):
@@ -21,3 +21,9 @@ def generate_id(prefix:str="", length:int=16, existing_ids:List[str]=[],
             return id
     raise ValueError(f"Could not generate ID unique from '{existing_ids}' "
         f"using values '{charset}' and length of '{length}'.")
+
+def generate_rule_id():
+    _generate_id(prefix="rule_")
+
+def generate_job_id():
+    _generate_id(prefix="job_")
