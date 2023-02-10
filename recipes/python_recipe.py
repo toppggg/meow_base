@@ -12,8 +12,9 @@ from typing import Any, Tuple, Dict, List
 
 from core.base_recipe import BaseRecipe
 from core.base_handler import BaseHandler
+from core.correctness.meow import valid_event
 from core.correctness.validation import check_script, valid_string, \
-    valid_dict, valid_event, valid_dir_path
+    valid_dict, valid_dir_path
 from core.correctness.vars import VALID_VARIABLE_NAME_CHARS, PYTHON_FUNC, \
     DEBUG_INFO, EVENT_TYPE_WATCHDOG, JOB_HASH, DEFAULT_JOB_QUEUE_DIR, \
     EVENT_RULE, EVENT_PATH, JOB_TYPE_PYTHON, WATCHDOG_HASH, JOB_PARAMETERS, \

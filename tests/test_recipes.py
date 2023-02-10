@@ -6,13 +6,13 @@ import unittest
 from multiprocessing import Pipe
 from typing import Dict
 
+from core.correctness.meow import valid_job
 from core.correctness.vars import EVENT_TYPE, WATCHDOG_BASE, EVENT_RULE, \
     EVENT_TYPE_WATCHDOG, EVENT_PATH, SHA256, WATCHDOG_HASH, JOB_ID, \
     JOB_TYPE_PYTHON, JOB_PARAMETERS, JOB_HASH, PYTHON_FUNC, JOB_STATUS, \
     META_FILE, JOB_ERROR, \
     PARAMS_FILE, SWEEP_STOP, SWEEP_JUMP, SWEEP_START, JOB_TYPE_PAPERMILL, \
     get_base_file, get_job_file, get_result_file
-from core.correctness.validation import valid_job
 from functionality.file_io import lines_to_string, make_dir, read_yaml, \
     write_file, write_notebook, write_yaml
 from functionality.hashing import get_file_hash

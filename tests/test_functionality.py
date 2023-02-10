@@ -1,4 +1,5 @@
 
+import io
 import json
 import unittest
 import os
@@ -15,6 +16,7 @@ from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
     PYTHON_FUNC, JOB_ID, JOB_EVENT, \
     JOB_TYPE, JOB_PATTERN, JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, \
     JOB_REQUIREMENTS, STATUS_QUEUED, JOB_TYPE_PAPERMILL
+from functionality.debug import setup_debugging
 from functionality.file_io import lines_to_string, make_dir, read_file, \
     read_file_lines, read_notebook, read_yaml, rmtree, write_file, \
     write_notebook, write_yaml    
@@ -42,6 +44,21 @@ class DebugTests(unittest.TestCase):
     def tearDown(self)->None:
         super().tearDown()
         teardown()
+
+    # Test setup_debugging will create writeable location
+    def testSetupDebugging(self)->None:
+        stream = io.StringIO("")
+
+        target, level = setup_debugging(stream, 1)
+
+        self.assertIsInstance(target, io.StringIO)
+        self.assertIsInstance(level, int)
+
+        with self.assertRaises(TypeError):
+            setup_debugging("stream", 1)
+
+        with self.assertRaises(TypeError):
+            setup_debugging(stream, "1")
 
 
 class FileIoTests(unittest.TestCase):

@@ -18,7 +18,6 @@ from core.correctness.vars import EVENT_PATH, EVENT_RULE, EVENT_TYPE, \
     STATUS_QUEUED, WATCHDOG_BASE, WATCHDOG_HASH
 from functionality.naming import generate_job_id, generate_rule_id
 
-
 # mig trigger keyword replacements
 KEYWORD_PATH = "{PATH}"
 KEYWORD_REL_PATH = "{REL_PATH}"

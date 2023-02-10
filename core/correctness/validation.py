@@ -5,43 +5,13 @@ package.
 
 Author(s): David Marchant
 """
-from datetime import datetime
+
 from inspect import signature
 from os.path import sep, exists, isfile, isdir, dirname
 from typing import Any, _SpecialForm, Union, Type, Dict, List, \
     get_origin, get_args
 
-from core.correctness.vars import VALID_PATH_CHARS, get_not_imp_msg, \
-    EVENT_TYPE, EVENT_PATH, JOB_EVENT, JOB_TYPE, JOB_ID, JOB_PATTERN, \
-    JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, EVENT_RULE, \
-    WATCHDOG_BASE, WATCHDOG_HASH
-
-# Required keys in event dict
-EVENT_KEYS = {
-    EVENT_TYPE: str,
-    EVENT_PATH: str,
-    # TODO sort this
-    # Should be a Rule but can't import here due to circular dependencies
-    EVENT_RULE: Any
-}
-
-WATCHDOG_EVENT_KEYS = {
-    WATCHDOG_BASE: str,
-    WATCHDOG_HASH: str,    
-    **EVENT_KEYS
-}
-
-# Required keys in job dict
-JOB_KEYS = {
-    JOB_TYPE: str,
-    JOB_EVENT: Dict,
-    JOB_ID: str,
-    JOB_PATTERN: Any,
-    JOB_RECIPE: Any,
-    JOB_RULE: str,
-    JOB_STATUS: str,
-    JOB_CREATE_TIME: datetime,
-}
+from core.correctness.vars import VALID_PATH_CHARS, get_not_imp_msg
 
 def check_type(variable:Any, expected_type:Type, alt_types:List[Type]=[], 
         or_none:bool=False, hint:str="")->None:
@@ -251,26 +221,3 @@ def valid_non_existing_path(variable:str, allow_base:bool=False):
     if dirname(variable) and not exists(dirname(variable)):
         raise ValueError(
             f"Route to requested path '{variable}' does not exist.")
-
-def valid_meow_dict(meow_dict:Dict[str,Any], msg:str, 
-        keys:Dict[str,Type])->None:
-    """Check given dictionary expresses a meow construct. This won't do much 
-    directly, but is called by more specific validation functions."""
-    check_type(meow_dict, Dict)
-    # Check we have all the required keys, and they are all of the expected 
-    # type
-    for key, value_type in keys.items():
-        if not key in meow_dict.keys():
-            raise KeyError(f"{msg} require key '{key}'")
-        check_type(meow_dict[key], value_type)
-
-def valid_event(event:Dict[str,Any])->None:
-    """Check that a given dict expresses a meow event."""
-    valid_meow_dict(event, "Event", EVENT_KEYS)
-
-def valid_job(job:Dict[str,Any])->None:
-    """Check that a given dict expresses a meow job."""
-    valid_meow_dict(job, "Job", JOB_KEYS)
-
-def valid_watchdog_event(event:Dict[str,Any])->None:
-    valid_meow_dict(event, "Watchdog event", WATCHDOG_EVENT_KEYS)

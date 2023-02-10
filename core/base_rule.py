@@ -6,10 +6,13 @@ for all rule instances.
 Author(s): David Marchant
 """
 
+from sys import modules
 from typing import Any
 
-from core.base_pattern import BasePattern
-from core.base_recipe import BaseRecipe
+if "BasePattern" not in modules:
+    from core.base_pattern import BasePattern
+if "BaseRecipe" not in modules:
+    from core.base_recipe import BaseRecipe
 from core.correctness.vars import get_drt_imp_msg, VALID_RULE_NAME_CHARS
 from core.correctness.validation import valid_string, check_type, \
     check_implementation
