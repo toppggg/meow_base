@@ -14,8 +14,7 @@ from patterns import FileEventPattern
 from shared import setup, teardown, valid_pattern_one, valid_recipe_one
 
 
-# TODO split me
-class MeowTests(unittest.TestCase):
+class BaseRecipeTests(unittest.TestCase):
     def setUp(self)->None:
         super().setUp()
         setup()
@@ -42,6 +41,16 @@ class MeowTests(unittest.TestCase):
             def _is_valid_requirements(self, requirements:Any)->None:
                 pass
         FullRecipe("name", "")
+
+
+class BasePatternTests(unittest.TestCase):
+    def setUp(self)->None:
+        super().setUp()
+        setup()
+
+    def tearDown(self)->None:
+        super().tearDown()
+        teardown()
 
     # Test that BaseRecipe instantiation
     def testBasePattern(self)->None:
@@ -137,6 +146,16 @@ class MeowTests(unittest.TestCase):
                 values.remove(f"{val1}/{val2}")
         self.assertEqual(len(values), 0)
 
+
+class BaseRuleTests(unittest.TestCase):
+    def setUp(self)->None:
+        super().setUp()
+        setup()
+
+    def tearDown(self)->None:
+        super().tearDown()
+        teardown()
+
     # Test that BaseRecipe instantiation
     def testBaseRule(self)->None:
         with self.assertRaises(TypeError):
@@ -155,6 +174,16 @@ class MeowTests(unittest.TestCase):
             def _is_valid_pattern(self, pattern:Any)->None:
                 pass
         FullRule("name", valid_pattern_one, valid_recipe_one)
+
+
+class BaseMonitorTests(unittest.TestCase):
+    def setUp(self)->None:
+        super().setUp()
+        setup()
+
+    def tearDown(self)->None:
+        super().tearDown()
+        teardown()
 
     # Test that BaseMonitor instantiation
     def testBaseMonitor(self)->None:
@@ -197,6 +226,16 @@ class MeowTests(unittest.TestCase):
             
         FullTestMonitor({}, {})
 
+
+class BaseHandleTests(unittest.TestCase):
+    def setUp(self)->None:
+        super().setUp()
+        setup()
+
+    def tearDown(self)->None:
+        super().tearDown()
+        teardown()
+
     # Test that BaseHandler instantiation
     def testBaseHandler(self)->None:
         with self.assertRaises(TypeError):
@@ -222,6 +261,16 @@ class MeowTests(unittest.TestCase):
                 pass
 
         FullTestHandler()
+
+
+class BaseConductorTests(unittest.TestCase):
+    def setUp(self)->None:
+        super().setUp()
+        setup()
+
+    def tearDown(self)->None:
+        super().tearDown()
+        teardown()
 
     # Test that BaseConductor instantiation
     def testBaseConductor(self)->None:

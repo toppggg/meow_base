@@ -169,7 +169,9 @@ def create_rule(pattern:BasePattern, recipe:BaseRecipe,
     # TODO fix me
     # Imported here to avoid circular imports at top of file
     import rules
-    all_rules = {(r.pattern_type, r.recipe_type):r for r in BaseRule.__subclasses__()}
+    all_rules = {
+        (r.pattern_type, r.recipe_type):r for r in BaseRule.__subclasses__()
+    }
 
     # Add in new rules
     for rule in new_rules:
