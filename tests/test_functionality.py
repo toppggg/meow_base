@@ -13,7 +13,7 @@ from core.base_rule import BaseRule
 from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
     SHA256, EVENT_TYPE, EVENT_PATH, EVENT_TYPE_WATCHDOG, \
     WATCHDOG_BASE, WATCHDOG_HASH, EVENT_RULE, JOB_PARAMETERS, JOB_HASH, \
-    PYTHON_FUNC, JOB_ID, JOB_EVENT, \
+    PYTHON_FUNC, JOB_ID, JOB_EVENT, SWEEP_JUMP, SWEEP_START, SWEEP_STOP, \
     JOB_TYPE, JOB_PATTERN, JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, \
     JOB_REQUIREMENTS, STATUS_QUEUED, JOB_TYPE_PAPERMILL
 from functionality.debug import setup_debugging
@@ -23,6 +23,7 @@ from functionality.file_io import lines_to_string, make_dir, read_file, \
 from functionality.hashing import get_file_hash
 from functionality.meow import create_event, create_job, create_rule, \
     create_rules, create_watchdog_event, replace_keywords, \
+    create_parameter_sweep, \
     KEYWORD_BASE, KEYWORD_DIR, KEYWORD_EXTENSION, KEYWORD_FILENAME, \
     KEYWORD_JOB, KEYWORD_PATH, KEYWORD_PREFIX, KEYWORD_REL_DIR, \
     KEYWORD_REL_PATH
@@ -623,6 +624,33 @@ class MeowTests(unittest.TestCase):
         with self.assertRaises(KeyError):
             create_rules({}, recipes)
 
+    # Test create parameter sweep function
+    def testCreateParameterSweep(self)->None:
+        create_parameter_sweep("name", 0, 10, 2)
+        create_parameter_sweep("name", 10, 0, -2)
+        create_parameter_sweep("name", 0.0, 10.0, 1.3)
+        create_parameter_sweep("name", 10.0, 0.0, -1.3)
+
+        with self.assertRaises(TypeError):
+            create_parameter_sweep(0, 0, 10, 2)
+
+        with self.assertRaises(TypeError):
+            create_parameter_sweep("name", "0", 10, 2)
+
+        with self.assertRaises(TypeError):
+            create_parameter_sweep("name", 0, "10", 2)
+
+        with self.assertRaises(TypeError):
+            create_parameter_sweep("name", 0, 10, "2")
+
+        with self.assertRaises(ValueError):
+            create_parameter_sweep("name", 0, 10, 0)
+
+        with self.assertRaises(ValueError):
+            create_parameter_sweep("name", 0, 10, -1)
+
+        with self.assertRaises(ValueError):
+            create_parameter_sweep("name", 10, 0, 1)
 
 
 class NamingTests(unittest.TestCase):

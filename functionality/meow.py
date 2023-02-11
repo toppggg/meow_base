@@ -15,7 +15,8 @@ from core.correctness.validation import check_type, valid_dict, valid_list
 from core.correctness.vars import EVENT_PATH, EVENT_RULE, EVENT_TYPE, \
     EVENT_TYPE_WATCHDOG, JOB_CREATE_TIME, JOB_EVENT, JOB_ID, JOB_PATTERN, \
     JOB_RECIPE, JOB_REQUIREMENTS, JOB_RULE, JOB_STATUS, JOB_TYPE, \
-    STATUS_QUEUED, WATCHDOG_BASE, WATCHDOG_HASH
+    STATUS_QUEUED, WATCHDOG_BASE, WATCHDOG_HASH, SWEEP_JUMP, SWEEP_START, \
+    SWEEP_STOP
 from functionality.naming import generate_job_id, generate_rule_id
 
 # mig trigger keyword replacements
@@ -59,6 +60,42 @@ def replace_keywords(old_dict:Dict[str,str], job_id:str, src_path:str,
             new_dict[var] = val
 
     return new_dict
+
+def create_parameter_sweep(variable_name:str, start:Union[int,float,complex], 
+        stop:Union[int,float,complex], jump:Union[int,float,complex]
+        )->Dict[str,Dict[str,Union[int,float,complex]]]:
+    check_type(variable_name, str, hint="create_parameter_sweep.variable_name")
+    check_type(start, int, alt_types=[float, complex])
+    check_type(stop, int, alt_types=[float, complex])
+    check_type(jump, int, alt_types=[float, complex])
+
+    if jump == 0:
+        raise ValueError(
+            f"Cannot create sweep with a '{SWEEP_JUMP}' value of zero as this "
+            "would be infinite in nature."
+        )
+    elif jump > 0:
+        if not stop > start:
+            raise ValueError(
+                f"Cannot create sweep with a positive '{SWEEP_JUMP}' "
+                "value where the end point is smaller than the start as this "
+                "would be infinite in nature."
+            )
+    elif jump < 0:
+        if not stop < start:
+            raise ValueError(
+                f"Cannot create sweep with a negative '{SWEEP_JUMP}' "
+                "value where the end point is smaller than the start as this "
+                "would be infinite in nature."
+            )
+
+    return {
+        variable_name: {
+            SWEEP_START: start,
+            SWEEP_STOP: stop,
+            SWEEP_JUMP: jump
+        }
+    }
 
 def create_event(event_type:str, path:str, rule:Any, extras:Dict[Any,Any]={}
         )->Dict[Any,Any]:

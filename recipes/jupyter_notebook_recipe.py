@@ -232,7 +232,6 @@ def papermill_job_func(job_dir):
     # Create a parameterised version of the executable notebook
     try:
         base_notebook = read_notebook(base_file)
-        # TODO read notebook from already written file rather than event
         job_notebook = parameterize_jupyter_notebook(
             base_notebook, yaml_dict
         )
