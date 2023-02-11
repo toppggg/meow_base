@@ -64,6 +64,10 @@ def replace_keywords(old_dict:Dict[str,str], job_id:str, src_path:str,
 def create_parameter_sweep(variable_name:str, start:Union[int,float,complex], 
         stop:Union[int,float,complex], jump:Union[int,float,complex]
         )->Dict[str,Dict[str,Union[int,float,complex]]]:
+    """Function to create a valid parameter sweep dict for a givan variable, 
+    from start to stop, with a regular jump of jump. This function will perform
+    some basic checks to ensure this isn't infinitie in nature as that 
+    would lead to unlimited jobs scheduled per event."""
     check_type(variable_name, str, hint="create_parameter_sweep.variable_name")
     check_type(start, int, alt_types=[float, complex])
     check_type(stop, int, alt_types=[float, complex])
