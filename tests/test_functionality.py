@@ -739,7 +739,6 @@ class ParameterisationTests(unittest.TestCase):
         self.assertEqual(ps[2], "num = 50")
 
 
-
 class ProcessIoTests(unittest.TestCase):
     def setUp(self)->None:
         super().setUp()

@@ -13,6 +13,7 @@ from core.correctness.vars import get_result_file, \
     JOB_TYPE_PAPERMILL, JOB_ERROR, META_FILE, JOB_TYPE_PYTHON, JOB_CREATE_TIME
 from core.runner import MeowRunner
 from functionality.file_io import make_dir, read_file, read_notebook, read_yaml
+from functionality.meow import create_parameter_sweep
 from patterns.file_event_pattern import WatchdogMonitor, FileEventPattern
 from recipes.jupyter_notebook_recipe import PapermillHandler, \
     JupyterNotebookRecipe
@@ -211,7 +212,7 @@ class MeowTests(unittest.TestCase):
 
         loops = 0
         job_id = None
-        while loops < 15:
+        while loops < 5:
             sleep(1)
             runner_debug_stream.seek(0)
             messages = runner_debug_stream.readlines()
@@ -223,7 +224,7 @@ class MeowTests(unittest.TestCase):
                     job_id = msg.replace(
                         "INFO: Completed execution for job: '", "")
                     job_id = job_id[:-2]
-                    loops = 15
+                    loops = 5
             loops += 1
 
         self.assertIsNotNone(job_id)
@@ -306,7 +307,7 @@ class MeowTests(unittest.TestCase):
 
         loops = 0
         job_ids = []
-        while len(job_ids) < 2 and loops < 15:
+        while len(job_ids) < 2 and loops < 5:
             sleep(1)
             runner_debug_stream.seek(0)
             messages = runner_debug_stream.readlines()
@@ -410,7 +411,7 @@ class MeowTests(unittest.TestCase):
 
         loops = 0
         job_id = None
-        while loops < 15:
+        while loops < 5:
             sleep(1)
             runner_debug_stream.seek(0)
             messages = runner_debug_stream.readlines()
@@ -422,7 +423,7 @@ class MeowTests(unittest.TestCase):
                     job_id = msg.replace(
                         "INFO: Completed execution for job: '", "")
                     job_id = job_id[:-2]
-                    loops = 15
+                    loops = 5
             loops += 1
 
         self.assertIsNotNone(job_id)
@@ -512,7 +513,7 @@ class MeowTests(unittest.TestCase):
 
         loops = 0
         job_ids = []
-        while len(job_ids) < 2 and loops < 15:
+        while len(job_ids) < 2 and loops < 5:
             sleep(1)
             runner_debug_stream.seek(0)
             messages = runner_debug_stream.readlines()
@@ -591,9 +592,9 @@ class MeowTests(unittest.TestCase):
             "pattern_one", 
             os.path.join("start", "A.txt"), 
             "recipe_one", 
-            "infile", 
+            "infile",
+            sweep=create_parameter_sweep("num", 1000, 10000, 200),
             parameters={
-                "num":10000,
                 "outfile":os.path.join("{VGRID}", "output", "{FILENAME}")
             })
         recipe = PythonRecipe(
@@ -637,8 +638,8 @@ class MeowTests(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(start_dir, "A.txt")))
 
         loops = 0
-        job_id = None
-        while loops < 15:
+        job_ids = []
+        while loops < 5:
             sleep(1)
             runner_debug_stream.seek(0)
             messages = runner_debug_stream.readlines()
@@ -650,37 +651,33 @@ class MeowTests(unittest.TestCase):
                     job_id = msg.replace(
                         "INFO: Completed execution for job: '", "")
                     job_id = job_id[:-2]
-                    loops = 15
+                    if job_id not in job_ids:
+                        job_ids.append(job_id)
+                        loops = 0
             loops += 1
-
-        self.assertIsNotNone(job_id)
-        self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), 1)
-        self.assertIn(job_id, os.listdir(TEST_JOB_OUTPUT))
 
         runner.stop()
 
-        job_dir = os.path.join(TEST_JOB_OUTPUT, job_id)
+        self.assertIsNotNone(job_ids)
+        self.assertEqual(len(job_ids), 46)
+        self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), 46)
 
-        metafile = os.path.join(job_dir, META_FILE)
-        status = read_yaml(metafile)
+        for job_id in job_ids:
+            self.assertIn(job_id, os.listdir(TEST_JOB_OUTPUT))
 
-        self.assertNotIn(JOB_ERROR, status)
+            job_dir = os.path.join(TEST_JOB_OUTPUT, job_id)
 
-        result_path = os.path.join(job_dir, get_result_file(JOB_TYPE_PYTHON))
-        self.assertTrue(os.path.exists(result_path))
-        result = read_file(os.path.join(result_path))
-        self.assertEqual(
-            result, "--STDOUT--\n12505000.0\ndone\n\n\n--STDERR--\n\n")
+            metafile = os.path.join(job_dir, META_FILE)
+            status = read_yaml(metafile)
 
-        output_path = os.path.join(TEST_MONITOR_BASE, "output", "A.txt")
-        self.assertTrue(os.path.exists(output_path))
-        output = read_file(os.path.join(output_path))
-        self.assertEqual(output, "12505000.0")
+            self.assertNotIn(JOB_ERROR, status)
 
+            result_path = os.path.join(job_dir, get_result_file(JOB_TYPE_PYTHON))
+            self.assertTrue(os.path.exists(result_path))
+            
+            output_path = os.path.join(TEST_MONITOR_BASE, "output", "A.txt")
+            self.assertTrue(os.path.exists(output_path))
 
-
-
-    # TODO sweep execution test
     # TODO adding tests with numpy or other external dependency
     # TODO test getting job cannot handle
     # TODO test getting event cannot handle
