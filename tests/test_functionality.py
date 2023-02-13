@@ -13,7 +13,7 @@ from core.base_rule import BaseRule
 from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
     SHA256, EVENT_TYPE, EVENT_PATH, EVENT_TYPE_WATCHDOG, \
     WATCHDOG_BASE, WATCHDOG_HASH, EVENT_RULE, JOB_PARAMETERS, JOB_HASH, \
-    PYTHON_FUNC, JOB_ID, JOB_EVENT, SWEEP_JUMP, SWEEP_START, SWEEP_STOP, \
+    PYTHON_FUNC, JOB_ID, JOB_EVENT, \
     JOB_TYPE, JOB_PATTERN, JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, \
     JOB_REQUIREMENTS, STATUS_QUEUED, JOB_TYPE_PAPERMILL
 from functionality.debug import setup_debugging
@@ -31,6 +31,9 @@ from functionality.naming import _generate_id
 from functionality.parameterisation import parameterize_jupyter_notebook, \
     parameterize_python_script
 from functionality.process_io import wait
+from functionality.requirements import create_python_requirements, \
+    REQUIREMENT_PYTHON, REQ_PYTHON_ENVIRONMENT, REQ_PYTHON_MODULES, \
+    REQ_PYTHON_VERSION
 from patterns import FileEventPattern
 from recipes import JupyterNotebookRecipe
 from shared import setup, teardown, valid_recipe_two, valid_recipe_one, \
@@ -886,3 +889,87 @@ class ProcessIoTests(unittest.TestCase):
             elif readable == pipe_one_reader:
                 msg = readable.recv()
                 self.assertEqual(msg, 1)
+
+class RequirementsTest(unittest.TestCase):
+    def setUp(self)->None:
+        super().setUp()
+        setup()
+
+    def tearDown(self)->None:
+        super().tearDown()
+        teardown()
+
+    # Test Python requirement testings
+    def testPythonRequirementCreation(self)->None:
+        key, reqs = create_python_requirements()
+
+        self.assertIsInstance(key, str)
+        self.assertEqual(key, REQUIREMENT_PYTHON)
+        self.assertIsInstance(reqs, dict)
+        self.assertEqual(reqs, {})
+
+        key, reqs = create_python_requirements(modules="first")
+
+        self.assertIsInstance(key, str)
+        self.assertEqual(key, REQUIREMENT_PYTHON)
+        self.assertIsInstance(reqs, dict)
+        self.assertEqual(len(reqs), 1)
+        self.assertIn(REQ_PYTHON_MODULES, reqs)
+        self.assertEqual(len(reqs[REQ_PYTHON_MODULES]), 1)
+        self.assertIsInstance(reqs[REQ_PYTHON_MODULES], list)
+        self.assertEqual(reqs[REQ_PYTHON_MODULES], ["first"])
+
+        key, reqs = create_python_requirements(modules=["first", "second"])
+
+        self.assertIsInstance(key, str)
+        self.assertEqual(key, REQUIREMENT_PYTHON)
+        self.assertIsInstance(reqs, dict)
+        self.assertEqual(len(reqs), 1)
+        self.assertIn(REQ_PYTHON_MODULES, reqs)
+        self.assertEqual(len(reqs[REQ_PYTHON_MODULES]), 2)
+        self.assertIsInstance(reqs[REQ_PYTHON_MODULES], list)
+        self.assertEqual(reqs[REQ_PYTHON_MODULES], ["first", "second"])
+
+        key, reqs = create_python_requirements(version="3.10.6")
+
+        self.assertIsInstance(key, str)
+        self.assertEqual(key, REQUIREMENT_PYTHON)
+        self.assertIsInstance(reqs, dict)
+        self.assertEqual(len(reqs), 1)
+        self.assertIn(REQ_PYTHON_VERSION, reqs)
+        self.assertIsInstance(reqs[REQ_PYTHON_VERSION], str)
+        self.assertEqual(reqs[REQ_PYTHON_VERSION], "3.10.6")
+
+        key, reqs = create_python_requirements(environment="env")
+
+        self.assertIsInstance(key, str)
+        self.assertEqual(key, REQUIREMENT_PYTHON)
+        self.assertIsInstance(reqs, dict)
+        self.assertEqual(len(reqs), 1)
+        self.assertIn(REQ_PYTHON_ENVIRONMENT, reqs)
+        self.assertIsInstance(reqs[REQ_PYTHON_ENVIRONMENT], str)
+        self.assertEqual(reqs[REQ_PYTHON_ENVIRONMENT], "env")
+
+        key, reqs = create_python_requirements(
+            modules=["first", "second"],
+            version="3.10.6",
+            environment="env"
+        )
+
+        self.assertIsInstance(key, str)
+        self.assertEqual(key, REQUIREMENT_PYTHON)
+        self.assertIsInstance(reqs, dict)
+        self.assertEqual(len(reqs), 3)
+        self.assertIn(REQ_PYTHON_MODULES, reqs)
+        self.assertEqual(len(reqs[REQ_PYTHON_MODULES]), 2)
+        self.assertIsInstance(reqs[REQ_PYTHON_MODULES], list)
+        self.assertEqual(reqs[REQ_PYTHON_MODULES], ["first", "second"])
+        self.assertIn(REQ_PYTHON_VERSION, reqs)
+        self.assertIsInstance(reqs[REQ_PYTHON_VERSION], str)
+        self.assertEqual(reqs[REQ_PYTHON_VERSION], "3.10.6")
+        self.assertIn(REQ_PYTHON_ENVIRONMENT, reqs)
+        self.assertIsInstance(reqs[REQ_PYTHON_ENVIRONMENT], str)
+        self.assertEqual(reqs[REQ_PYTHON_ENVIRONMENT], "env")
+
+        # TODO expand me and add values for other attributes
+    

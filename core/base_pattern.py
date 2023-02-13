@@ -27,7 +27,7 @@ class BasePattern:
     outputs:Dict[str,Any]
     # A collection of variables to be swept over for job scheduling
     sweep:Dict[str,Any]
-
+    # TODO Add requirements to patterns
     def __init__(self, name:str, recipe:str, parameters:Dict[str,Any]={}, 
             outputs:Dict[str,Any]={}, sweep:Dict[str,Any]={}):
         """BasePattern Constructor. This will check that any class inheriting 
