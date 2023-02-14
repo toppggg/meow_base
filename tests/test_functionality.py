@@ -6,6 +6,8 @@ import os
 
 from datetime import datetime
 from multiprocessing import Pipe, Queue
+from os.path import basename
+from sys import prefix, base_prefix
 from time import sleep
 from typing import Dict
 
@@ -32,6 +34,7 @@ from functionality.parameterisation import parameterize_jupyter_notebook, \
     parameterize_python_script
 from functionality.process_io import wait
 from functionality.requirements import create_python_requirements, \
+    check_requirements, \
     REQUIREMENT_PYTHON, REQ_PYTHON_ENVIRONMENT, REQ_PYTHON_MODULES, \
     REQ_PYTHON_VERSION
 from patterns import FileEventPattern
@@ -899,8 +902,8 @@ class RequirementsTest(unittest.TestCase):
         super().tearDown()
         teardown()
 
-    # Test Python requirement testings
-    def testPythonRequirementCreation(self)->None:
+    # Test structure of Python requirement testings
+    def testPythonRequirementStructuring(self)->None:
         key, reqs = create_python_requirements()
 
         self.assertIsInstance(key, str)
@@ -971,5 +974,99 @@ class RequirementsTest(unittest.TestCase):
         self.assertIsInstance(reqs[REQ_PYTHON_ENVIRONMENT], str)
         self.assertEqual(reqs[REQ_PYTHON_ENVIRONMENT], "env")
 
-        # TODO expand me and add values for other attributes
-    
+    # Test version values of Python requirement testings
+    def testPythonRequirementsVersion(self)->None:
+        key, python_reqs = create_python_requirements(version="3.10.6")
+
+        reqs = {
+            key: python_reqs
+        }
+
+        status, _ = check_requirements(reqs)
+
+        self.assertTrue(status)
+
+        key, python_reqs = create_python_requirements(version="2.5.9")
+
+        reqs = {
+            key: python_reqs
+        }
+
+        status, _ = check_requirements(reqs)
+
+        self.assertTrue(status)
+
+        key, python_reqs = create_python_requirements(version="4.1.1")
+
+        reqs = {
+            key: python_reqs
+        }
+
+        status, _ = check_requirements(reqs)
+
+        self.assertFalse(status)
+
+    # Test module values of Python requirement testings
+    def testPythonRequirementsModules(self)->None:
+        key, python_reqs = create_python_requirements(modules=[
+            "papermill", "sys", "typing"
+        ])
+
+        reqs = {
+            key: python_reqs
+        }
+
+        status, _ = check_requirements(reqs)
+
+        self.assertTrue(status)
+
+        key, python_reqs = create_python_requirements(modules=[
+            "does", "not", "exist"
+        ])
+
+        reqs = {
+            key: python_reqs
+        }
+
+        status, _ = check_requirements(reqs)
+
+        self.assertFalse(status)
+
+        key, python_reqs = create_python_requirements(modules=[
+            "papermill", "sys", "doesnotexist"
+        ])
+
+        reqs = {
+            key: python_reqs
+        }
+
+        status, _ = check_requirements(reqs)
+
+        self.assertFalse(status)
+
+    # Test environment value of Python requirement testings
+    def testPythonRequirementsEnvironment(self)->None:
+        # TODO rework this test so that it actually create and runs in a new 
+        # environment
+        if prefix != base_prefix: 
+            key, python_reqs = create_python_requirements(
+                environment=basename(prefix)
+            )
+
+            reqs = {
+                key: python_reqs
+            }
+
+            status, _ = check_requirements(reqs)
+
+            self.assertTrue(status)
+
+        key, python_reqs = create_python_requirements(environment="bad_env")
+
+        reqs = {
+            key: python_reqs
+        }
+
+        status, _ = check_requirements(reqs)
+
+        self.assertFalse(status)

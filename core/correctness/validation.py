@@ -221,3 +221,5 @@ def valid_non_existing_path(variable:str, allow_base:bool=False):
     if dirname(variable) and not exists(dirname(variable)):
         raise ValueError(
             f"Route to requested path '{variable}' does not exist.")
+
+# TODO add validation for requirement functions
