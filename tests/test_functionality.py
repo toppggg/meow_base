@@ -1044,6 +1044,73 @@ class RequirementsTest(unittest.TestCase):
 
         self.assertFalse(status)
 
+    def testPythonRequirementModuleVersions(self)->None:
+        key, python_reqs = create_python_requirements(
+            modules="papermill==2.4.0")
+        reqs = { key: python_reqs }
+        status, _ = check_requirements(reqs)
+        self.assertTrue(status)
+
+        key, python_reqs = create_python_requirements(
+            modules="papermill<4")
+        reqs = { key: python_reqs }
+        status, _ = check_requirements(reqs)
+        self.assertTrue(status)
+
+        key, python_reqs = create_python_requirements(
+            modules="papermill<1.0")
+        reqs = { key: python_reqs }
+        status, _ = check_requirements(reqs)
+        self.assertFalse(status)
+
+        key, python_reqs = create_python_requirements(
+            modules="papermill>4")
+        reqs = { key: python_reqs }
+        status, _ = check_requirements(reqs)
+        self.assertFalse(status)
+
+        key, python_reqs = create_python_requirements(
+            modules="papermill>1.0")
+        reqs = { key: python_reqs }
+        status, _ = check_requirements(reqs)
+        self.assertTrue(status)
+
+        key, python_reqs = create_python_requirements(
+            modules="papermill<=4")
+        reqs = { key: python_reqs }
+        status, _ = check_requirements(reqs)
+        self.assertTrue(status)
+
+        key, python_reqs = create_python_requirements(
+            modules="papermill<=2.4.0")
+        reqs = { key: python_reqs }
+        status, _ = check_requirements(reqs)
+        self.assertTrue(status)
+
+        key, python_reqs = create_python_requirements(
+            modules="papermill<=1.0")
+        reqs = { key: python_reqs }
+        status, _ = check_requirements(reqs)
+        self.assertFalse(status)
+
+        key, python_reqs = create_python_requirements(
+            modules="papermill>=4")
+        reqs = { key: python_reqs }
+        status, _ = check_requirements(reqs)
+        self.assertFalse(status)
+
+        key, python_reqs = create_python_requirements(
+            modules="papermill>=2.4.0")
+        reqs = { key: python_reqs }
+        status, _ = check_requirements(reqs)
+        self.assertTrue(status)
+
+        key, python_reqs = create_python_requirements(
+            modules="papermill>=1.0")
+        reqs = { key: python_reqs }
+        status, _ = check_requirements(reqs)
+        self.assertTrue(status)
+
     # Test environment value of Python requirement testings
     def testPythonRequirementsEnvironment(self)->None:
         # TODO rework this test so that it actually create and runs in a new 

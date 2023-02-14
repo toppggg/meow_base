@@ -5,6 +5,7 @@ requirements, and assessed by handlers and conductors.
 Author(s): David Marchant
 """
 
+from importlib.metadata import version, PackageNotFoundError
 from importlib.util import find_spec
 from os.path import basename
 from sys import version_info, prefix, base_prefix
@@ -71,9 +72,60 @@ def check_python_requirements(reqs:Dict[str,Any])->bool:
     # TODO expand these so you can specify versions
     if REQ_PYTHON_MODULES in reqs:
         for module in reqs[REQ_PYTHON_MODULES]:
+            module_version = None
+            relation = None
+            for r in ["==", ">=", "<=", ">", "<"]:
+                if r in module:
+                    module, module_version = module.split(r)
+                    relation = r
+                    break
+
             found_spec = find_spec(module)
             if found_spec is None:
                 return False, f"Could not find module '{module}'."
+
+            if module_version is None:
+                continue
+
+            try:
+                installed_version = version(module)
+            except PackageNotFoundError:
+                return False, f"Could not find module '{module}'."
+
+            if relation == "==" and module_version != installed_version:
+                return (
+                    False, 
+                    f"Installed {module} version '{installed_version}' "
+                    f"differs from requested '{module_version}'"
+                )
+            
+            if relation == ">=" and module_version > installed_version:
+                return (
+                    False,
+                    f"Installed {module} version '{installed_version}' "
+                    f"is more that requested '{module_version}'"
+                )
+            
+            if relation == "<=" and module_version < installed_version:
+                return (
+                    False,
+                    f"Installed {module} version '{installed_version}' "
+                    f"is less that requested '{module_version}'"
+                )
+            
+            if relation == ">" and module_version > installed_version:
+                return (
+                    False,
+                    f"Installed {module} version '{installed_version}' "
+                    f"is more that requested '{module_version}'"
+                )
+            
+            if relation == "<" and module_version < installed_version:
+                return (
+                    False,
+                    f"Installed {module} version '{installed_version}' "
+                    f"is less that requested '{module_version}'"
+                ) 
 
     if REQ_PYTHON_VERSION in reqs:
         major, minor, micro = parse_versions(reqs[REQ_PYTHON_VERSION]) 
