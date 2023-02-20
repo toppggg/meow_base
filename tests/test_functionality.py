@@ -1044,6 +1044,7 @@ class RequirementsTest(unittest.TestCase):
 
         self.assertFalse(status)
 
+    # TODO make this test portable
     def testPythonRequirementModuleVersions(self)->None:
         key, python_reqs = create_python_requirements(
             modules="papermill==2.4.0")
@@ -1113,7 +1114,7 @@ class RequirementsTest(unittest.TestCase):
 
     # Test environment value of Python requirement testings
     def testPythonRequirementsEnvironment(self)->None:
-        # TODO rework this test so that it actually create and runs in a new 
+        # TODO rework this test so that it actually creates and runs in a new 
         # environment
         if prefix != base_prefix: 
             key, python_reqs = create_python_requirements(

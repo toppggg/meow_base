@@ -69,7 +69,6 @@ def check_python_requirements(reqs:Dict[str,Any])->bool:
         if basename(prefix) != reqs[REQ_PYTHON_ENVIRONMENT]:
             return False, ""
         
-    # TODO expand these so you can specify versions
     if REQ_PYTHON_MODULES in reqs:
         for module in reqs[REQ_PYTHON_MODULES]:
             module_version = None
