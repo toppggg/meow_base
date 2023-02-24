@@ -2,3 +2,4 @@ pytest
 papermill
 nbformat
 pyyaml
+watchdog

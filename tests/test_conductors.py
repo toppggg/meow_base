@@ -406,7 +406,7 @@ class MeowTests(unittest.TestCase):
         error = read_file(error_file)
         self.assertEqual(error, 
             "Recieved incorrectly setup job.\n\n[Errno 2] No such file or "
-            f"directory: 'test_job_queue_dir/{job_dict[JOB_ID]}/job.yml'")
+            f"directory: 'test_job_queue_dir{os.path.sep}{job_dict[JOB_ID]}{os.path.sep}job.yml'")
 
     # Test LocalPythonConductor does not execute jobs with bad functions
     def testLocalPythonConductorBadFunc(self)->None:
