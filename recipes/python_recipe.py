@@ -52,7 +52,8 @@ class PythonRecipe(BaseRecipe):
         valid_dict(requirements, str, Any, strict=False, min_length=0)
         for k in requirements.keys():
             valid_string(k, VALID_VARIABLE_NAME_CHARS)
-
+    def __str__(self) -> str:
+        return f'{self.name}' 
 
 class PythonHandler(BaseHandler):
     # Config option, above which debug messages are ignored

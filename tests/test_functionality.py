@@ -343,6 +343,9 @@ class HashingTests(unittest.TestCase):
         expected_hash = \
             "8557122088c994ba8aa5540ccbb9a3d2d8ae2887046c2db23d65f40ae63abade"
         
+        if b"\r\n" in open(file_path,"rb").read():
+            expected_hash = "db602926d1cc131cfced81bef73d11d84dfd6f32cdb6833bd662044969370077"
+
         hash = get_file_hash(file_path, SHA256)
         self.assertEqual(hash, expected_hash)
     

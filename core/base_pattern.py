@@ -125,6 +125,9 @@ class BasePattern:
                         "value where the end point is smaller than the start."
                     )
 
+    def __str__(self) -> str :
+        return f'{self.name}, recipe: {self.recipe} '
+
     def expand_sweeps(self)->List[Tuple[str,Any]]:
         """Function to get all combinations of sweep parameters"""
         values_dict = {}

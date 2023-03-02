@@ -136,6 +136,22 @@ DEBUG_ERROR = 1
 DEBUG_WARNING = 2
 DEBUG_INFO = 3
 
+# Visualizer Event keys
+    #base requirement
+PATTERN_NAME = "Pattern_name"
+RECIPE_NAME = "Recipe_Name"
+    #Optional/Ideas
+RULE_NAME = "Rule_Name"
+# RULE_ID = "Rule_ID"
+EVENT_ID = "Event_ID"
+ERROR_CODE = "Error_Code"
+
+#Event send to visualizer
+VISUALIZER_EVENT_KEYS = {
+    PATTERN_NAME: str,
+    RECIPE_NAME: str,
+}
+
 # debug message functions
 def get_drt_imp_msg(base_class):
     return f"{base_class.__name__} may not be instantiated directly. " \

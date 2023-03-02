@@ -6,7 +6,7 @@ from core.base_rule import BaseRule
 from core.correctness.validation import check_type
 from core.correctness.vars import EVENT_TYPE, EVENT_PATH, JOB_EVENT, \
     JOB_TYPE, JOB_ID, JOB_PATTERN, JOB_RECIPE, JOB_RULE, JOB_STATUS, \
-    JOB_CREATE_TIME, EVENT_RULE, WATCHDOG_BASE, WATCHDOG_HASH
+    JOB_CREATE_TIME, EVENT_RULE, WATCHDOG_BASE, WATCHDOG_HASH, PATTERN_NAME, RECIPE_NAME
 
 # Required keys in event dict
 EVENT_KEYS = {
