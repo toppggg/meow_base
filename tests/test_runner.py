@@ -771,6 +771,155 @@ class MeowTests(unittest.TestCase):
             output_path = os.path.join(TEST_MONITOR_BASE, "output", "A.txt")
             self.assertTrue(os.path.exists(output_path))
 
+    # Test monitor meow editting
+    def testMeowRunnerMEOWEditting(self)->None:
+        pattern_one = FileEventPattern(
+            "pattern_one", os.path.join("start", "A.txt"), "recipe_one", "infile", 
+            parameters={
+                "num":10000,
+                "outfile":os.path.join("{BASE}", "output", "{FILENAME}")
+            })
+        pattern_two = FileEventPattern(
+            "pattern_two", os.path.join("start", "A.txt"), "recipe_two", "infile", 
+            parameters={
+                "num":10000,
+                "outfile":os.path.join("{BASE}", "output", "{FILENAME}")
+            })
+        recipe_one = PythonRecipe(
+            "recipe_one", COMPLETE_PYTHON_SCRIPT
+        )
+        recipe_two = PythonRecipe(
+            "recipe_two", COMPLETE_PYTHON_SCRIPT
+        )
+
+        patterns = {
+            pattern_one.name: pattern_one,
+        }
+        recipes = {
+            recipe_one.name: recipe_one,
+        }
+
+        runner_debug_stream = io.StringIO("")
+
+        runner = MeowRunner(
+            WatchdogMonitor(
+                TEST_MONITOR_BASE,
+                patterns,
+                recipes,
+                settletime=1
+            ), 
+            PythonHandler(
+                job_queue_dir=TEST_JOB_QUEUE
+            ),
+            LocalPythonConductor(),
+            job_queue_dir=TEST_JOB_QUEUE,
+            job_output_dir=TEST_JOB_OUTPUT,
+            print=runner_debug_stream,
+            logging=3                
+        )        
+   
+        runner.start()
+
+        start_dir = os.path.join(TEST_MONITOR_BASE, "start")
+        make_dir(start_dir)
+        self.assertTrue(start_dir)
+        with open(os.path.join(start_dir, "A.txt"), "w") as f:
+            f.write("25000")
+
+        self.assertTrue(os.path.exists(os.path.join(start_dir, "A.txt")))
+
+        loops = 0
+        job_ids = set()
+        while loops < 5:
+            sleep(1)
+            runner_debug_stream.seek(0)
+            messages = runner_debug_stream.readlines()
+
+            for msg in messages:
+                self.assertNotIn("ERROR", msg)
+            
+                if "INFO: Completed execution for job: '" in msg:
+                    job_id = msg.replace(
+                        "INFO: Completed execution for job: '", "")
+                    job_ids.add(job_id[:-2])
+                    loops = 5
+            loops += 1
+
+        self.assertEqual(len(job_ids), 1)
+        self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), 1)
+        for job_id in job_ids:
+            self.assertIn(job_id, os.listdir(TEST_JOB_OUTPUT))
+
+        runner.monitors[0].add_pattern(pattern_two)
+
+        loops = 0
+        while loops < 5:
+            sleep(1)
+            runner_debug_stream.seek(0)
+            messages = runner_debug_stream.readlines()
+
+            for msg in messages:
+                self.assertNotIn("ERROR", msg)
+            
+                if "INFO: Completed execution for job: '" in msg:
+                    job_id = msg.replace(
+                        "INFO: Completed execution for job: '", "")
+                    job_ids.add(job_id[:-2])
+                    loops = 5
+            loops += 1
+
+        self.assertEqual(len(job_ids), 1)
+        self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), 1)
+        for job_id in job_ids:
+            self.assertIn(job_id, os.listdir(TEST_JOB_OUTPUT))
+
+        runner.monitors[0].add_recipe(recipe_two)
+
+        loops = 0
+        while loops < 5:
+            sleep(1)
+            runner_debug_stream.seek(0)
+            messages = runner_debug_stream.readlines()
+
+            for msg in messages:
+                self.assertNotIn("ERROR", msg)
+            
+                if "INFO: Completed execution for job: '" in msg:
+                    job_id = msg.replace(
+                        "INFO: Completed execution for job: '", "")
+                    job_ids.add(job_id[:-2])
+                    loops = 5
+            loops += 1
+
+        self.assertEqual(len(job_ids), 2)
+        self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), 2)
+        for job_id in job_ids:
+            self.assertIn(job_id, os.listdir(TEST_JOB_OUTPUT))
+
+        runner.stop()
+
+        job_dir = os.path.join(TEST_JOB_OUTPUT, job_id)
+
+        metafile = os.path.join(job_dir, META_FILE)
+        status = read_yaml(metafile)
+
+        self.assertNotIn(JOB_ERROR, status)
+
+        result_path = os.path.join(job_dir, get_result_file(JOB_TYPE_PYTHON))
+        self.assertTrue(os.path.exists(result_path))
+        result = read_file(os.path.join(result_path))
+        self.assertEqual(
+            result, "--STDOUT--\n12505000.0\ndone\n\n\n--STDERR--\n\n")
+
+        output_path = os.path.join(TEST_MONITOR_BASE, "output", "A.txt")
+        self.assertTrue(os.path.exists(output_path))
+        output = read_file(os.path.join(output_path))
+        self.assertEqual(output, "12505000.0")
+
+
+
+
+
     def testSelfModifyingAnalysis(self)->None:
         maker_pattern = FileEventPattern(
             "maker_pattern", 
