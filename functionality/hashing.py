@@ -6,8 +6,8 @@ Author(s): David Marchant
 
 from hashlib import sha256
 
-from core.correctness.vars import HASH_BUFFER_SIZE, SHA256
-from core.correctness.validation import check_type, valid_existing_file_path
+from meow_base.core.correctness.vars import HASH_BUFFER_SIZE, SHA256
+from meow_base.core.correctness.validation import check_type, valid_existing_file_path
 
 def _get_file_sha256(file_path):
     sha256_hash = sha256()

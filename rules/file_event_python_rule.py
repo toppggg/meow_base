@@ -6,10 +6,10 @@ and PythonRecipe.
 Author(s): David Marchant
 """
 
-from core.base_rule import BaseRule
-from core.correctness.validation import check_type
-from patterns.file_event_pattern import FileEventPattern
-from recipes.python_recipe import PythonRecipe
+from meow_base.core.base_rule import BaseRule
+from meow_base.core.correctness.validation import check_type
+from meow_base.patterns.file_event_pattern import FileEventPattern
+from meow_base.recipes.python_recipe import PythonRecipe
 
 # TODO potentailly remove this and just invoke BaseRule directly, as does not
 # add any functionality other than some validation.

@@ -3,14 +3,14 @@ import unittest
  
 from typing import Any, Union, Tuple, Dict
 
-from core.base_conductor import BaseConductor
-from core.base_handler import BaseHandler
-from core.base_monitor import BaseMonitor
-from core.base_pattern import BasePattern
-from core.base_recipe import BaseRecipe
-from core.base_rule import BaseRule
-from core.correctness.vars import SWEEP_STOP, SWEEP_JUMP, SWEEP_START
-from patterns import FileEventPattern
+from meow_base.core.base_conductor import BaseConductor
+from meow_base.core.base_handler import BaseHandler
+from meow_base.core.base_monitor import BaseMonitor
+from meow_base.core.base_pattern import BasePattern
+from meow_base.core.base_recipe import BaseRecipe
+from meow_base.core.base_rule import BaseRule
+from meow_base.core.correctness.vars import SWEEP_STOP, SWEEP_JUMP, SWEEP_START
+from meow_base.patterns.file_event_pattern import FileEventPattern
 from shared import setup, teardown, valid_pattern_one, valid_recipe_one
 
 

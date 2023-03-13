@@ -8,16 +8,16 @@ from datetime import datetime
 from os.path import basename, dirname, relpath, splitext
 from typing import Any, Dict, Union, List
 
-from core.base_pattern import BasePattern
-from core.base_recipe import BaseRecipe
-from core.base_rule import BaseRule
-from core.correctness.validation import check_type, valid_dict, valid_list
-from core.correctness.vars import EVENT_PATH, EVENT_RULE, EVENT_TYPE, \
+from meow_base.core.base_pattern import BasePattern
+from meow_base.core.base_recipe import BaseRecipe
+from meow_base.core.base_rule import BaseRule
+from meow_base.core.correctness.validation import check_type, valid_dict, valid_list
+from meow_base.core.correctness.vars import EVENT_PATH, EVENT_RULE, EVENT_TYPE, \
     EVENT_TYPE_WATCHDOG, JOB_CREATE_TIME, JOB_EVENT, JOB_ID, JOB_PATTERN, \
     JOB_RECIPE, JOB_REQUIREMENTS, JOB_RULE, JOB_STATUS, JOB_TYPE, \
     STATUS_QUEUED, WATCHDOG_BASE, WATCHDOG_HASH, SWEEP_JUMP, SWEEP_START, \
     SWEEP_STOP
-from functionality.naming import generate_job_id, generate_rule_id
+from meow_base.functionality.naming import generate_job_id, generate_rule_id
 
 # mig trigger keyword replacements
 KEYWORD_PATH = "{PATH}"
@@ -208,7 +208,7 @@ def create_rule(pattern:BasePattern, recipe:BaseRecipe,
 
     # TODO fix me
     # Imported here to avoid circular imports at top of file
-    import rules
+    import meow_base.rules
     all_rules = {
         (r.pattern_type, r.recipe_type):r for r in BaseRule.__subclasses__()
     }

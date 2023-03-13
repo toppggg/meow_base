@@ -5,21 +5,21 @@ import unittest
 from datetime import datetime
 from typing import Dict
 
-from core.correctness.vars import JOB_TYPE_PYTHON, SHA256, JOB_PARAMETERS, \
+from meow_base.core.correctness.vars import JOB_TYPE_PYTHON, SHA256, JOB_PARAMETERS, \
     JOB_HASH, PYTHON_FUNC, JOB_ID, BACKUP_JOB_ERROR_FILE, JOB_EVENT, \
     META_FILE, PARAMS_FILE, JOB_STATUS, JOB_ERROR, JOB_TYPE, JOB_PATTERN, \
     STATUS_DONE, JOB_TYPE_PAPERMILL, JOB_RECIPE, JOB_RULE, JOB_CREATE_TIME, \
     JOB_REQUIREMENTS, EVENT_PATH, EVENT_RULE, EVENT_TYPE, \
     EVENT_TYPE_WATCHDOG, get_base_file, get_result_file, get_job_file
-from conductors import LocalPythonConductor
-from functionality.file_io import read_file, read_yaml, write_file, \
+from meow_base.conductors import LocalPythonConductor
+from meow_base.functionality.file_io import read_file, read_yaml, write_file, \
     write_notebook, write_yaml, lines_to_string, make_dir
-from functionality.hashing import get_file_hash
-from functionality.meow import create_watchdog_event, create_job, create_rule
-from patterns import FileEventPattern
-from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe, \
+from meow_base.functionality.hashing import get_file_hash
+from meow_base.functionality.meow import create_watchdog_event, create_job, create_rule
+from meow_base.patterns.file_event_pattern import FileEventPattern
+from meow_base.recipes.jupyter_notebook_recipe import JupyterNotebookRecipe, \
     papermill_job_func
-from recipes.python_recipe import PythonRecipe, python_job_func
+from meow_base.recipes.python_recipe import PythonRecipe, python_job_func
 from shared import setup, teardown, TEST_MONITOR_BASE, APPENDING_NOTEBOOK, \
     TEST_JOB_OUTPUT, TEST_JOB_QUEUE, COMPLETE_PYTHON_SCRIPT, \
     BAREBONES_PYTHON_SCRIPT, BAREBONES_NOTEBOOK

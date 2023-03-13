@@ -11,34 +11,34 @@ from sys import prefix, base_prefix
 from time import sleep
 from typing import Dict
 
-from core.base_rule import BaseRule
-from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
+from meow_base.core.base_rule import BaseRule
+from meow_base.core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
     SHA256, EVENT_TYPE, EVENT_PATH, EVENT_TYPE_WATCHDOG, \
     WATCHDOG_BASE, WATCHDOG_HASH, EVENT_RULE, JOB_PARAMETERS, JOB_HASH, \
     PYTHON_FUNC, JOB_ID, JOB_EVENT, \
     JOB_TYPE, JOB_PATTERN, JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, \
     JOB_REQUIREMENTS, STATUS_QUEUED, JOB_TYPE_PAPERMILL
-from functionality.debug import setup_debugging
-from functionality.file_io import lines_to_string, make_dir, read_file, \
+from meow_base.functionality.debug import setup_debugging
+from meow_base.functionality.file_io import lines_to_string, make_dir, read_file, \
     read_file_lines, read_notebook, read_yaml, rmtree, write_file, \
     write_notebook, write_yaml    
-from functionality.hashing import get_file_hash
-from functionality.meow import create_event, create_job, create_rule, \
+from meow_base.functionality.hashing import get_file_hash
+from meow_base.functionality.meow import create_event, create_job, create_rule, \
     create_rules, create_watchdog_event, replace_keywords, \
     create_parameter_sweep, \
     KEYWORD_BASE, KEYWORD_DIR, KEYWORD_EXTENSION, KEYWORD_FILENAME, \
     KEYWORD_JOB, KEYWORD_PATH, KEYWORD_PREFIX, KEYWORD_REL_DIR, \
     KEYWORD_REL_PATH
-from functionality.naming import _generate_id
-from functionality.parameterisation import parameterize_jupyter_notebook, \
+from meow_base.functionality.naming import _generate_id
+from meow_base.functionality.parameterisation import parameterize_jupyter_notebook, \
     parameterize_python_script
-from functionality.process_io import wait
-from functionality.requirements import create_python_requirements, \
+from meow_base.functionality.process_io import wait
+from meow_base.functionality.requirements import create_python_requirements, \
     check_requirements, \
     REQUIREMENT_PYTHON, REQ_PYTHON_ENVIRONMENT, REQ_PYTHON_MODULES, \
     REQ_PYTHON_VERSION
-from patterns import FileEventPattern
-from recipes import JupyterNotebookRecipe
+from meow_base.patterns.file_event_pattern import FileEventPattern
+from meow_base.recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
 from shared import setup, teardown, valid_recipe_two, valid_recipe_one, \
     valid_pattern_one, valid_pattern_two, TEST_MONITOR_BASE, \
     COMPLETE_NOTEBOOK, APPENDING_NOTEBOOK, COMPLETE_PYTHON_SCRIPT
@@ -594,7 +594,7 @@ class MeowTests(unittest.TestCase):
 
         self.assertEqual(len(rules), 0)
 
-    # Test that create_rules creates rules from patterns and recipes
+    # Test that create_rules creates rules from meow_base.patterns and recipes
     def testCreateRulesPatternsAndRecipesDicts(self)->None:
         patterns = {
             valid_pattern_one.name: valid_pattern_one,

@@ -10,7 +10,7 @@ from os import getenv
 from papermill.translators import papermill_translators
 from typing import Any, Dict, List
 
-from core.correctness.validation import check_script, check_type
+from meow_base.core.correctness.validation import check_script, check_type
 
 # Adapted from: https://github.com/rasmunk/notebook_parameterizer
 def parameterize_jupyter_notebook(jupyter_notebook:Dict[str,Any], 

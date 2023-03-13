@@ -1,9 +1,9 @@
 
 import unittest
 
-from patterns.file_event_pattern import FileEventPattern
-from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
-from rules.file_event_jupyter_notebook_rule import FileEventJupyterNotebookRule
+from meow_base.patterns.file_event_pattern import FileEventPattern
+from meow_base.recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
+from meow_base.rules.file_event_jupyter_notebook_rule import FileEventJupyterNotebookRule
 from shared import setup, teardown, BAREBONES_NOTEBOOK
 
 class CorrectnessTests(unittest.TestCase):

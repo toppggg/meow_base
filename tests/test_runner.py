@@ -8,21 +8,21 @@ from random import shuffle
 from shutil import copy
 from time import sleep
 
-from core.base_conductor import BaseConductor
-from core.base_handler import BaseHandler
-from core.base_monitor import BaseMonitor
-from conductors import LocalPythonConductor
-from core.correctness.vars import get_result_file, \
+from meow_base.core.base_conductor import BaseConductor
+from meow_base.core.base_handler import BaseHandler
+from meow_base.core.base_monitor import BaseMonitor
+from meow_base.conductors import LocalPythonConductor
+from meow_base.core.correctness.vars import get_result_file, \
     JOB_TYPE_PAPERMILL, JOB_ERROR, META_FILE, JOB_TYPE_PYTHON, JOB_CREATE_TIME
-from core.runner import MeowRunner
-from functionality.file_io import make_dir, read_file, read_notebook, \
+from meow_base.core.runner import MeowRunner
+from meow_base.functionality.file_io import make_dir, read_file, read_notebook, \
     read_yaml, write_file, lines_to_string
-from functionality.meow import create_parameter_sweep
-from functionality.requirements import create_python_requirements
-from patterns.file_event_pattern import WatchdogMonitor, FileEventPattern
-from recipes.jupyter_notebook_recipe import PapermillHandler, \
+from meow_base.functionality.meow import create_parameter_sweep
+from meow_base.functionality.requirements import create_python_requirements
+from meow_base.patterns.file_event_pattern import WatchdogMonitor, FileEventPattern
+from meow_base.recipes.jupyter_notebook_recipe import PapermillHandler, \
     JupyterNotebookRecipe
-from recipes.python_recipe import PythonHandler, PythonRecipe
+from meow_base.recipes.python_recipe import PythonHandler, PythonRecipe
 from shared import setup, teardown, backup_before_teardown, \
     TEST_JOB_QUEUE, TEST_JOB_OUTPUT, TEST_MONITOR_BASE, MAKER_RECIPE, \
     APPENDING_NOTEBOOK, COMPLETE_PYTHON_SCRIPT, TEST_DIR, FILTER_RECIPE, \
@@ -915,10 +915,6 @@ class MeowTests(unittest.TestCase):
         self.assertTrue(os.path.exists(output_path))
         output = read_file(os.path.join(output_path))
         self.assertEqual(output, "12505000.0")
-
-
-
-
 
     def testSelfModifyingAnalysis(self)->None:
         maker_pattern = FileEventPattern(

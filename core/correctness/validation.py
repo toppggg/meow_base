@@ -11,7 +11,7 @@ from os.path import sep, exists, isfile, isdir, dirname
 from typing import Any, _SpecialForm, Union, Type, Dict, List, \
     get_origin, get_args
 
-from core.correctness.vars import VALID_PATH_CHARS, get_not_imp_msg
+from meow_base.core.correctness.vars import VALID_PATH_CHARS, get_not_imp_msg
 
 def check_type(variable:Any, expected_type:Type, alt_types:List[Type]=[], 
         or_none:bool=False, hint:str="")->None:

@@ -1,4 +1,4 @@
 
-from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe, \
-    PapermillHandler
-from recipes.python_recipe import PythonRecipe, PythonHandler
+from .jupyter_notebook_recipe import JupyterNotebookRecipe, PapermillHandler, \
+    getRecipeFromNotebook
+from .python_recipe import PythonRecipe, PythonHandler

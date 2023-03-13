@@ -7,10 +7,10 @@ import os
 
 from distutils.dir_util import copy_tree
 
-from core.correctness.vars import DEFAULT_JOB_OUTPUT_DIR, DEFAULT_JOB_QUEUE_DIR
-from functionality.file_io import make_dir, rmtree
-from patterns import FileEventPattern
-from recipes import JupyterNotebookRecipe
+from meow_base.core.correctness.vars import DEFAULT_JOB_OUTPUT_DIR, DEFAULT_JOB_QUEUE_DIR
+from meow_base.functionality.file_io import make_dir, rmtree
+from meow_base.patterns.file_event_pattern import FileEventPattern
+from meow_base.recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
 
 # testing 
 TEST_DIR = "test_files"

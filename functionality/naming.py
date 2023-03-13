@@ -7,7 +7,7 @@ Author(s): David Marchant
 from typing import List
 from random import SystemRandom
 
-from core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE
+from meow_base.core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE
 
 
 #TODO Make this guaranteed unique

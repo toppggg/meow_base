@@ -14,16 +14,16 @@ from multiprocessing import Pipe
 from random import randrange
 from typing import Any, Union, Dict, List
 
-from core.base_conductor import BaseConductor
-from core.base_handler import BaseHandler
-from core.base_monitor import BaseMonitor
-from core.correctness.vars import DEBUG_WARNING, DEBUG_INFO, EVENT_TYPE, \
+from meow_base.core.base_conductor import BaseConductor
+from meow_base.core.base_handler import BaseHandler
+from meow_base.core.base_monitor import BaseMonitor
+from meow_base.core.correctness.vars import DEBUG_WARNING, DEBUG_INFO, EVENT_TYPE, \
     VALID_CHANNELS, META_FILE, DEFAULT_JOB_OUTPUT_DIR, DEFAULT_JOB_QUEUE_DIR, \
     EVENT_PATH
-from core.correctness.validation import check_type, valid_list, valid_dir_path
-from functionality.debug import setup_debugging, print_debug
-from functionality.file_io import make_dir, read_yaml
-from functionality.process_io import wait
+from meow_base.core.correctness.validation import check_type, valid_list, valid_dir_path
+from meow_base.functionality.debug import setup_debugging, print_debug
+from meow_base.functionality.file_io import make_dir, read_yaml
+from meow_base.functionality.process_io import wait
 
 
 class MeowRunner:
@@ -112,6 +112,7 @@ class MeowRunner:
             if self._stop_mon_han_pipe[0] in ready:
                 return
             else:
+                handled = False
                 for from_monitor in self.from_monitors:
                     if from_monitor in ready:
                         # Read event from the monitor channel
@@ -136,13 +137,25 @@ class MeowRunner:
                         # If we've only one handler, use that
                         if len(valid_handlers) == 1:
                             handler = valid_handlers[0]
+                            handled = True
                             self.handle_event(handler, event)
+                            break
                         # If multiple handlers then randomly pick one
-                        else:
+                        elif len(valid_handlers) > 1:
                             handler = valid_handlers[
                                 randrange(len(valid_handlers))
                             ]
+                            handled = True
                             self.handle_event(handler, event)
+                            break
+
+                if not handled:
+                    print_debug(
+                        self._print_target, 
+                        self.debug_level, 
+                        "Could not determine handler for event.", 
+                        DEBUG_INFO
+                    )
 
     def run_handler_conductor_interaction(self)->None:
         """Function to be run in its own thread, to handle any inbound messages
@@ -156,6 +169,7 @@ class MeowRunner:
             if self._stop_han_con_pipe[0] in ready:
                 return
             else:
+                executed = False
                 for from_handler in self.from_handlers:
                     if from_handler in ready:
                         # Read job directory from the handler channel
@@ -188,14 +202,27 @@ class MeowRunner:
                         # If we've only one conductor, use that
                         if len(valid_conductors) == 1:
                             conductor = valid_conductors[0]
+                            executed = True
                             self.execute_job(conductor, job_dir)
+                            break
                         # If multiple handlers then randomly pick one
-                        else:
+                        elif len(valid_conductors) > 1:
                             conductor = valid_conductors[
                                 randrange(len(valid_conductors))
                             ]
+                            executed = True
                             self.execute_job(conductor, job_dir)
-   
+                            break
+
+                # TODO determine something more useful to do here
+                if not executed:
+                    print_debug(
+                        self._print_target, 
+                        self.debug_level, 
+                        f"No conductor could be found for job {job_dir}", 
+                        DEBUG_INFO
+                    )
+
     def handle_event(self, handler:BaseHandler, event:Dict[str,Any])->None:
         """Function for a given handler to handle a given event, without 
         crashing the runner in the event of a problem."""

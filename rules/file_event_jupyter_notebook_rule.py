@@ -6,10 +6,10 @@ and JupyterNotebookRecipe.
 Author(s): David Marchant
 """
 
-from core.base_rule import BaseRule
-from core.correctness.validation import check_type
-from patterns.file_event_pattern import FileEventPattern
-from recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
+from meow_base.core.base_rule import BaseRule
+from meow_base.core.correctness.validation import check_type
+from meow_base.patterns.file_event_pattern import FileEventPattern
+from meow_base.recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
 
 # TODO potentailly remove this and just invoke BaseRule directly, as does not
 # add any functionality other than some validation.

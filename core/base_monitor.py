@@ -9,12 +9,12 @@ Author(s): David Marchant
 from copy import deepcopy
 from typing import Union, Dict
 
-from core.base_pattern import BasePattern
-from core.base_recipe import BaseRecipe
-from core.base_rule import BaseRule
-from core.correctness.vars import get_drt_imp_msg, VALID_CHANNELS
-from core.correctness.validation import check_implementation
-from functionality.meow import create_rules
+from meow_base.core.base_pattern import BasePattern
+from meow_base.core.base_recipe import BaseRecipe
+from meow_base.core.base_rule import BaseRule
+from meow_base.core.correctness.vars import get_drt_imp_msg, VALID_CHANNELS
+from meow_base.core.correctness.validation import check_implementation
+from meow_base.functionality.meow import create_rules
 
 
 class BaseMonitor:
