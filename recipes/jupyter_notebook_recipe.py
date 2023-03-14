@@ -182,12 +182,11 @@ class PapermillHandler(BaseHandler):
         # Send job directory, as actual definitons will be read from within it
         self.to_runner.send(job_dir)
 
-#TODO test me
-def getRecipeFromNotebook(name:str, notebook_filename:str, 
+def get_recipe_from_notebook(name:str, notebook_filename:str, 
         parameters:Dict[str,Any]={}, requirements:Dict[str,Any]={}
         )->JupyterNotebookRecipe:
     valid_existing_file_path(notebook_filename, extension=".ipynb")
-    check_type(name, str, hint="getRecipeFromNotebook.name")
+    check_type(name, str, hint="get_recipe_from_notebook.name")
 
     notebook_code = read_notebook(notebook_filename)
 

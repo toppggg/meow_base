@@ -20,7 +20,7 @@ from meow_base.functionality.meow import create_job, create_rules, create_rule, 
     create_watchdog_event
 from meow_base.patterns.file_event_pattern import FileEventPattern
 from meow_base.recipes.jupyter_notebook_recipe import JupyterNotebookRecipe, \
-    PapermillHandler, papermill_job_func
+    PapermillHandler, papermill_job_func, get_recipe_from_notebook
 from meow_base.recipes.python_recipe import PythonRecipe, PythonHandler, python_job_func
 from meow_base.rules import FileEventPythonRule, FileEventJupyterNotebookRule
 from shared import setup, teardown, BAREBONES_PYTHON_SCRIPT, \
@@ -439,6 +439,19 @@ class JupyterNotebookTests(unittest.TestCase):
             EVENT_RULE: rule
         })
         self.assertTrue(status)
+
+    # Test function correctly creates Recipe directly from notebook
+    def testGetRecipeFromNotebook(self)->None:
+        notebook_path = os.path.join(TEST_MONITOR_BASE, "notebook.ipynb")
+        write_notebook(COMPLETE_NOTEBOOK, notebook_path)
+
+        self.assertTrue(os.path.exists(notebook_path))
+
+        recipe = get_recipe_from_notebook("name", notebook_path)
+
+        self.assertIsInstance(recipe, JupyterNotebookRecipe)
+        self.assertEqual(recipe.name, "name")
+        self.assertEqual(recipe.recipe, COMPLETE_NOTEBOOK)
 
 
 class PythonTests(unittest.TestCase):

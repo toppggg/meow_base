@@ -1,6 +1,6 @@
 
 from meow_base.patterns import FileEventPattern
-from meow_base.recipes import getRecipeFromNotebook
+from meow_base.recipes import get_recipe_from_notebook
 
 from shared import run_test, MRME
 
@@ -15,7 +15,7 @@ def multiple_rules_multiple_events(job_count:int, REPEATS, job_counter, requeste
         )
         patterns[pattern.name] = pattern
 
-    recipe = getRecipeFromNotebook("recipe_one", "test.ipynb")
+    recipe = get_recipe_from_notebook("recipe_one", "test.ipynb")
     
     recipes = {
         recipe.name: recipe

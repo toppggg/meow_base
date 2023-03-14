@@ -15,7 +15,6 @@ from meow_base.recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
 from shared import setup, teardown, BAREBONES_NOTEBOOK, TEST_MONITOR_BASE
 
 
-
 def patterns_equal(tester, pattern_one, pattern_two):
     tester.assertEqual(pattern_one.name, pattern_two.name)
     tester.assertEqual(pattern_one.recipe, pattern_two.recipe)

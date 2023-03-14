@@ -1,6 +1,6 @@
 
 from meow_base.patterns import FileEventPattern
-from meow_base.recipes import getRecipeFromNotebook
+from meow_base.recipes import get_recipe_from_notebook
 
 from shared import run_test, SRSES
 
@@ -17,7 +17,7 @@ def single_rule_single_event_sequential(job_count:int, REPEATS, job_counter, req
     )
     patterns[pattern.name] = pattern
 
-    recipe = getRecipeFromNotebook("recipe_two", "sequential.ipynb")
+    recipe = get_recipe_from_notebook("recipe_two", "sequential.ipynb")
     
     recipes = {
         recipe.name: recipe

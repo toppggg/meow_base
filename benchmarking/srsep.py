@@ -1,6 +1,6 @@
 
 from meow_base.patterns import FileEventPattern
-from meow_base.recipes import getRecipeFromNotebook
+from meow_base.recipes import get_recipe_from_notebook
 
 from meow_base.functionality.meow import create_parameter_sweep
 from shared import run_test, SRSEP
@@ -16,7 +16,7 @@ def single_rule_single_event_parallel(job_count:int, REPEATS, job_counter, reque
     )
     patterns[pattern.name] = pattern
 
-    recipe = getRecipeFromNotebook("recipe_one", "test.ipynb")
+    recipe = get_recipe_from_notebook("recipe_one", "test.ipynb")
     
     recipes = {
         recipe.name: recipe
