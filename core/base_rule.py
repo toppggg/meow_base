@@ -13,7 +13,8 @@ if "BasePattern" not in modules:
     from meow_base.core.base_pattern import BasePattern
 if "BaseRecipe" not in modules:
     from meow_base.core.base_recipe import BaseRecipe
-from meow_base.core.correctness.vars import get_drt_imp_msg, VALID_RULE_NAME_CHARS
+from meow_base.core.correctness.vars import VALID_RULE_NAME_CHARS, \
+    get_drt_imp_msg
 from meow_base.core.correctness.validation import valid_string, check_type, \
     check_implementation
 

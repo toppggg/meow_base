@@ -8,8 +8,10 @@ Author(s): David Marchant
 
 from typing import Any, Dict
 
-from meow_base.core.correctness.vars import get_drt_imp_msg, VALID_RECIPE_NAME_CHARS
-from meow_base.core.correctness.validation import valid_string, check_implementation
+from meow_base.core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
+    get_drt_imp_msg
+from meow_base.core.correctness.validation import check_implementation, \
+    valid_string
 
 
 class BaseRecipe:

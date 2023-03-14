@@ -19,29 +19,27 @@ from meow_base.core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
     JOB_TYPE, JOB_PATTERN, JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, \
     JOB_REQUIREMENTS, STATUS_QUEUED, JOB_TYPE_PAPERMILL
 from meow_base.functionality.debug import setup_debugging
-from meow_base.functionality.file_io import lines_to_string, make_dir, read_file, \
-    read_file_lines, read_notebook, read_yaml, rmtree, write_file, \
+from meow_base.functionality.file_io import lines_to_string, make_dir, \
+    read_file, read_file_lines, read_notebook, read_yaml, rmtree, write_file, \
     write_notebook, write_yaml    
 from meow_base.functionality.hashing import get_file_hash
-from meow_base.functionality.meow import create_event, create_job, create_rule, \
-    create_rules, create_watchdog_event, replace_keywords, \
-    create_parameter_sweep, \
-    KEYWORD_BASE, KEYWORD_DIR, KEYWORD_EXTENSION, KEYWORD_FILENAME, \
-    KEYWORD_JOB, KEYWORD_PATH, KEYWORD_PREFIX, KEYWORD_REL_DIR, \
-    KEYWORD_REL_PATH
+from meow_base.functionality.meow import KEYWORD_BASE, KEYWORD_DIR, \
+    KEYWORD_EXTENSION, KEYWORD_FILENAME, KEYWORD_JOB, KEYWORD_PATH, \
+    KEYWORD_PREFIX, KEYWORD_REL_DIR, KEYWORD_REL_PATH, \
+    create_event, create_job, create_rule, create_rules, \
+    create_watchdog_event, replace_keywords, create_parameter_sweep
 from meow_base.functionality.naming import _generate_id
-from meow_base.functionality.parameterisation import parameterize_jupyter_notebook, \
-    parameterize_python_script
+from meow_base.functionality.parameterisation import \
+    parameterize_jupyter_notebook, parameterize_python_script
 from meow_base.functionality.process_io import wait
-from meow_base.functionality.requirements import create_python_requirements, \
-    check_requirements, \
-    REQUIREMENT_PYTHON, REQ_PYTHON_ENVIRONMENT, REQ_PYTHON_MODULES, \
-    REQ_PYTHON_VERSION
+from meow_base.functionality.requirements import REQUIREMENT_PYTHON, \
+    REQ_PYTHON_ENVIRONMENT, REQ_PYTHON_MODULES, REQ_PYTHON_VERSION, \
+    create_python_requirements, check_requirements
 from meow_base.patterns.file_event_pattern import FileEventPattern
 from meow_base.recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
-from shared import setup, teardown, valid_recipe_two, valid_recipe_one, \
-    valid_pattern_one, valid_pattern_two, TEST_MONITOR_BASE, \
-    COMPLETE_NOTEBOOK, APPENDING_NOTEBOOK, COMPLETE_PYTHON_SCRIPT
+from shared import TEST_MONITOR_BASE, COMPLETE_NOTEBOOK, APPENDING_NOTEBOOK, \
+    COMPLETE_PYTHON_SCRIPT, valid_recipe_two, valid_recipe_one, \
+    valid_pattern_one, valid_pattern_two, setup, teardown
 
 class DebugTests(unittest.TestCase):
     def setUp(self)->None:

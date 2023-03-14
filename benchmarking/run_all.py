@@ -5,14 +5,18 @@ import sys
 import time
 import os
 
-from shared import JOBS_COUNTS, REPEATS, TESTS, MRME, MRSE, SRME, SRSEP, SRSES, RESULTS_DIR, BASE, GRAPH_FILENAME
+from typing import List
+
+from shared import JOBS_COUNTS, REPEATS, TESTS, MRME, MRSE, SRME, SRSEP, \
+    SRSES, RESULTS_DIR, BASE
 from mrme import multiple_rules_multiple_events
 from mrse import multiple_rules_single_event
 from srme import single_rule_multiple_events
 from srsep import single_rule_single_event_parallel
 from srsps import single_rule_single_event_sequential
 
-from meow_base.core.correctness.vars import DEFAULT_JOB_OUTPUT_DIR, DEFAULT_JOB_QUEUE_DIR
+from meow_base.core.correctness.vars import DEFAULT_JOB_OUTPUT_DIR, \
+    DEFAULT_JOB_QUEUE_DIR
 from meow_base.functionality.file_io import rmtree
 
 LINE_KEYS = {
@@ -59,7 +63,7 @@ def run_tests():
 
     print(f"All tests completed in: {str(time.time()-runtime_start)}")
 
-def get_meow_graph(results_dir):
+def get_meow_graph(results_dir:str):
     lines = []
 
     for run_type in os.listdir(results_dir):
@@ -68,24 +72,25 @@ def get_meow_graph(results_dir):
 
 #       lines.append((f'scheduling {run_type}', [], 'solid'))
         lines.append((run_type, [], 'solid'))
-        run_type_path = os.path.join(results_dir, run_type)
+        run_path = os.path.join(results_dir, run_type)
 
-        for job_count in os.listdir(run_type_path):
-            results_path = os.path.join(run_type_path, job_count, 'results.txt')
+        for job_count in os.listdir(run_path):
+            results_path = os.path.join(run_path, job_count, "results.txt")
             with open(results_path, 'r') as f_in:
                 data = f_in.readlines()
 
             scheduling_duration = 0
             for line in data:
                 if "Average schedule time: " in line:
-                    scheduling_duration = float(line.replace("Average schedule time: ", ''))
+                    scheduling_duration = float(line.replace(
+                        "Average schedule time: ", ''))
     
             lines[-1][1].append((job_count, scheduling_duration))
             lines[-1][1].sort(key=lambda y: float(y[0]))
 
     return lines
 
-def make_plot(lines, graph_path, title, logged):
+def make_plot(lines:List, graph_path:str, title:str, logged:bool):
     w = 10
     h = 4
     linecount = 0
@@ -129,14 +134,19 @@ def make_plot(lines, graph_path, title, logged):
 def make_both_plots(lines, path, title, log=True):
     make_plot(lines, path, title, False)
     if log:
-        logged_path = path[:path.index(".pdf")] + "_logged" + path[path.index(".pdf"):]
+        logged_path = path[:path.index(".pdf")] + "_logged" \
+            + path[path.index(".pdf"):]
         make_plot(lines, logged_path, title, True)
 
 
 def make_graphs():
     lines = get_meow_graph(RESULTS_DIR)
 
-    make_both_plots(lines, "result.pdf", "MiG scheduling overheads on the Threadripper")
+    make_both_plots(
+        lines, 
+        "result.pdf", 
+        "MiG scheduling overheads on the Threadripper"
+    )
 
     average_lines = []
     all_delta_lines = []
@@ -146,20 +156,36 @@ def make_graphs():
             averages = [(i, v/float(i)) for i, v in line_values]
             average_lines.append((line_signature, averages, lines_style))
 
-            if line_signature not in ["total single_Pattern_single_file_sequential", "scheduling single_Pattern_single_file_sequential_jobs", "SPSFS"]:
+            if line_signature not in [
+                    "total single_Pattern_single_file_sequential", 
+                    "scheduling single_Pattern_single_file_sequential_jobs", 
+                    "SPSFS"]:
                 deltas = []
                 for i in range(len(line_values)-1):
-                    deltas.append( (line_values[i+1][0], (averages[i+1][1]-averages[i][1]) / (float(averages[i+1][0])-float(averages[i][0])) ) )
+                    deltas.append((line_values[i+1][0], 
+                        (averages[i+1][1]-averages[i][1]) \
+                        / (float(averages[i+1][0])-float(averages[i][0]))))
                 no_spsfs_delta_lines.append((line_signature, deltas, lines_style))
             deltas = []
             for i in range(len(line_values)-1):
-                deltas.append( (line_values[i+1][0], (averages[i+1][1]-averages[i][1]) / (float(averages[i+1][0])-float(averages[i][0])) ) )
+                deltas.append((line_values[i+1][0], 
+                    (averages[i+1][1]-averages[i][1]) \
+                    / (float(averages[i+1][0])-float(averages[i][0]))))
             all_delta_lines.append((line_signature, deltas, lines_style))
 
 
-    make_both_plots(average_lines, "result_averaged.pdf", "Per-job MiG scheduling overheads on the Threadripper")
+    make_both_plots(
+        average_lines, 
+        "result_averaged.pdf", 
+        "Per-job MiG scheduling overheads on the Threadripper"
+    )
 
-    make_both_plots(all_delta_lines, "result_deltas.pdf", "Difference in per-job MiG scheduling overheads on the Threadripper", log=False)
+    make_both_plots(
+        all_delta_lines, 
+        "result_deltas.pdf", 
+        "Difference in per-job MiG scheduling overheads on the Threadripper", 
+        log=False
+    )
 
 if __name__ == '__main__':
     try:

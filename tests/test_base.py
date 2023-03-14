@@ -11,7 +11,7 @@ from meow_base.core.base_recipe import BaseRecipe
 from meow_base.core.base_rule import BaseRule
 from meow_base.core.correctness.vars import SWEEP_STOP, SWEEP_JUMP, SWEEP_START
 from meow_base.patterns.file_event_pattern import FileEventPattern
-from shared import setup, teardown, valid_pattern_one, valid_recipe_one
+from shared import valid_pattern_one, valid_recipe_one, setup, teardown
 
 
 class BaseRecipeTests(unittest.TestCase):

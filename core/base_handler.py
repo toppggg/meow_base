@@ -8,7 +8,7 @@ Author(s): David Marchant
 
 from typing import Any, Tuple, Dict
 
-from meow_base.core.correctness.vars import get_drt_imp_msg, VALID_CHANNELS
+from meow_base.core.correctness.vars import VALID_CHANNELS, get_drt_imp_msg 
 from meow_base.core.correctness.validation import check_implementation
 
 

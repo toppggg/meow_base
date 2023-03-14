@@ -16,15 +16,15 @@ from meow_base.core.base_handler import BaseHandler
 from meow_base.core.correctness.meow import valid_event
 from meow_base.core.correctness.validation import check_type, valid_string, \
     valid_dict, valid_path, valid_dir_path, valid_existing_file_path
-from meow_base.core.correctness.vars import VALID_VARIABLE_NAME_CHARS, PYTHON_FUNC, \
-    DEBUG_INFO, EVENT_TYPE_WATCHDOG, JOB_HASH, DEFAULT_JOB_QUEUE_DIR, \
-    EVENT_PATH, JOB_TYPE_PAPERMILL, WATCHDOG_HASH, JOB_PARAMETERS, \
-    JOB_ID, WATCHDOG_BASE, META_FILE, \
-    PARAMS_FILE, JOB_STATUS, STATUS_QUEUED, EVENT_RULE, EVENT_TYPE, \
-    EVENT_RULE, get_base_file
+from meow_base.core.correctness.vars import VALID_VARIABLE_NAME_CHARS, \
+    PYTHON_FUNC, DEBUG_INFO, EVENT_TYPE_WATCHDOG, JOB_HASH, \
+    DEFAULT_JOB_QUEUE_DIR, EVENT_PATH, JOB_TYPE_PAPERMILL, WATCHDOG_HASH, \
+    JOB_PARAMETERS, JOB_ID, WATCHDOG_BASE, META_FILE, PARAMS_FILE, \
+    JOB_STATUS, STATUS_QUEUED, EVENT_RULE, EVENT_TYPE, EVENT_RULE, \
+    get_base_file
 from meow_base.functionality.debug import setup_debugging, print_debug
-from meow_base.functionality.file_io import make_dir, read_notebook, write_notebook, \
-    write_yaml
+from meow_base.functionality.file_io import make_dir, read_notebook, \
+    write_notebook, write_yaml
 from meow_base.functionality.meow import create_job, replace_keywords
 
 

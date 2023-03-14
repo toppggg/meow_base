@@ -7,26 +7,26 @@ from multiprocessing import Pipe
 from typing import Dict
 
 from meow_base.core.correctness.meow import valid_job
-from meow_base.core.correctness.vars import EVENT_TYPE, WATCHDOG_BASE, EVENT_RULE, \
-    EVENT_TYPE_WATCHDOG, EVENT_PATH, SHA256, WATCHDOG_HASH, JOB_ID, \
-    JOB_TYPE_PYTHON, JOB_PARAMETERS, JOB_HASH, PYTHON_FUNC, JOB_STATUS, \
-    META_FILE, JOB_ERROR, \
-    PARAMS_FILE, SWEEP_STOP, SWEEP_JUMP, SWEEP_START, JOB_TYPE_PAPERMILL, \
-    get_base_file, get_job_file, get_result_file
-from meow_base.functionality.file_io import lines_to_string, make_dir, read_yaml, \
-    write_file, write_notebook, write_yaml
+from meow_base.core.correctness.vars import EVENT_TYPE, WATCHDOG_BASE, \
+    EVENT_RULE, EVENT_TYPE_WATCHDOG, EVENT_PATH, SHA256, WATCHDOG_HASH, \
+    JOB_ID, JOB_TYPE_PYTHON, JOB_PARAMETERS, JOB_HASH, PYTHON_FUNC, \
+    JOB_STATUS, META_FILE, JOB_ERROR, PARAMS_FILE, SWEEP_STOP, SWEEP_JUMP, \
+    SWEEP_START, JOB_TYPE_PAPERMILL, get_base_file, get_job_file, \
+    get_result_file
+from meow_base.functionality.file_io import lines_to_string, make_dir, \
+    read_yaml, write_file, write_notebook, write_yaml
 from meow_base.functionality.hashing import get_file_hash
-from meow_base.functionality.meow import create_job, create_rules, create_rule, \
-    create_watchdog_event
+from meow_base.functionality.meow import create_job, create_rules, \
+    create_rule, create_watchdog_event
 from meow_base.patterns.file_event_pattern import FileEventPattern
 from meow_base.recipes.jupyter_notebook_recipe import JupyterNotebookRecipe, \
     PapermillHandler, papermill_job_func, get_recipe_from_notebook
-from meow_base.recipes.python_recipe import PythonRecipe, PythonHandler, python_job_func
+from meow_base.recipes.python_recipe import PythonRecipe, PythonHandler, \
+    python_job_func
 from meow_base.rules import FileEventPythonRule, FileEventJupyterNotebookRule
-from shared import setup, teardown, BAREBONES_PYTHON_SCRIPT, \
-    COMPLETE_PYTHON_SCRIPT, TEST_JOB_QUEUE, TEST_MONITOR_BASE, \
-    TEST_JOB_OUTPUT, BAREBONES_NOTEBOOK, APPENDING_NOTEBOOK, COMPLETE_NOTEBOOK
-
+from shared import BAREBONES_PYTHON_SCRIPT, COMPLETE_PYTHON_SCRIPT, \
+    TEST_JOB_QUEUE, TEST_MONITOR_BASE, TEST_JOB_OUTPUT, BAREBONES_NOTEBOOK, \
+    APPENDING_NOTEBOOK, COMPLETE_NOTEBOOK, setup, teardown
 
 class JupyterNotebookTests(unittest.TestCase):
     def setUp(self)->None:

@@ -23,7 +23,7 @@ from meow_base.core.base_monitor import BaseMonitor
 from meow_base.core.base_pattern import BasePattern
 from meow_base.core.base_rule import BaseRule
 from meow_base.core.correctness.validation import check_type, valid_string, \
-    valid_dict, valid_list, valid_path, valid_dir_path
+    valid_dict, valid_list, valid_dir_path
 from meow_base.core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
     VALID_VARIABLE_NAME_CHARS, FILE_EVENTS, FILE_CREATE_EVENT, \
     FILE_MODIFY_EVENT, FILE_MOVED_EVENT, DEBUG_INFO, \
@@ -579,29 +579,6 @@ class WatchdogEventHandler(PatternMatchingEventHandler):
         self._recent_jobs_lock.release()
 
         self.monitor.match(event)
-
-#                recent_timestamp = self._recent_jobs[event.src_path]
-#                difference = event.time_stamp - recent_timestamp
-#
-#                # Discard the event if we already have a recent event at this 
-#                # same path. Update the most recent time, so we can hopefully
-#                # wait till events have stopped happening
-#                if difference <= self._settletime:
-#                    self._recent_jobs[event.src_path] = \
-#                        max(recent_timestamp, event.time_stamp)
-#                    self._recent_jobs_lock.release()
-#                    return
-#                else:
-#                    self._recent_jobs[event.src_path] = event.time_stamp
-#            else:
-#                self._recent_jobs[event.src_path] = event.time_stamp
-#        except Exception as ex:
-#            self._recent_jobs_lock.release()
-#            raise Exception(ex)
-#        self._recent_jobs_lock.release()
-#
-#        # If we did not have a recent event, then send it on to the monitor
-#        self.monitor.match(event)
 
     def handle_event(self, event):
         """Handler function, called by all specific event functions. Will 

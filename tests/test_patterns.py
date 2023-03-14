@@ -9,10 +9,10 @@ from meow_base.core.correctness.vars import FILE_CREATE_EVENT, EVENT_TYPE, \
     EVENT_RULE, WATCHDOG_BASE, EVENT_TYPE_WATCHDOG, EVENT_PATH, SWEEP_START, \
     SWEEP_JUMP, SWEEP_STOP
 from meow_base.functionality.file_io import make_dir
-from meow_base.patterns.file_event_pattern import FileEventPattern, WatchdogMonitor, \
-    _DEFAULT_MASK
+from meow_base.patterns.file_event_pattern import FileEventPattern, \
+    WatchdogMonitor, _DEFAULT_MASK
 from meow_base.recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
-from shared import setup, teardown, BAREBONES_NOTEBOOK, TEST_MONITOR_BASE
+from shared import BAREBONES_NOTEBOOK, TEST_MONITOR_BASE, setup, teardown
 
 
 def patterns_equal(tester, pattern_one, pattern_two):

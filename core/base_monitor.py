@@ -12,7 +12,7 @@ from typing import Union, Dict
 from meow_base.core.base_pattern import BasePattern
 from meow_base.core.base_recipe import BaseRecipe
 from meow_base.core.base_rule import BaseRule
-from meow_base.core.correctness.vars import get_drt_imp_msg, VALID_CHANNELS
+from meow_base.core.correctness.vars import VALID_CHANNELS, get_drt_imp_msg 
 from meow_base.core.correctness.validation import check_implementation
 from meow_base.functionality.meow import create_rules
 

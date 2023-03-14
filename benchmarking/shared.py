@@ -6,9 +6,12 @@ import pathlib
 import time
 import yaml
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, List
 
-from meow_base.core.correctness.vars import DEFAULT_JOB_OUTPUT_DIR, DEFAULT_JOB_QUEUE_DIR
+from meow_base.core.correctness.vars import DEFAULT_JOB_OUTPUT_DIR, \
+    DEFAULT_JOB_QUEUE_DIR
+from meow_base.core.base_pattern import BasePattern
+from meow_base.core.base_recipe import BaseRecipe
 from meow_base.core.runner import MeowRunner
 from meow_base.patterns.file_event_pattern import WatchdogMonitor
 from meow_base.recipes.jupyter_notebook_recipe import PapermillHandler
@@ -17,9 +20,13 @@ from meow_base.functionality.file_io import rmtree
 
 RESULTS_DIR = "results"
 BASE = "benchmark_base"
-GRAPH_FILENAME = "graph.pdf"
 REPEATS = 10
-JOBS_COUNTS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 125, 150, 175, 200, 250, 300, 400, 500]
+JOBS_COUNTS = [
+    10, 20, 30, 40, 50, 
+    60, 70, 80, 90, 100, 
+    125, 150, 175, 200, 
+    250, 300, 400, 500
+]
 
 SRME = "single_rule_multiple_events"
 MRSE = "multiple_rules_single_event"
@@ -42,10 +49,11 @@ class DummyConductor(LocalPythonConductor):
         return False, ">:("
 
 
-def datetime_to_timestamp(date_time_obj):
-    return time.mktime(date_time_obj.timetuple()) + float(date_time_obj.microsecond)/1000000 
+def datetime_to_timestamp(date_time_obj:datetime):
+    return time.mktime(date_time_obj.timetuple()) \
+        + float(date_time_obj.microsecond)/1000000 
 
-def generate(file_count, file_path, file_type='.txt'):
+def generate(file_count:int, file_path:str, file_type:str=".txt"):
     first_filename = ''
     start = time.time()
     for i in range(int(file_count)):
@@ -56,7 +64,8 @@ def generate(file_count, file_path, file_type='.txt'):
             f.write('0')
     return first_filename, time.time() - start
 
-def cleanup(jobs, file_out, base_time, gen_time, execution=False):
+def cleanup(jobs:List[str], file_out:str, base_time:float, gen_time:float, 
+        execution:bool=False):
     if not jobs:
         return
 
@@ -116,27 +125,30 @@ def cleanup(jobs, file_out, base_time, gen_time, execution=False):
 
     return total_time
 
-def mean(l):
+def mean(l:List):
     return sum(l)/len(l)
 
-def collate_results(base_results_dir):
-
+def collate_results(base_dir:str):
     scheduling_delays = []
 
-    for run in os.listdir(base_results_dir):
+    for run in os.listdir(base_dir):
         if run != 'results.txt':
-            with open(os.path.join(base_results_dir, run, 'results.txt'), 'r') as f:
+            with open(os.path.join(base_dir, run, "results.txt"), 'r') as f:
                 d = f.readlines()
 
                 for l in d:
                     if "Total scheduling delay (seconds): " in l:
-                        scheduling_delays.append(float(l.replace("Total scheduling delay (seconds): ", '')))
+                        scheduling_delays.append(float(l.replace(
+                            "Total scheduling delay (seconds): ", '')))
 
-    with open(os.path.join(base_results_dir, 'results.txt'), 'w') as f:
+    with open(os.path.join(base_dir, 'results.txt'), 'w') as f:
         f.write(f"Average schedule time: {round(mean(scheduling_delays), 3)}\n")
         f.write(f"Scheduling times: {scheduling_delays}")
 
-def run_test(patterns, recipes, files_count, expected_job_count, repeats, job_counter, requested_jobs, runtime_start, signature='', execution=False, print_logging=False):
+def run_test(patterns:Dict[str,BasePattern], recipes:Dict[str,BaseRecipe], 
+        files_count:int, expected_job_count:int, repeats:int, job_counter:int, 
+        requested_jobs:int, runtime_start:float, signature:str="", 
+        execution:bool=False, print_logging:bool=False):
     if not os.path.exists(RESULTS_DIR):
         os.mkdir(RESULTS_DIR)
 
@@ -172,24 +184,12 @@ def run_test(patterns, recipes, files_count, expected_job_count, repeats, job_co
                 print=runner_debug_stream,
                 logging=3
             )
-        
-#        meow.WorkflowRunner(
-#            VGRID,
-#            num_workers,
-#            patterns=patterns,
-#            recipes=recipes,
-#            daemon=True,
-#            start_workers=False,
-#            retro_active_jobs=False,
-#            print_logging=print_logging,
-#            file_logging=False,
-#            wait_time=1
-#        )
 
         runner.start()
 
         # Generate triggering files
-        first_filename, generation_duration = generate(files_count, file_base +"/file_")
+        first_filename, generation_duration = \
+            generate(files_count, file_base +"/file_")
 
         idle_loops = 0
         total_loops = 0
@@ -216,10 +216,27 @@ def run_test(patterns, recipes, files_count, expected_job_count, repeats, job_co
         else:
             jobs = os.listdir(DEFAULT_JOB_QUEUE_DIR)
 
-        results_path = os.path.join(RESULTS_DIR, signature, str(expected_job_count), str(run), 'results.txt')
+        results_path = os.path.join(
+            RESULTS_DIR, 
+            signature, 
+            str(expected_job_count), 
+            str(run), 
+            "results.txt"
+        )
 
-        cleanup(jobs, results_path, first_filename, generation_duration, execution=execution)
+        cleanup(
+            jobs, 
+            results_path, 
+            first_filename, 
+            generation_duration, 
+            execution=execution
+        )
 
-        print(f"Completed scheduling run {str(run + 1)} of {str(len(jobs))}/{str(expected_job_count)} jobs for '{signature}' {job_counter + expected_job_count*(run+1)}/{requested_jobs} ({str(round(time.time()-runtime_start, 3))}s)")
+        print(f"Completed scheduling run {str(run + 1)} of {str(len(jobs))}"
+              f"/{str(expected_job_count)} jobs for '{signature}' "
+              f"{job_counter + expected_job_count*(run+1)}/{requested_jobs} "
+              f"({str(round(time.time()-runtime_start, 3))}s)")
 
-    collate_results(os.path.join(RESULTS_DIR, signature, str(expected_job_count)))
+    collate_results(
+        os.path.join(RESULTS_DIR, signature, str(expected_job_count))
+    )
