@@ -26,4 +26,4 @@ to run locally, update your '~/.bashrc' file to inclue:
     export PYTHONPATH=/home/patch/Documents/Research/Python
 
 ## Benchmarking 
-Benchmarks have been written for this library, but are included in the seperate meow_benchmarking package
+Benchmarks have been written for this library, but are included in the seperate https://github.com/PatchOfScotland/meow_benchmarks package
