@@ -194,8 +194,12 @@ class WatchdogMonitor(BaseMonitor):
                 # Use regex to match event paths against rule paths
                 target_path = rule.pattern.triggering_path
                 recursive_regexp = translate(target_path)
-                direct_regexp = recursive_regexp.replace(
-                    '.*', '[^'+ os.path.sep +']*')
+                if os.name == 'nt':
+                    direct_regexp = recursive_regexp.replace(
+                        '.*', '[^'+ os.path.sep + os.path.sep +']*')
+                else:
+                    direct_regexp = recursive_regexp.replace(
+                        '.*', '[^'+ os.path.sep +']*')
                 recursive_hit = match(recursive_regexp, handle_path)
                 direct_hit = match(direct_regexp, handle_path)
 
