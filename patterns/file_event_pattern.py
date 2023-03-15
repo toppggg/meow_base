@@ -559,6 +559,14 @@ class WatchdogEventHandler(PatternMatchingEventHandler):
             else:
                 self._recent_jobs[event.src_path] = \
                     [event.time_stamp, {event.event_type}]
+
+            # If we have a closed event then short-cut the wait and send event
+            # immediately        
+            if event.event_type == FILE_CLOSED_EVENT:
+                self.monitor.match(event)
+                self._recent_jobs_lock.release()
+                return
+
         except Exception as ex:
             self._recent_jobs_lock.release()
             raise Exception(ex)
