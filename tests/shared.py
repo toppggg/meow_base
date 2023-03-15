@@ -27,6 +27,7 @@ def setup():
     make_dir(TEST_JOB_OUTPUT, ensure_clean=True)
     make_dir(DEFAULT_JOB_OUTPUT_DIR, ensure_clean=True)
     make_dir(DEFAULT_JOB_QUEUE_DIR, ensure_clean=True)
+    make_dir("visualizer_print", ensure_clean=True)
 
 def teardown():
     rmtree(TEST_DIR)
@@ -35,6 +36,7 @@ def teardown():
     rmtree(TEST_JOB_OUTPUT)
     rmtree(DEFAULT_JOB_OUTPUT_DIR)
     rmtree(DEFAULT_JOB_QUEUE_DIR)
+    rmtree("visualizer_print")
     rmtree("first")
     if os.path.exists("temp_phantom_info.h5"):
         os.remove("temp_phantom_info.h5")

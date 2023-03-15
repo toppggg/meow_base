@@ -1,0 +1,65 @@
+create: 2023-03-02 14:51:57.297066
+end: 2023-03-02 14:51:57.985161
+event:
+  event_path: test_monitor_base\start\A.txt
+  event_type: watchdog
+  file_hash: 0812a4ef4ea9e800e2cb87a311317fdb06f80ab8700c7185b35588b3d6953739
+  monitor_base: test_monitor_base
+  rule: !!python/object:rules.file_event_python_rule.FileEventPythonRule
+    name: rule_iEtfArQFNlt
+    pattern: !!python/object:patterns.file_event_pattern.FileEventPattern
+      event_mask:
+      - file_created
+      - file_modified
+      - file_moved
+      - retroactive_file_event
+      name: pattern_one
+      outputs: {}
+      parameters:
+        num: 10000
+        outfile: '{VGRID}\output\{FILENAME}'
+      recipe: recipe_two
+      sweep: {}
+      triggering_file: infile
+      triggering_path: start\A.txt
+    recipe: !!python/object:recipes.python_recipe.PythonRecipe
+      name: recipe_two
+      parameters: {}
+      recipe:
+      - import os
+      - '# Setup parameters'
+      - num = 1000
+      - infile = 'somehere\particular'
+      - outfile = 'nowhere\particular'
+      - ''
+      - 'with open(infile, ''r'') as file:'
+      - '    s = float(file.read())'
+      - 'for i in range(num):'
+      - '    s += i'
+      - ''
+      - div_by = 4
+      - result = s / div_by
+      - ''
+      - print(result)
+      - ''
+      - os.makedirs(os.path.dirname(outfile), exist_ok=True)
+      - ''
+      - 'with open(outfile, ''w'') as file:'
+      - '    file.write(str(result))'
+      - ''
+      - print('done')
+      requirements: &id001 {}
+func: !!python/name:recipes.python_recipe.python_job_func ''
+hash: 0812a4ef4ea9e800e2cb87a311317fdb06f80ab8700c7185b35588b3d6953739
+id: job_GjUTpSQQxNxU
+job_type: python
+parameters:
+  infile: test_monitor_base\start\A.txt
+  num: 10000
+  outfile: '{VGRID}\output\{FILENAME}'
+pattern: pattern_one
+recipe: recipe_two
+requirements: *id001
+rule: rule_iEtfArQFNlt
+start: 2023-03-02 14:51:57.348872
+status: done

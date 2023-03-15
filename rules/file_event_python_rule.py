@@ -37,3 +37,5 @@ class FileEventPythonRule(BaseRule):
             PythonRecipe,
             hint="FileEventPythonRule.recipe"
         )
+    #  def __str__(self) -> str :
+        # return super.__str__()

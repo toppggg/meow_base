@@ -34,12 +34,16 @@ class MeowRunner:
     handlers:List[BaseHandler]
     # A collection of all conductors in the runner
     conductors:List[BaseConductor]
+    # A visualizer in the runner
+    visualizer: Visualizer
     # A collection of all channels from each monitor
     from_monitors: List[VALID_CHANNELS]
     # A collection of all channels from each handler
     from_handlers: List[VALID_CHANNELS]
     # Directory where queued jobs are initially written to
     job_queue_dir:str
+    # Boolean to show if Visualizer is active
+    visualizer_active: bool
     # Directory where completed jobs are finally written to
     job_output_dir:str
     def __init__(self, monitors:Union[BaseMonitor,List[BaseMonitor]], 
@@ -47,7 +51,9 @@ class MeowRunner:
             conductors:Union[BaseConductor,List[BaseConductor]],
             job_queue_dir:str=DEFAULT_JOB_QUEUE_DIR,
             job_output_dir:str=DEFAULT_JOB_OUTPUT_DIR,
+            visualizer_active:bool=0,
             print:Any=sys.stdout, logging:int=0)->None:
+            
         """MeowRunner constructor. This connects all provided monitors, 
         handlers and conductors according to what events and jobs they produce 
         or consume."""
@@ -89,6 +95,11 @@ class MeowRunner:
             monitor_to_runner_reader, monitor_to_runner_writer = Pipe()
             monitor.to_runner = monitor_to_runner_writer
             self.from_monitors.append(monitor_to_runner_reader)
+           
+            # if self.visualizer_active: 
+            #     monitor_to_visualizer_reader, monitor_to_visualizer_writer = Pipe()
+            #     monitor.to_visualizer = monitor_to_visualizer_writer
+            #     self.visualizer.from_monitor.append(monitor_to_visualizer_reader)
 
         # Create channel to send stop messages to monitor/handler thread
         self._stop_mon_han_pipe = Pipe()
@@ -100,6 +111,10 @@ class MeowRunner:
 
         # Setup debugging
         self._print_target, self.debug_level = setup_debugging(print, logging)
+
+        self.visualizer_active = visualizer_active
+        if visualizer_active : 
+            self.create_visualizer()
 
     def run_monitor_handler_interaction(self)->None:
         """Function to be run in its own thread, to handle any inbound messages
@@ -119,7 +134,13 @@ class MeowRunner:
                         # Read event from the monitor channel
                         message = from_monitor.recv()
                         event = message
-
+                        if self.visualizer_active : 
+                            # try: 
+                            self.visualizer.from_runner(event)
+                            # except Exception as e:
+                            #     print("visualizer exception")
+                            #     pass # Have a default visualizer that handles exceptions? or is it just log
+                                    
                         valid_handlers = []
                         for handler in self.handlers:
                             try:
@@ -413,3 +434,8 @@ class MeowRunner:
         valid_dir_path(job_output_dir, must_exist=False)
         if not os.path.exists(job_output_dir):
             make_dir(job_output_dir)
+
+    def create_visualizer (self):
+        self.visualizer = Visualizer()
+        #Create visualizer
+        

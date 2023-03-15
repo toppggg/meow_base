@@ -83,3 +83,6 @@ class BaseRule:
         if self.recipe_type == "":
             raise AttributeError(f"Rule Class '{self.__class__.__name__}' "
                 "does not set a recipe_type.")
+
+    def __str__(self) -> str :
+        return f'\n rule_name:{self.name} \n   recipe: {self.recipe} \n   pattern: {self.pattern}'
