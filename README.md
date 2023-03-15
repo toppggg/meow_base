@@ -24,3 +24,6 @@ to run locally, update your '~/.bashrc' file to inclue:
 
     # Manually added to get local testing of Python files working easier
     export PYTHONPATH=/home/patch/Documents/Research/Python
+
+## Benchmarking 
+Benchmarks have been written for this library, but are included in the seperate meow_benchmarking package
