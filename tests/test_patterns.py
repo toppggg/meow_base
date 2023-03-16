@@ -36,7 +36,7 @@ def recipes_equal(tester, recipe_one, recipe_two):
     tester.assertEqual(recipe_one.source, recipe_two.source)
 
 
-class CorrectnessTests(unittest.TestCase):
+class FileEventPatternTests(unittest.TestCase):
     def setUp(self)->None:
         super().setUp()
         setup()
@@ -184,10 +184,28 @@ class CorrectnessTests(unittest.TestCase):
             fep = FileEventPattern("name", "path", "recipe", "file", 
                 sweep=bad_sweep)
 
+class WatchdogMonitorTests(unittest.TestCase):
+    def setUp(self)->None:
+        super().setUp()
+        setup()
+
+    def tearDown(self)->None:
+        super().tearDown()
+        teardown()
+
     # Test WatchdogMonitor created 
     def testWatchdogMonitorMinimum(self)->None:
         from_monitor = Pipe()
         WatchdogMonitor(TEST_MONITOR_BASE, {}, {}, from_monitor[1])
+
+    # Test WatchdogMonitor naming
+    def testWatchdogMonitorNaming(self)->None:
+        test_name = "test_name"
+        monitor = WatchdogMonitor(TEST_MONITOR_BASE, {}, {}, name=test_name)
+        self.assertEqual(monitor.name, test_name)
+
+        monitor = WatchdogMonitor(TEST_MONITOR_BASE, {}, {})
+        self.assertTrue(monitor.name.startswith("monitor_"))
 
     # Test WatchdogMonitor identifies expected events in base directory
     def testWatchdogMonitorEventIdentificaion(self)->None:

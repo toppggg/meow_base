@@ -111,9 +111,27 @@ class JupyterNotebookTests(unittest.TestCase):
             "name", BAREBONES_NOTEBOOK, source=source)
         self.assertEqual(jnr.source, source)
 
+class PapermillHandlerTests(unittest.TestCase):
+    def setUp(self)->None:
+        super().setUp()
+        setup()
+
+    def tearDown(self)->None:
+        super().tearDown()
+        teardown()
+
     # Test PapermillHandler can be created
     def testPapermillHanderMinimum(self)->None:
         PapermillHandler(job_queue_dir=TEST_JOB_QUEUE)
+
+    # Test PapermillHandler naming
+    def testPapermillHandlerNaming(self)->None:
+        test_name = "test_name"
+        handler = PapermillHandler(name=test_name)
+        self.assertEqual(handler.name, test_name)
+
+        handler = PapermillHandler()
+        self.assertTrue(handler.name.startswith("handler_"))
 
     # Test PapermillHandler will handle given events
     def testPapermillHandlerHandling(self)->None:
@@ -453,7 +471,6 @@ class JupyterNotebookTests(unittest.TestCase):
         self.assertEqual(recipe.name, "name")
         self.assertEqual(recipe.recipe, COMPLETE_NOTEBOOK)
 
-
 class PythonTests(unittest.TestCase):
     def setUp(self)->None:
         super().setUp()
@@ -513,9 +530,27 @@ class PythonTests(unittest.TestCase):
             "name", BAREBONES_PYTHON_SCRIPT, requirements=requirements)
         self.assertEqual(pr.requirements, requirements)
 
+class PythonHandlerTests(unittest.TestCase):
+    def setUp(self)->None:
+        super().setUp()
+        setup()
+
+    def tearDown(self)->None:
+        super().tearDown()
+        teardown()
+
     # Test PythonHandler can be created
     def testPythonHandlerMinimum(self)->None:
         PythonHandler(job_queue_dir=TEST_JOB_QUEUE)
+
+    # Test PythonHandler naming
+    def testPythonHandlerNaming(self)->None:
+        test_name = "test_name"
+        handler = PythonHandler(name=test_name)
+        self.assertEqual(handler.name, test_name)
+
+        handler = PythonHandler()
+        self.assertTrue(handler.name.startswith("handler_"))
 
     # Test PythonHandler will handle given events
     def testPythonHandlerHandling(self)->None:

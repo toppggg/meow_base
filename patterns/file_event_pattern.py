@@ -129,12 +129,12 @@ class WatchdogMonitor(BaseMonitor):
 
     def __init__(self, base_dir:str, patterns:Dict[str,FileEventPattern], 
             recipes:Dict[str,BaseRecipe], autostart=False, settletime:int=1, 
-            print:Any=sys.stdout, logging:int=0)->None:
+            name:str="", print:Any=sys.stdout, logging:int=0)->None:
         """WatchdogEventHandler Constructor. This uses the watchdog module to 
         monitor a directory and all its sub-directories. Watchdog will provide 
         the monitor with an caught events, with the monitor comparing them 
         against its rules, and informing the runner of match."""
-        super().__init__(patterns, recipes)
+        super().__init__(patterns, recipes, name=name)
         self._is_valid_base_dir(base_dir)
         self.base_dir = base_dir
         check_type(settletime, int, hint="WatchdogMonitor.settletime")

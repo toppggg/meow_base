@@ -38,9 +38,18 @@ class MeowTests(unittest.TestCase):
         super().tearDown()
         teardown()
         
-    # Test LocalPythonConductor creation and job types
+    # Test LocalPythonConductor creation
     def testLocalPythonConductorCreation(self)->None:
         LocalPythonConductor()
+
+    # Test LocalPythonConductor naming
+    def testLocalPythonConductorNaming(self)->None:
+        test_name = "test_name"
+        conductor = LocalPythonConductor(name=test_name)
+        self.assertEqual(conductor.name, test_name)
+
+        conductor = LocalPythonConductor()
+        self.assertTrue(conductor.name.startswith("conductor_"))
 
     # Test LocalPythonConductor executes valid python jobs
     def testLocalPythonConductorValidPythonJob(self)->None:

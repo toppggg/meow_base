@@ -59,14 +59,14 @@ class PythonHandler(BaseHandler):
     debug_level:int
     # Where print messages are sent
     _print_target:Any
-    def __init__(self, job_queue_dir:str=DEFAULT_JOB_QUEUE_DIR, 
+    def __init__(self, job_queue_dir:str=DEFAULT_JOB_QUEUE_DIR, name:str="",
             print:Any=sys.stdout, logging:int=0)->None:
         """PythonHandler Constructor. This creates jobs to be executed as 
         python functions. This does not run as a continuous thread to 
         handle execution, but is invoked according to a factory pattern using 
         the handle function. Note that if this handler is given to a MeowRunner
         object, the job_queue_dir will be overwridden but its"""
-        super().__init__()
+        super().__init__(name=name)
         self._is_valid_job_queue_dir(job_queue_dir)
         self.job_queue_dir = job_queue_dir
         self._print_target, self.debug_level = setup_debugging(print, logging)
