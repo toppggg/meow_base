@@ -3,10 +3,11 @@ import io
 import importlib
 import os
 import unittest
- 
+
 from random import shuffle
 from shutil import copy
 from time import sleep
+from warnings import warn
 
 from meow_base.core.base_conductor import BaseConductor
 from meow_base.core.base_handler import BaseHandler
@@ -116,6 +117,7 @@ recipe_generator = JupyterNotebookRecipe(
     requirements={recipe_generator_key: recipe_generator_req}           
 )
 
+ 
 class MeowTests(unittest.TestCase):
     def setUp(self)->None:
         super().setUp()
@@ -970,6 +972,10 @@ class MeowTests(unittest.TestCase):
 
     # Test some actual scientific analysis, but in a simple progression
     def testScientificAnalysisAllGood(self)->None:
+        if os.environ["SKIP_LONG"]:
+            warn("Skipping testScientificAnalysisAllGood")
+            return
+        
         patterns = {
             'pattern_check': pattern_check,
             'pattern_segment': pattern_segment,
@@ -1090,6 +1096,10 @@ class MeowTests(unittest.TestCase):
 
     # Test some actual scientific analysis, in a predicatable loop
     def testScientificAnalysisPredictableLoop(self)->None:
+        if os.environ["SKIP_LONG"]:
+            warn("Skipping testScientificAnalysisPredictableLoop")
+            return
+        
         patterns = {
             'pattern_check': pattern_check,
             'pattern_segment': pattern_segment,
@@ -1225,6 +1235,10 @@ class MeowTests(unittest.TestCase):
 
     # Test some actual scientific analysis, in an unpredicatable loop
     def testScientificAnalysisRandomLoop(self)->None:
+        if os.environ["SKIP_LONG"]:
+            warn("Skipping testScientificAnalysisRandomLoop")
+            return
+
         pattern_regenerate_random = FileEventPattern(
             "pattern_regenerate_random",
             os.path.join("foam_ct_data_discarded", "*"),
@@ -1373,6 +1387,10 @@ class MeowTests(unittest.TestCase):
 
     # Test some actual scientific analysis, in an unpredicatable loop
     def testScientificAnalysisMassiveRandomLoop(self)->None:
+        if os.environ["SKIP_LONG"]:
+            warn("Skipping testScientificAnalysisMassiveRandomLoop")
+            return
+
         pattern_regenerate_random = FileEventPattern(
             "pattern_regenerate_random",
             os.path.join("foam_ct_data_discarded", "*"),
