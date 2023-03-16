@@ -12,7 +12,7 @@ import threading
 
 from multiprocessing import Pipe
 from random import randrange
-from typing import Any, Union, Dict, List
+from typing import Any, Union, Dict, List, Type
 
 from meow_base.core.base_conductor import BaseConductor
 from meow_base.core.base_handler import BaseHandler
@@ -363,6 +363,58 @@ class MeowRunner:
             self._han_con_worker.join()
         print_debug(self._print_target, self.debug_level, 
             "Job conductor thread stopped", DEBUG_INFO)
+
+    def get_monitor_by_name(self, queried_name:str)->BaseMonitor:
+        """Gets a runner monitor with a name matching the queried name. Note 
+        in the case of multiple monitors having the same name, only the first 
+        match is returned."""
+        return self._get_entity_by_name(queried_name, self.monitors)
+
+    def get_monitor_by_type(self, queried_type:Type)->BaseMonitor:
+        """Gets a runner monitor with a type matching the queried type. Note 
+        in the case of multiple monitors having the same name, only the first 
+        match is returned."""
+        return self._get_entity_by_type(queried_type, self.monitors)
+
+    def get_handler_by_name(self, queried_name:str)->BaseHandler:
+        """Gets a runner handler with a name matching the queried name. Note 
+        in the case of multiple handlers having the same name, only the first 
+        match is returned."""
+        return self._get_entity_by_name(queried_name, self.handlers)
+
+    def get_handler_by_type(self, queried_type:Type)->BaseHandler:
+        """Gets a runner handler with a type matching the queried type. Note 
+        in the case of multiple handlers having the same name, only the first 
+        match is returned."""
+        return self._get_entity_by_type(queried_type, self.handlers)
+
+    def get_conductor_by_name(self, queried_name:str)->BaseConductor:
+        """Gets a runner conductor with a name matching the queried name. Note 
+        in the case of multiple conductors having the same name, only the first 
+        match is returned."""
+        return self._get_entity_by_name(queried_name, self.conductors)
+
+    def get_conductor_by_type(self, queried_type:Type)->BaseConductor:
+        """Gets a runner conductor with a type matching the queried type. Note 
+        in the case of multiple conductors having the same name, only the first 
+        match is returned."""
+        return self._get_entity_by_type(queried_type, self.conductors)
+
+    def _get_entity_by_name(self, queried_name:str, entities
+            )->Union[BaseMonitor,BaseHandler,BaseConductor]:
+        """Base function inherited by more specific name query functions."""
+        for entity in entities:
+            if entity.name == queried_name:
+                return entity
+        return None
+
+    def _get_entity_by_type(self, queried_type:Type, entities
+            )->Union[BaseMonitor,BaseHandler,BaseConductor]:
+        """Base function inherited by more specific type query functions."""
+        for entity in entities:
+            if isinstance(entity, queried_type):
+                return entity
+        return None
 
     def _is_valid_monitors(self, 
             monitors:Union[BaseMonitor,List[BaseMonitor]])->None:

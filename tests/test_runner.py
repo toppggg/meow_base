@@ -1536,13 +1536,84 @@ class MeowTests(unittest.TestCase):
 
         self.assertEqual(results, good+big+small)
 
+    def testMonitorIdentification(self)->None:
+        monitor_one = WatchdogMonitor(TEST_MONITOR_BASE, {}, {}, name="m1")
+        monitor_two = WatchdogMonitor(TEST_MONITOR_BASE, {}, {}, name="m2")
+        monitors = [ monitor_one, monitor_two ]
+
+        handler_one = PapermillHandler(name="h1")
+        handler_two = PapermillHandler(name="h2")
+        handlers = [ handler_one, handler_two ]
+
+        conductor_one = LocalPythonConductor(name="c1")
+        conductor_two = LocalPythonConductor(name="c2")
+        conductors = [ conductor_one, conductor_two ]
+
+        runner = MeowRunner(monitors, handlers, conductors)
+
+        m1 = runner.get_monitor_by_name("m1")
+        self.assertEqual(monitor_one, m1)
+        m2 = runner.get_monitor_by_name("m2")
+        self.assertEqual(monitor_two, m2)
+        m3 = runner.get_monitor_by_name("m3")
+        self.assertIsNone(m3)
+
+        mt = runner.get_monitor_by_type(WatchdogMonitor)
+        self.assertIn(mt, monitors)
+
+    def testHandlerIdentification(self)->None:
+        monitor_one = WatchdogMonitor(TEST_MONITOR_BASE, {}, {}, name="m1")
+        monitor_two = WatchdogMonitor(TEST_MONITOR_BASE, {}, {}, name="m2")
+        monitors = [ monitor_one, monitor_two ]
+
+        handler_one = PapermillHandler(name="h1")
+        handler_two = PapermillHandler(name="h2")
+        handlers = [ handler_one, handler_two ]
+
+        conductor_one = LocalPythonConductor(name="c1")
+        conductor_two = LocalPythonConductor(name="c2")
+        conductors = [ conductor_one, conductor_two ]
+
+        runner = MeowRunner(monitors, handlers, conductors)
+
+        h1 = runner.get_handler_by_name("h1")
+        self.assertEqual(handler_one, h1)
+        h2 = runner.get_handler_by_name("h2")
+        self.assertEqual(handler_two, h2)
+        h3 = runner.get_handler_by_name("h3")
+        self.assertIsNone(h3)
+
+        mt = runner.get_handler_by_type(PapermillHandler)
+        self.assertIn(mt, handlers)
+        mn = runner.get_handler_by_type(PythonHandler)
+        self.assertIsNone(mn)
+
+    def testConductorIdentification(self)->None:
+        monitor_one = WatchdogMonitor(TEST_MONITOR_BASE, {}, {}, name="m1")
+        monitor_two = WatchdogMonitor(TEST_MONITOR_BASE, {}, {}, name="m2")
+        monitors = [ monitor_one, monitor_two ]
+
+        handler_one = PapermillHandler(name="h1")
+        handler_two = PapermillHandler(name="h2")
+        handlers = [ handler_one, handler_two ]
+
+        conductor_one = LocalPythonConductor(name="c1")
+        conductor_two = LocalPythonConductor(name="c2")
+        conductors = [ conductor_one, conductor_two ]
+
+        runner = MeowRunner(monitors, handlers, conductors)
+
+        c1 = runner.get_conductor_by_name("c1")
+        self.assertEqual(conductor_one, c1)
+        c2 = runner.get_conductor_by_name("c2")
+        self.assertEqual(conductor_two, c2)
+        c3 = runner.get_conductor_by_name("c3")
+        self.assertIsNone(c3)
+
+        ct = runner.get_conductor_by_type(LocalPythonConductor)
+        self.assertIn(ct, conductors)
+
     # TODO test getting job cannot handle
     # TODO test getting event cannot handle
-    # TODO test with several matched monitors
-    # TODO test with several mismatched monitors
-    # TODO test with several matched handlers
-    # TODO test with several mismatched handlers
-    # TODO test with several matched conductors
-    # TODO test with several mismatched conductors
     # TODO tests runner job queue dir
     # TODO tests runner job output dir
