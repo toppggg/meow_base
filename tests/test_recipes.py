@@ -878,5 +878,3 @@ class PythonHandlerTests(unittest.TestCase):
             EVENT_RULE: rule
         })
         self.assertTrue(status)
-
-    # TODO test default parameter function execution

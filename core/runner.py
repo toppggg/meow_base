@@ -400,7 +400,8 @@ class MeowRunner:
         match is returned."""
         return self._get_entity_by_type(queried_type, self.conductors)
 
-    def _get_entity_by_name(self, queried_name:str, entities
+    def _get_entity_by_name(self, queried_name:str, 
+            entities:List[Union[BaseMonitor,BaseHandler,BaseConductor]]
             )->Union[BaseMonitor,BaseHandler,BaseConductor]:
         """Base function inherited by more specific name query functions."""
         for entity in entities:
@@ -408,7 +409,8 @@ class MeowRunner:
                 return entity
         return None
 
-    def _get_entity_by_type(self, queried_type:Type, entities
+    def _get_entity_by_type(self, queried_type:Type, 
+            entities:List[Union[BaseMonitor,BaseHandler,BaseConductor]]
             )->Union[BaseMonitor,BaseHandler,BaseConductor]:
         """Base function inherited by more specific type query functions."""
         for entity in entities:
