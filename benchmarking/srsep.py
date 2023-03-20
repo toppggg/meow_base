@@ -1,4 +1,4 @@
-
+import os
 from meow_base.patterns import FileEventPattern
 from meow_base.recipes import get_recipe_from_notebook
 
@@ -10,7 +10,7 @@ def single_rule_single_event_parallel(job_count:int, REPEATS:int,
     patterns = {}
     pattern = FileEventPattern(
         f"pattern_one",
-        f"testing/*",
+        f"testing{os.path.sep}*",
         "recipe_one",
         "input",
         sweep=create_parameter_sweep("var", 1, job_count, 1)

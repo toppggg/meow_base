@@ -25,6 +25,7 @@ from meow_base.core.correctness.validation import check_type, valid_list, \
 from meow_base.functionality.debug import setup_debugging, print_debug
 from meow_base.functionality.file_io import make_dir, read_yaml
 from meow_base.functionality.process_io import wait
+from meow_base.core.visualizer import Visualizer
 
 
 class MeowRunner:

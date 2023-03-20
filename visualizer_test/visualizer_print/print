@@ -1,4 +1,0 @@
-{'file_hash': '0812a4ef4ea9e800e2cb87a311317fdb06f80ab8700c7185b35588b3d6953739', 'monitor_base': 'test_monitor_base', 'event_path': 'test_monitor_base\\start\\A.txt', 'event_type': 'watchdog', 'rule': <rules.file_event_python_rule.FileEventPythonRule object at 0x000002304459D0F0>}
- rule_name:rule_iEtfArQFNlt 
-   recipe: recipe_two 
-   pattern: pattern_one, recipe: recipe_two 

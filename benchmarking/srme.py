@@ -1,4 +1,4 @@
-
+import os
 from meow_base.patterns import FileEventPattern
 from meow_base.recipes import get_recipe_from_notebook
 
@@ -7,15 +7,18 @@ from shared import run_test, SRME
 def single_rule_multiple_events(job_count:int, REPEATS:int, job_counter:int,
         requested_jobs:int, runtime_start:float):
     patterns = {}
+
+    
+
     pattern = FileEventPattern(
         f"pattern_one",
-        f"testing/*",
+        f"testing{os.path.sep}*",
         "recipe_one",
         "input"
     )
     patterns[pattern.name] = pattern
 
-    recipe = get_recipe_from_notebook("recipe_one", "test.ipynb")
+    recipe = get_recipe_from_notebook("recipe_one", f"meow_base{os.path.sep}benchmarking{os.path.sep}test.ipynb")
     
     recipes = {
         recipe.name: recipe

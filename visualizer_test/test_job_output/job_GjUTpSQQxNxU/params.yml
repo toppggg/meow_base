@@ -1,3 +1,0 @@
-infile: test_monitor_base\start\A.txt
-num: 10000
-outfile: test_monitor_base\output\A.txt

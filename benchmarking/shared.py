@@ -5,7 +5,8 @@ import os
 import pathlib
 import time
 import yaml
-
+import sys
+sys.path.append("C:\\Users\\Johan\OneDrive\\Universitet\\Datalogi\\6. semester\\Bachelor\meow")
 from typing import Any, Dict, Tuple, List
 
 from meow_base.core.correctness.vars import DEFAULT_JOB_OUTPUT_DIR, \
@@ -72,10 +73,10 @@ def cleanup(jobs:List[str], file_out:str, base_time:float, gen_time:float,
     job_timestamps = []
     for job in jobs:
         if execution:
-            with open(f"{DEFAULT_JOB_OUTPUT_DIR}/{job}/job.yml", 'r') as f_in:
+            with open(f"{DEFAULT_JOB_OUTPUT_DIR}{os.path.sep}{job}{os.path.sep}job.yml", 'r') as f_in:
                 data = yaml.load(f_in, Loader=yaml.Loader)
         else:
-            with open(f"{DEFAULT_JOB_QUEUE_DIR}/{job}/job.yml", 'r') as f_in:
+            with open(f"{DEFAULT_JOB_QUEUE_DIR}{os.path.sep}{job}{os.path.sep}job.yml", 'r') as f_in:
                 data = yaml.load(f_in, Loader=yaml.Loader)
         create_datetime = data['create']
         create_timestamp = datetime_to_timestamp(create_datetime)
@@ -174,7 +175,8 @@ def run_test(patterns:Dict[str,BasePattern], recipes:Dict[str,BaseRecipe],
                 PapermillHandler(),
                 LocalPythonConductor(),
                 print=runner_debug_stream,
-                logging=3
+                logging=3,
+                visualizer_active=True
             )
         else:
             runner = MeowRunner(
@@ -182,14 +184,15 @@ def run_test(patterns:Dict[str,BasePattern], recipes:Dict[str,BaseRecipe],
                 PapermillHandler(),
                 DummyConductor(),
                 print=runner_debug_stream,
-                logging=3
+                logging=3,
+                visualizer_active=True
             )
 
         runner.start()
 
         # Generate triggering files
         first_filename, generation_duration = \
-            generate(files_count, file_base +"/file_")
+            generate(files_count, file_base +f"{os.path.sep}file_")
 
         idle_loops = 0
         total_loops = 0
@@ -233,8 +236,8 @@ def run_test(patterns:Dict[str,BasePattern], recipes:Dict[str,BaseRecipe],
         )
 
         print(f"Completed scheduling run {str(run + 1)} of {str(len(jobs))}"
-              f"/{str(expected_job_count)} jobs for '{signature}' "
-              f"{job_counter + expected_job_count*(run+1)}/{requested_jobs} "
+              f"{os.path.sep}{str(expected_job_count)} jobs for '{signature}' "
+              f"{job_counter + expected_job_count*(run+1)}{os.path.sep}{requested_jobs} "
               f"({str(round(time.time()-runtime_start, 3))}s)")
 
     collate_results(

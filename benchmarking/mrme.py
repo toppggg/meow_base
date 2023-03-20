@@ -1,4 +1,6 @@
 
+
+import os
 from meow_base.patterns import FileEventPattern
 from meow_base.recipes import get_recipe_from_notebook
 
@@ -10,7 +12,7 @@ def multiple_rules_multiple_events(job_count:int, REPEATS:int, job_counter:int,
     for i in range(job_count):
         pattern = FileEventPattern(
             f"pattern_{i}",
-            f"testing/file_{i}.txt",
+            f"testing{os.path.sep}file_{i}.txt",
             "recipe_one",
             "input"
         )
