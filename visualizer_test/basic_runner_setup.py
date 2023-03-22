@@ -34,7 +34,14 @@ def main():
 
 def testMeowRunnerPythonExecution()->None:
     pattern_one = FileEventPattern(
-        "pattern_one", os.path.join("start", "*.txt"), "recipe_two", "infile", 
+        "pattern_one", os.path.join("start", "*.txt"), "recipe_one", "infile", 
+        parameters={
+            "num":10000,
+            "outfile":os.path.join("{BASE}", "output", "{FILENAME}")
+        })
+
+    pattern_two = FileEventPattern(
+        "pattern_two", os.path.join("start", "*.txt"), "recipe_two", "infile", 
         parameters={
             "num":10000,
             "outfile":os.path.join("{BASE}", "output", "{FILENAME}")
@@ -48,9 +55,11 @@ def testMeowRunnerPythonExecution()->None:
     )
     patterns = {
         pattern_one.name: pattern_one,
+        pattern_two.name: pattern_two
     }
     recipes = {
         recipe.name: recipe,
+        recipe2.name: recipe2
     }
 
     runner_debug_stream = io.StringIO("")
@@ -75,7 +84,8 @@ def testMeowRunnerPythonExecution()->None:
 
     runner.start()
 
-    runner.monitors[0].add_recipe(recipe2)
+    # runner.monitors[0].add_recipe(recipe)
+    # runner.monitors[0].add_recipe(recipe2)
 
     start_dir = os.path.join(TEST_MONITOR_BASE, "start")
     make_dir(start_dir)
@@ -84,35 +94,37 @@ def testMeowRunnerPythonExecution()->None:
     # with open(os.path.join(start_dir, "B.txt"), "w") as f:
     #     f.write("25000") 
 
-    loops = 0
-    job_id = None
+    # job_id = None
+    
 
     
     for i in range(0, 15):
-        loops = 0
         for j in range (1,rand.randint(30,30)) :
             with open(os.path.join(start_dir, f"{i}_{j}.txt"), "w") as f: 
                 f.write(str(25000/(i*j + 1) + 25000 / (j+1))) 
-        flag = True
-        while flag:
-            sleep(30)
+        loops = 0
+        
+        while loops < 15:
+            sleep(3)
             runner_debug_stream.seek(0)
             messages = runner_debug_stream.readlines()
             
-
-
             for msg in messages:
                 # self.assertNotIn("ERROR", msg)
                 with open(os.path.join("visualizer_print", "messages.txt"), "a") as f:
                     f.write(msg)  
                     
                 if "INFO: Completed execution for job: '" in msg:
-                    job_id = msg.replace(
-                        "INFO: Completed execution for job: '", "")
-                    job_id = job_id[:-2]
-                    # loops = 30
-                    flag = False
+                    # From Davids test
+                    # job_id = msg.replace(
+                    #     "INFO: Completed execution for job: '", "")
+                    # job_id = job_id[:-2]
+                    # # loops = 30
+                    loops = 15
             loops += 1
+
+            runner.visualizer.update()
+            
 
     runner.stop()
 
