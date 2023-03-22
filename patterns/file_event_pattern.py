@@ -194,8 +194,12 @@ class WatchdogMonitor(BaseMonitor):
                 # Use regex to match event paths against rule paths
                 target_path = rule.pattern.triggering_path
                 recursive_regexp = translate(target_path)
-                direct_regexp = recursive_regexp.replace(
-                    '.*', '[^'+ os.path.sep + os.path.sep +']*')
+                if os.name == 'nt':
+                    direct_regexp = recursive_regexp.replace(
+                        '.*', '[^'+ os.path.sep + os.path.sep +']*')
+                else:
+                    direct_regexp = recursive_regexp.replace(
+                        '.*', '[^'+ os.path.sep +']*')
                 recursive_hit = match(recursive_regexp, handle_path)
                 direct_hit = match(direct_regexp, handle_path)
 
@@ -559,6 +563,14 @@ class WatchdogEventHandler(PatternMatchingEventHandler):
             else:
                 self._recent_jobs[event.src_path] = \
                     [event.time_stamp, {event.event_type}]
+
+            # If we have a closed event then short-cut the wait and send event
+            # immediately        
+            if event.event_type == FILE_CLOSED_EVENT:
+                self.monitor.match(event)
+                self._recent_jobs_lock.release()
+                return
+
         except Exception as ex:
             self._recent_jobs_lock.release()
             raise Exception(ex)
