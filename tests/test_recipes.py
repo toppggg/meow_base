@@ -11,7 +11,7 @@ from typing import Dict
 from meow_base.core.correctness.meow import valid_job
 from meow_base.core.correctness.vars import EVENT_TYPE, WATCHDOG_BASE, \
     EVENT_RULE, EVENT_TYPE_WATCHDOG, EVENT_PATH, SHA256, WATCHDOG_HASH, \
-    JOB_ID, JOB_TYPE_PYTHON, JOB_PARAMETERS, JOB_HASH, PYTHON_FUNC, \
+    JOB_ID, JOB_TYPE_PYTHON, JOB_PARAMETERS, PYTHON_FUNC, \
     JOB_STATUS, META_FILE, JOB_ERROR, PARAMS_FILE, SWEEP_STOP, SWEEP_JUMP, \
     SWEEP_START, JOB_TYPE_PAPERMILL, JOB_TYPE_BASH, \
     get_base_file, get_job_file, get_result_file
@@ -378,7 +378,6 @@ class PapermillHandlerTests(unittest.TestCase):
             ),
             extras={
                 JOB_PARAMETERS:params_dict,
-                JOB_HASH: file_hash,
                 PYTHON_FUNC:papermill_job_func
             }
         )
@@ -797,7 +796,6 @@ class PythonHandlerTests(unittest.TestCase):
             ),
             extras={
                 JOB_PARAMETERS:params_dict,
-                JOB_HASH: file_hash,
                 PYTHON_FUNC:python_job_func
             }
         )
@@ -1210,8 +1208,7 @@ class BashHandlerTests(unittest.TestCase):
                 file_hash
             ),
             extras={
-                JOB_PARAMETERS:params_dict,
-                JOB_HASH: file_hash
+                JOB_PARAMETERS:params_dict
             }
         )
 
@@ -1234,7 +1231,6 @@ class BashHandlerTests(unittest.TestCase):
         write_file(lines_to_string(job_script), job_file)
         st = os.stat(job_file)
         os.chmod(job_file, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-
 
         print(os.listdir(job_dir))
         print(os.getcwd())
@@ -1264,16 +1260,6 @@ class BashHandlerTests(unittest.TestCase):
             result = f.read()
 
         self.assertEqual(result, "124937\n")
-
-    # Test jobFunc doesn't execute with no args
-    def testJobFuncBadArgs(self)->None:
-        try:
-            Bash_job_func({})
-        except Exception:
-            pass
-
-        self.assertEqual(len(os.listdir(TEST_JOB_QUEUE)), 0)
-        self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), 0)
 
     # Test handling criteria function
     def testValidHandleCriteria(self)->None:

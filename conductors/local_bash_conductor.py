@@ -84,15 +84,34 @@ class LocalBashConductor(BaseConductor):
         # execute the job
         if not abort:
             try:
-                result = subprocess.call(get_job_file(JOB_TYPE_BASH), cwd=".")
+                print(f"PWD: {os.getcwd()}")
+                print(f"job_dir: {job_dir}")
+                print(os.path.exists(os.path.join(job_dir, get_job_file(JOB_TYPE_BASH))))
+                result = subprocess.call(
+                    os.path.join(job_dir, get_job_file(JOB_TYPE_BASH)), 
+                    cwd="."
+                )
 
                 # get up to date job data
                 job = read_yaml(meta_file)
 
-                # Update the status file with the finalised status
-                job[JOB_STATUS] = STATUS_DONE
-                job[JOB_END_TIME] = datetime.now()
-                write_yaml(job, meta_file)
+                if result == 0:
+                    # Update the status file with the finalised status
+                    job[JOB_STATUS] = STATUS_DONE
+                    job[JOB_END_TIME] = datetime.now()
+                    write_yaml(job, meta_file)
+
+                else:
+                    # Update the status file with the error status. Don't 
+                    # overwrite any more specific error messages already 
+                    # created
+                    if JOB_STATUS not in job:
+                        job[JOB_STATUS] = STATUS_FAILED
+                    if JOB_END_TIME not in job:
+                        job[JOB_END_TIME] = datetime.now()
+                    if JOB_ERROR not in job:
+                        job[JOB_ERROR] = f"Job execution returned non-zero."
+                    write_yaml(job, meta_file)
 
             except Exception as e:
                 # get up to date job data

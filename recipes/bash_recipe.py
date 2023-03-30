@@ -12,9 +12,8 @@ from meow_base.core.correctness.validation import check_type, valid_dict, \
     valid_string, valid_dir_path
 from meow_base.core.correctness.vars import DEBUG_INFO, DEFAULT_JOB_QUEUE_DIR, \
     VALID_VARIABLE_NAME_CHARS, EVENT_PATH, EVENT_RULE, EVENT_TYPE, JOB_ID, \
-    EVENT_TYPE_WATCHDOG, JOB_TYPE_BASH, JOB_PARAMETERS, JOB_HASH, \
-    WATCHDOG_HASH, WATCHDOG_BASE, META_FILE, PARAMS_FILE, STATUS_QUEUED, \
-    JOB_STATUS, \
+    EVENT_TYPE_WATCHDOG, JOB_TYPE_BASH, JOB_PARAMETERS, WATCHDOG_HASH, \
+    WATCHDOG_BASE, META_FILE, STATUS_QUEUED, JOB_STATUS, \
     get_base_file, get_job_file
 from meow_base.functionality.debug import setup_debugging, print_debug
 from meow_base.functionality.file_io import valid_path, make_dir, write_yaml, \
@@ -138,7 +137,6 @@ class BashHandler(BaseHandler):
             event, 
             extras={
                 JOB_PARAMETERS:yaml_dict,
-                JOB_HASH: event[WATCHDOG_HASH],
 #                CONTROL_SCRIPT:python_job_func
             }
         )

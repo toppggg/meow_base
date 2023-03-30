@@ -16,7 +16,7 @@ from meow_base.core.correctness.meow import valid_event
 from meow_base.core.correctness.validation import check_script, valid_string, \
     valid_dict, valid_dir_path
 from meow_base.core.correctness.vars import VALID_VARIABLE_NAME_CHARS, \
-    PYTHON_FUNC, DEBUG_INFO, EVENT_TYPE_WATCHDOG, JOB_HASH, \
+    PYTHON_FUNC, DEBUG_INFO, EVENT_TYPE_WATCHDOG, \
     DEFAULT_JOB_QUEUE_DIR, EVENT_RULE, EVENT_PATH, JOB_TYPE_PYTHON, \
     WATCHDOG_HASH, JOB_PARAMETERS, JOB_ID, WATCHDOG_BASE, META_FILE, \
     PARAMS_FILE, JOB_STATUS, STATUS_QUEUED, EVENT_TYPE, EVENT_RULE, \
@@ -132,7 +132,6 @@ class PythonHandler(BaseHandler):
             event, 
             extras={
                 JOB_PARAMETERS:yaml_dict,
-                JOB_HASH: event[WATCHDOG_HASH],
                 PYTHON_FUNC:python_job_func
             }
         )
@@ -182,7 +181,7 @@ def python_job_func(job_dir):
     from io import StringIO
     from meow_base.core.correctness.vars import JOB_EVENT, JOB_ID, \
         EVENT_PATH, META_FILE, PARAMS_FILE, \
-        JOB_STATUS, JOB_HASH, SHA256, STATUS_SKIPPED, JOB_END_TIME, \
+        JOB_STATUS, SHA256, STATUS_SKIPPED, JOB_END_TIME, \
         JOB_ERROR, STATUS_FAILED, get_base_file, \
         get_job_file, get_result_file
     from meow_base.functionality.file_io import read_yaml, write_yaml
@@ -203,19 +202,20 @@ def python_job_func(job_dir):
     # Check the hash of the triggering file, if present. This addresses 
     # potential race condition as file could have been modified since 
     # triggering event
-    if JOB_HASH in job:
+    if JOB_EVENT in job and WATCHDOG_HASH in job[JOB_EVENT]:
         # get current hash
         triggerfile_hash = get_file_hash(job[JOB_EVENT][EVENT_PATH], SHA256)
         # If hash doesn't match, then abort the job. If its been modified, then
         # another job will have been scheduled anyway.
         if not triggerfile_hash \
-                or triggerfile_hash != job[JOB_HASH]:
+                or triggerfile_hash != job[JOB_EVENT][WATCHDOG_HASH]:
             job[JOB_STATUS] = STATUS_SKIPPED
             job[JOB_END_TIME] = datetime.now()
             msg = "Job was skipped as triggering file " + \
                 f"'{job[JOB_EVENT][EVENT_PATH]}' has been modified since " + \
                 "scheduling. Was expected to have hash " + \
-                f"'{job[JOB_HASH]}' but has '{triggerfile_hash}'."
+                f"'{job[JOB_EVENT][WATCHDOG_HASH]}' but has '" + \
+                f"{triggerfile_hash}'."
             job[JOB_ERROR] = msg
             write_yaml(job, meta_file)
             return

@@ -14,7 +14,7 @@ from typing import Dict
 from meow_base.core.rule import Rule
 from meow_base.core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
     SHA256, EVENT_TYPE, EVENT_PATH, EVENT_TYPE_WATCHDOG, \
-    WATCHDOG_BASE, WATCHDOG_HASH, EVENT_RULE, JOB_PARAMETERS, JOB_HASH, \
+    WATCHDOG_BASE, WATCHDOG_HASH, EVENT_RULE, JOB_PARAMETERS, \
     PYTHON_FUNC, JOB_ID, JOB_EVENT, \
     JOB_TYPE, JOB_PATTERN, JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, \
     JOB_REQUIREMENTS, STATUS_QUEUED, JOB_TYPE_PAPERMILL
@@ -443,7 +443,6 @@ class MeowTests(unittest.TestCase):
                     "infile":"file_path",
                     "outfile":"result_path"
                 },
-                JOB_HASH: "file_hash",
                 PYTHON_FUNC:max
             }
         )
