@@ -11,7 +11,7 @@ from typing import Union, Dict
 
 from meow_base.core.base_pattern import BasePattern
 from meow_base.core.base_recipe import BaseRecipe
-from meow_base.core.base_rule import BaseRule
+from meow_base.core.rule import Rule
 from meow_base.core.correctness.vars import VALID_CHANNELS, \
     VALID_MONITOR_NAME_CHARS, get_drt_imp_msg 
 from meow_base.core.correctness.validation import check_implementation, \
@@ -29,7 +29,7 @@ class BaseMonitor:
     # A collection of recipes
     _recipes: Dict[str, BaseRecipe]
     # A collection of rules derived from _patterns and _recipes
-    _rules: Dict[str, BaseRule]
+    _rules: Dict[str, Rule]
     # A channel for sending messages to the runner. Note that this is not 
     # initialised within the constructor, but within the runner when passed the
     # monitor is passed to it.
@@ -138,7 +138,7 @@ class BaseMonitor:
         Must be implemented by any child process."""
         pass
 
-    def get_rules(self)->Dict[str,BaseRule]:
+    def get_rules(self)->Dict[str,Rule]:
         """Function to get a dictionary of all current rule definitions. 
         Must be implemented by any child process."""
         pass

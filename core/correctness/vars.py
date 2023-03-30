@@ -86,6 +86,7 @@ DEFAULT_JOB_OUTPUT_DIR = "job_output"
 
 # meow jobs
 JOB_TYPE = "job_type"
+JOB_TYPE_BASH = "bash"
 JOB_TYPE_PYTHON = "python"
 JOB_TYPE_PAPERMILL = "papermill"
 PYTHON_FUNC = "func"
@@ -94,12 +95,17 @@ JOB_TYPES = {
     JOB_TYPE_PAPERMILL: [
         "base.ipynb",
         "job.ipynb",
-        "result.ipynb",
+        "result.ipynb"
     ],
     JOB_TYPE_PYTHON: [
         "base.py",
         "job.py",
-        "result.py",
+        "result.py"
+    ],
+    JOB_TYPE_BASH: [
+        "base.sh",
+        "job.sh",
+        "result.sh"
     ]
 }
 

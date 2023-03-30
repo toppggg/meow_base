@@ -21,7 +21,7 @@ from watchdog.events import PatternMatchingEventHandler
 from meow_base.core.base_recipe import BaseRecipe
 from meow_base.core.base_monitor import BaseMonitor
 from meow_base.core.base_pattern import BasePattern
-from meow_base.core.base_rule import BaseRule
+from meow_base.core.rule import Rule
 from meow_base.core.correctness.validation import check_type, valid_string, \
     valid_dict, valid_list, valid_dir_path
 from meow_base.core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
@@ -358,7 +358,7 @@ class WatchdogMonitor(BaseMonitor):
         self._recipes_lock.release()
         return to_return
     
-    def get_rules(self)->Dict[str,BaseRule]:
+    def get_rules(self)->Dict[str,Rule]:
         """Function to get a dict of the currently defined rules of the 
         monitor. Note that the result is deep-copied, and so can be manipulated
         without directly manipulating the internals of the monitor."""
@@ -486,7 +486,7 @@ class WatchdogMonitor(BaseMonitor):
         for rule in self._rules.values():
             self._apply_retroactive_rule(rule)
 
-    def _apply_retroactive_rule(self, rule:BaseRule)->None:
+    def _apply_retroactive_rule(self, rule:Rule)->None:
         """Function to determine if a rule should be applied to the existing 
         file structure, were the file structure created/modified now."""
         self._rules_lock.acquire()

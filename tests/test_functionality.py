@@ -11,7 +11,7 @@ from sys import prefix, base_prefix
 from time import sleep
 from typing import Dict
 
-from meow_base.core.base_rule import BaseRule
+from meow_base.core.rule import Rule
 from meow_base.core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
     SHA256, EVENT_TYPE, EVENT_PATH, EVENT_TYPE_WATCHDOG, \
     WATCHDOG_BASE, WATCHDOG_HASH, EVENT_RULE, JOB_PARAMETERS, JOB_HASH, \
@@ -581,7 +581,7 @@ class MeowTests(unittest.TestCase):
     def testCreateRule(self)->None:
         rule = create_rule(valid_pattern_one, valid_recipe_one)
 
-        self.assertIsInstance(rule, BaseRule)
+        self.assertIsInstance(rule, Rule)
 
         with self.assertRaises(ValueError):
             rule = create_rule(valid_pattern_one, valid_recipe_two)
@@ -607,7 +607,7 @@ class MeowTests(unittest.TestCase):
         self.assertEqual(len(rules), 2)
         for k, rule in rules.items():
             self.assertIsInstance(k, str)
-            self.assertIsInstance(rule, BaseRule)
+            self.assertIsInstance(rule, Rule)
             self.assertEqual(k, rule.name)
 
     # Test that create_rules creates nothing from invalid pattern inputs

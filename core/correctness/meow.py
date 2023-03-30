@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import Any, Dict, Type
 
-from meow_base.core.base_rule import BaseRule
+from meow_base.core.rule import Rule
 from meow_base.core.correctness.validation import check_type
 from meow_base.core.correctness.vars import EVENT_TYPE, EVENT_PATH, \
     JOB_EVENT, JOB_TYPE, JOB_ID, JOB_PATTERN, JOB_RECIPE, JOB_RULE, \
@@ -13,7 +13,7 @@ EVENT_KEYS = {
     EVENT_TYPE: str,
     EVENT_PATH: str,
     # Should be a Rule but can't import here due to circular dependencies
-    EVENT_RULE: BaseRule
+    EVENT_RULE: Rule
 }
 
 WATCHDOG_EVENT_KEYS = {

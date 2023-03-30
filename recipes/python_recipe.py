@@ -65,7 +65,7 @@ class PythonHandler(BaseHandler):
         python functions. This does not run as a continuous thread to 
         handle execution, but is invoked according to a factory pattern using 
         the handle function. Note that if this handler is given to a MeowRunner
-        object, the job_queue_dir will be overwridden but its"""
+        object, the job_queue_dir will be overwridden by its"""
         super().__init__(name=name)
         self._is_valid_job_queue_dir(job_queue_dir)
         self.job_queue_dir = job_queue_dir

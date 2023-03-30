@@ -46,34 +46,36 @@ def backup_before_teardown(backup_source:str, backup_dest:str):
     copy_tree(backup_source, backup_dest)
 
 
-# Recipe funcs
-BAREBONES_PYTHON_SCRIPT = [
+# Bash scripts
+BAREBONES_BASH_SCRIPT = [
     ""
 ]
-COMPLETE_PYTHON_SCRIPT = [
-    "import os",
-    "# Setup parameters",
-    "num = 1000",
-    "infile = 'somehere"+ os.path.sep +"particular'",
-    "outfile = 'nowhere"+ os.path.sep +"particular'",
-    "",
-    "with open(infile, 'r') as file:",
-    "    s = float(file.read())",
-    ""
-    "for i in range(num):",
-    "    s += i",
-    "",
-    "div_by = 4",
-    "result = s / div_by",
-    "",
-    "print(result)",
-    "",
-    "os.makedirs(os.path.dirname(outfile), exist_ok=True)",
-    "",
-    "with open(outfile, 'w') as file:",
-    "    file.write(str(result))",
-    "",
-    "print('done')"
+COMPLETE_BASH_SCRIPT = [
+    '#!/bin/bash',
+    '',
+    'num=1000',
+    'infile="data"',
+    'outfile="output"',
+    '',
+    'echo "starting"',
+    '',
+    'read var < $infile',
+    'for (( i=0; i<$num; i++ ))',
+    'do',
+    '    var=$((var+i))',
+    'done',
+    '',
+    'div_by=4',
+    'echo $var',
+    'result=$((var/div_by))',
+    '',
+    'echo $result',
+    '',
+    'mkdir -p $(dirname $outfile)',
+    '',
+    'echo $result > $outfile',
+    '',
+    'echo "done"'
 ]
 
 # Jupyter notebooks
@@ -1225,6 +1227,34 @@ GENERATOR_NOTEBOOK = {
 }
 
 # Python scripts
+BAREBONES_PYTHON_SCRIPT = [
+    ""
+]
+COMPLETE_PYTHON_SCRIPT = [
+    "import os",
+    "# Setup parameters",
+    "num = 1000",
+    "infile = 'somehere"+ os.path.sep +"particular'",
+    "outfile = 'nowhere"+ os.path.sep +"particular'",
+    "",
+    "with open(infile, 'r') as file:",
+    "    s = float(file.read())",
+    ""
+    "for i in range(num):",
+    "    s += i",
+    "",
+    "div_by = 4",
+    "result = s / div_by",
+    "",
+    "print(result)",
+    "",
+    "os.makedirs(os.path.dirname(outfile), exist_ok=True)",
+    "",
+    "with open(outfile, 'w') as file:",
+    "    file.write(str(result))",
+    "",
+    "print('done')"
+]
 IDMC_UTILS_MODULE = [
     "import matplotlib.pyplot as plt",
     "from sklearn import mixture",
