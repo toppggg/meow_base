@@ -1255,7 +1255,7 @@ COMPLETE_PYTHON_SCRIPT = [
     "",
     "print('done')"
 ]
-IDMC_UTILS_MODULE = [
+IDMC_UTILS_PYTHON_SCRIPT = [
     "import matplotlib.pyplot as plt",
     "from sklearn import mixture",
     "import numpy as np",
@@ -1364,7 +1364,7 @@ IDMC_UTILS_MODULE = [
     "    else:",
     "        return means, stds, weights"
 ]
-GENERATE_SCRIPT = [
+GENERATE_PYTHON_SCRIPT = [
     "import numpy as np",
     "import random",
     "import foam_ct_phantom.foam_ct_phantom as foam_ct_phantom",
@@ -1391,7 +1391,9 @@ GENERATE_SCRIPT = [
     "    np.save(filename, dataset)",
     "    del dataset"
 ]
+COUNTING_PYTHON_SCRIPT = [
 
+]
 
 valid_pattern_one = FileEventPattern(
     "pattern_one", "path_one", "recipe_one", "file_one")

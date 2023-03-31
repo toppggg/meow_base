@@ -28,8 +28,8 @@ from meow_base.recipes.python_recipe import PythonHandler, PythonRecipe
 from shared import TEST_JOB_QUEUE, TEST_JOB_OUTPUT, TEST_MONITOR_BASE, \
     MAKER_RECIPE, APPENDING_NOTEBOOK, COMPLETE_PYTHON_SCRIPT, TEST_DIR, \
     FILTER_RECIPE, POROSITY_CHECK_NOTEBOOK, SEGMENT_FOAM_NOTEBOOK, \
-    GENERATOR_NOTEBOOK, FOAM_PORE_ANALYSIS_NOTEBOOK, IDMC_UTILS_MODULE, \
-    TEST_DATA, GENERATE_SCRIPT, setup, teardown, backup_before_teardown
+    GENERATOR_NOTEBOOK, FOAM_PORE_ANALYSIS_NOTEBOOK, IDMC_UTILS_PYTHON_SCRIPT, \
+    TEST_DATA, GENERATE_PYTHON_SCRIPT, setup, teardown, backup_before_teardown
 
 pattern_check = FileEventPattern(
     "pattern_check", 
@@ -1020,11 +1020,11 @@ class MeowTests(unittest.TestCase):
         foam_data_dir = os.path.join(TEST_MONITOR_BASE, "foam_ct_data")
         make_dir(foam_data_dir)
 
-        write_file(lines_to_string(IDMC_UTILS_MODULE), 
+        write_file(lines_to_string(IDMC_UTILS_PYTHON_SCRIPT), 
             os.path.join(TEST_MONITOR_BASE, "idmc_utils_module.py"))
 
         gen_path = os.path.join(TEST_MONITOR_BASE, "generator.py")
-        write_file(lines_to_string(GENERATE_SCRIPT), gen_path)
+        write_file(lines_to_string(GENERATE_PYTHON_SCRIPT), gen_path)
 
         u_spec = importlib.util.spec_from_file_location("gen", gen_path)
         gen = importlib.util.module_from_spec(u_spec)
@@ -1145,11 +1145,11 @@ class MeowTests(unittest.TestCase):
         foam_data_dir = os.path.join(TEST_MONITOR_BASE, "foam_ct_data")
         make_dir(foam_data_dir)
         
-        write_file(lines_to_string(IDMC_UTILS_MODULE), 
+        write_file(lines_to_string(IDMC_UTILS_PYTHON_SCRIPT), 
             os.path.join(TEST_MONITOR_BASE, "idmc_utils_module.py"))
 
         gen_path = os.path.join(TEST_MONITOR_BASE, "generator.py")
-        write_file(lines_to_string(GENERATE_SCRIPT), gen_path)
+        write_file(lines_to_string(GENERATE_PYTHON_SCRIPT), gen_path)
 
         all_data = [1000] * good + [100] * big + [10000] * small
         shuffle(all_data)
@@ -1303,11 +1303,11 @@ class MeowTests(unittest.TestCase):
         foam_data_dir = os.path.join(TEST_MONITOR_BASE, "foam_ct_data")
         make_dir(foam_data_dir)
         
-        write_file(lines_to_string(IDMC_UTILS_MODULE), 
+        write_file(lines_to_string(IDMC_UTILS_PYTHON_SCRIPT), 
             os.path.join(TEST_MONITOR_BASE, "idmc_utils_module.py"))
 
         gen_path = os.path.join(TEST_MONITOR_BASE, "generator.py")
-        write_file(lines_to_string(GENERATE_SCRIPT), gen_path)
+        write_file(lines_to_string(GENERATE_PYTHON_SCRIPT), gen_path)
 
         all_data = [1000] * good + [100] * big + [10000] * small
         shuffle(all_data)
@@ -1455,11 +1455,11 @@ class MeowTests(unittest.TestCase):
         foam_data_dir = os.path.join(TEST_MONITOR_BASE, "foam_ct_data")
         make_dir(foam_data_dir)
         
-        write_file(lines_to_string(IDMC_UTILS_MODULE), 
+        write_file(lines_to_string(IDMC_UTILS_PYTHON_SCRIPT), 
             os.path.join(TEST_MONITOR_BASE, "idmc_utils_module.py"))
 
         gen_path = os.path.join(TEST_MONITOR_BASE, "generator.py")
-        write_file(lines_to_string(GENERATE_SCRIPT), gen_path)
+        write_file(lines_to_string(GENERATE_PYTHON_SCRIPT), gen_path)
 
         all_data = [1000] * good + [100] * big + [10000] * small
         shuffle(all_data)

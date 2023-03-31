@@ -136,8 +136,7 @@ class BashHandler(BaseHandler):
             JOB_TYPE_BASH, 
             event, 
             extras={
-                JOB_PARAMETERS:yaml_dict,
-#                CONTROL_SCRIPT:python_job_func
+                JOB_PARAMETERS:yaml_dict
             }
         )
         print_debug(self._print_target, self.debug_level,  
