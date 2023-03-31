@@ -26,10 +26,11 @@ from meow_base.core.correctness.validation import check_type, valid_string, \
     valid_dict, valid_list, valid_dir_path
 from meow_base.core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
     VALID_VARIABLE_NAME_CHARS, FILE_EVENTS, FILE_CREATE_EVENT, \
-    FILE_MODIFY_EVENT, FILE_MOVED_EVENT, DEBUG_INFO, \
-    FILE_RETROACTIVE_EVENT, SHA256, VALID_PATH_CHARS, FILE_CLOSED_EVENT
+    FILE_MODIFY_EVENT, FILE_MOVED_EVENT, DEBUG_INFO, DIR_EVENTS, \
+    FILE_RETROACTIVE_EVENT, SHA256, VALID_PATH_CHARS, FILE_CLOSED_EVENT, \
+    DIR_RETROACTIVE_EVENT
 from meow_base.functionality.debug import setup_debugging, print_debug
-from meow_base.functionality.hashing import get_file_hash
+from meow_base.functionality.hashing import get_hash
 from meow_base.functionality.meow import create_rule, create_watchdog_event
 
 # Events that are monitored by default
@@ -140,9 +141,9 @@ class FileEventPattern(BasePattern):
             hint="FileEventPattern.event_mask"
         )
         for mask in event_mask:
-            if mask not in FILE_EVENTS:
+            if mask not in FILE_EVENTS + DIR_EVENTS:
                 raise ValueError(f"Invalid event mask '{mask}'. Valid are: "
-                    f"{FILE_EVENTS}")
+                    f"{FILE_EVENTS + DIR_EVENTS}")
 
     def _is_valid_sweep(self, sweep: Dict[str,Union[int,float,complex]]) -> None:
         """Validation check for 'sweep' variable from main constructor."""
@@ -249,7 +250,7 @@ class WatchdogMonitor(BaseMonitor):
                         event.src_path,
                         rule,
                         self.base_dir,
-                        get_file_hash(event.src_path, SHA256) 
+                        get_hash(event.src_path, SHA256) 
                     )
                     print_debug(self._print_target, self.debug_level,  
                         f"Event at {src_path} hit rule {rule.name}", 
@@ -536,7 +537,8 @@ class WatchdogMonitor(BaseMonitor):
                 self._rules_lock.release()
                 return
 
-            if FILE_RETROACTIVE_EVENT in rule.pattern.event_mask:
+            if FILE_RETROACTIVE_EVENT in rule.pattern.event_mask \
+                    or DIR_RETROACTIVE_EVENT in rule.pattern.event_mask:
                 # Determine what paths are potentially triggerable and gather
                 # files at those paths
                 testing_path = os.path.join(
@@ -551,7 +553,7 @@ class WatchdogMonitor(BaseMonitor):
                         globble,
                         rule,
                         self.base_dir,
-                        get_file_hash(globble, SHA256)
+                        get_hash(globble, SHA256)
                     )
                     print_debug(self._print_target, self.debug_level,  
                         f"Retroactive event for file at at {globble} hit rule "

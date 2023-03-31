@@ -185,7 +185,7 @@ def python_job_func(job_dir):
         JOB_ERROR, STATUS_FAILED, get_base_file, \
         get_job_file, get_result_file
     from meow_base.functionality.file_io import read_yaml, write_yaml
-    from meow_base.functionality.hashing import get_file_hash
+    from meow_base.functionality.hashing import get_hash
     from meow_base.functionality.parameterisation import parameterize_python_script
 
     # Identify job files
@@ -204,7 +204,7 @@ def python_job_func(job_dir):
     # triggering event
     if JOB_EVENT in job and WATCHDOG_HASH in job[JOB_EVENT]:
         # get current hash
-        triggerfile_hash = get_file_hash(job[JOB_EVENT][EVENT_PATH], SHA256)
+        triggerfile_hash = get_hash(job[JOB_EVENT][EVENT_PATH], SHA256)
         # If hash doesn't match, then abort the job. If its been modified, then
         # another job will have been scheduled anyway.
         if not triggerfile_hash \

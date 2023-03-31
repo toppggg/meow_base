@@ -237,6 +237,27 @@ def valid_existing_file_path(variable:str, allow_base:bool=False,
             msg = f"Requested file '{variable}' is not a file."
         raise ValueError(msg)
 
+def valid_existing_dir_path(variable:str, allow_base:bool=False, 
+        extension:str="", hint:str=""):
+    """Check the given string is a path to an existing dir."""
+    # Check that the string is a path
+    valid_path(variable, allow_base=allow_base, extension=extension, hint=hint)
+    # Check the path exists
+    if not exists(variable):
+        if hint:
+            msg = f"Requested dir path '{variable}' in '{hint}' does not " \
+                  "exist."
+        else:
+            msg = f"Requested dir path '{variable}' does not exist."
+        raise FileNotFoundError(msg)
+    # Check it is a dir
+    if not isdir(variable):
+        if hint: 
+            msg = f"Requested dir '{variable}' in '{hint}' is not a dir."
+        else:
+            msg = f"Requested dir '{variable}' is not a dir."
+        raise ValueError(msg)
+
 def valid_dir_path(variable:str, must_exist:bool=False, allow_base:bool=False,
         hint:str="")->None:
     """Check the given string is a valid directory path, either to an existing 

@@ -22,7 +22,7 @@ from meow_base.functionality.debug import setup_debugging
 from meow_base.functionality.file_io import lines_to_string, make_dir, \
     read_file, read_file_lines, read_notebook, read_yaml, rmtree, write_file, \
     write_notebook, write_yaml    
-from meow_base.functionality.hashing import get_file_hash
+from meow_base.functionality.hashing import get_hash
 from meow_base.functionality.meow import KEYWORD_BASE, KEYWORD_DIR, \
     KEYWORD_EXTENSION, KEYWORD_FILENAME, KEYWORD_JOB, KEYWORD_PATH, \
     KEYWORD_PREFIX, KEYWORD_REL_DIR, KEYWORD_REL_PATH, \
@@ -340,7 +340,7 @@ class HashingTests(unittest.TestCase):
         super().tearDown()
         teardown()
 
-    # Test that get_file_hash produces the expected hash
+    # Test that get_hash produces the expected hash
     def testGetFileHashSha256(self)->None:
         file_path = os.path.join(TEST_MONITOR_BASE, "hased_file.txt")
         with open(file_path, 'w') as hashed_file:
@@ -348,15 +348,15 @@ class HashingTests(unittest.TestCase):
         expected_hash = \
             "8557122088c994ba8aa5540ccbb9a3d2d8ae2887046c2db23d65f40ae63abade"
         
-        hash = get_file_hash(file_path, SHA256)
+        hash = get_hash(file_path, SHA256)
         self.assertEqual(hash, expected_hash)
     
-    # Test that get_file_hash raises on a missing file
+    # Test that get_hash raises on a missing file
     def testGetFileHashSha256NoFile(self)->None:
         file_path = os.path.join(TEST_MONITOR_BASE, "file.txt")
 
         with self.assertRaises(FileNotFoundError):        
-            get_file_hash(file_path, SHA256)
+            get_hash(file_path, SHA256)
 
 
 class MeowTests(unittest.TestCase):

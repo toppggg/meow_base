@@ -1392,7 +1392,11 @@ GENERATE_PYTHON_SCRIPT = [
     "    del dataset"
 ]
 COUNTING_PYTHON_SCRIPT = [
-
+    "import os",
+    "",
+    "dir_to_count = '.'",
+    "",
+    "print(f'There are {len(os.listdir(dir_to_count))} files in the directory.')"
 ]
 
 valid_pattern_one = FileEventPattern(

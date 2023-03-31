@@ -18,7 +18,7 @@ from meow_base.core.correctness.vars import EVENT_TYPE, WATCHDOG_BASE, \
 from meow_base.core.rule import Rule
 from meow_base.functionality.file_io import lines_to_string, make_dir, \
     read_yaml, write_file, write_notebook, write_yaml
-from meow_base.functionality.hashing import get_file_hash
+from meow_base.functionality.hashing import get_hash
 from meow_base.functionality.meow import create_job, create_rules, \
     create_rule, create_watchdog_event
 from meow_base.functionality.parameterisation import parameterize_bash_script
@@ -173,7 +173,7 @@ class PapermillHandlerTests(unittest.TestCase):
             EVENT_PATH: os.path.join(TEST_MONITOR_BASE, "A"),
             WATCHDOG_BASE: TEST_MONITOR_BASE,
             EVENT_RULE: rule,
-            WATCHDOG_HASH: get_file_hash(
+            WATCHDOG_HASH: get_hash(
                 os.path.join(TEST_MONITOR_BASE, "A"), SHA256
             )
         }
@@ -224,7 +224,7 @@ class PapermillHandlerTests(unittest.TestCase):
             EVENT_PATH: os.path.join(TEST_MONITOR_BASE, "A"),
             WATCHDOG_BASE: TEST_MONITOR_BASE,
             EVENT_RULE: rule,
-            WATCHDOG_HASH: get_file_hash(
+            WATCHDOG_HASH: get_hash(
                 os.path.join(TEST_MONITOR_BASE, "A"), SHA256
             )
         }
@@ -294,7 +294,7 @@ class PapermillHandlerTests(unittest.TestCase):
             EVENT_PATH: os.path.join(TEST_MONITOR_BASE, "A"),
             WATCHDOG_BASE: TEST_MONITOR_BASE,
             EVENT_RULE: rule,
-            WATCHDOG_HASH: get_file_hash(
+            WATCHDOG_HASH: get_hash(
                 os.path.join(TEST_MONITOR_BASE, "A"), SHA256
             )
         }
@@ -346,7 +346,7 @@ class PapermillHandlerTests(unittest.TestCase):
         with open(file_path, "w") as f:
             f.write("Data")
 
-        file_hash = get_file_hash(file_path, SHA256)
+        file_hash = get_hash(file_path, SHA256)
 
         pattern = FileEventPattern(
             "pattern", 
@@ -591,7 +591,7 @@ class PythonHandlerTests(unittest.TestCase):
             EVENT_PATH: os.path.join(TEST_MONITOR_BASE, "A"),
             WATCHDOG_BASE: TEST_MONITOR_BASE,
             EVENT_RULE: rule,
-            WATCHDOG_HASH: get_file_hash(
+            WATCHDOG_HASH: get_hash(
                 os.path.join(TEST_MONITOR_BASE, "A"), SHA256
             )
         }
@@ -642,7 +642,7 @@ class PythonHandlerTests(unittest.TestCase):
             EVENT_PATH: os.path.join(TEST_MONITOR_BASE, "A"),
             WATCHDOG_BASE: TEST_MONITOR_BASE,
             EVENT_RULE: rule,
-            WATCHDOG_HASH: get_file_hash(
+            WATCHDOG_HASH: get_hash(
                 os.path.join(TEST_MONITOR_BASE, "A"), SHA256
             )
         }
@@ -712,7 +712,7 @@ class PythonHandlerTests(unittest.TestCase):
             EVENT_PATH: os.path.join(TEST_MONITOR_BASE, "A"),
             WATCHDOG_BASE: TEST_MONITOR_BASE,
             EVENT_RULE: rule,
-            WATCHDOG_HASH: get_file_hash(
+            WATCHDOG_HASH: get_hash(
                 os.path.join(TEST_MONITOR_BASE, "A"), SHA256
             )
         }
@@ -764,7 +764,7 @@ class PythonHandlerTests(unittest.TestCase):
         with open(file_path, "w") as f:
             f.write("250")
 
-        file_hash = get_file_hash(file_path, SHA256)
+        file_hash = get_hash(file_path, SHA256)
 
         pattern = FileEventPattern(
             "pattern", 
@@ -1004,7 +1004,7 @@ class BashHandlerTests(unittest.TestCase):
             EVENT_PATH: os.path.join(TEST_MONITOR_BASE, "A"),
             WATCHDOG_BASE: TEST_MONITOR_BASE,
             EVENT_RULE: rule,
-            WATCHDOG_HASH: get_file_hash(
+            WATCHDOG_HASH: get_hash(
                 os.path.join(TEST_MONITOR_BASE, "A"), SHA256
             )
         }
@@ -1055,7 +1055,7 @@ class BashHandlerTests(unittest.TestCase):
             EVENT_PATH: os.path.join(TEST_MONITOR_BASE, "A"),
             WATCHDOG_BASE: TEST_MONITOR_BASE,
             EVENT_RULE: rule,
-            WATCHDOG_HASH: get_file_hash(
+            WATCHDOG_HASH: get_hash(
                 os.path.join(TEST_MONITOR_BASE, "A"), SHA256
             )
         }
@@ -1125,7 +1125,7 @@ class BashHandlerTests(unittest.TestCase):
             EVENT_PATH: os.path.join(TEST_MONITOR_BASE, "A"),
             WATCHDOG_BASE: TEST_MONITOR_BASE,
             EVENT_RULE: rule,
-            WATCHDOG_HASH: get_file_hash(
+            WATCHDOG_HASH: get_hash(
                 os.path.join(TEST_MONITOR_BASE, "A"), SHA256
             )
         }
@@ -1177,7 +1177,7 @@ class BashHandlerTests(unittest.TestCase):
         with open(file_path, "w") as f:
             f.write("250")
 
-        file_hash = get_file_hash(file_path, SHA256)
+        file_hash = get_hash(file_path, SHA256)
 
         pattern = FileEventPattern(
             "pattern", 

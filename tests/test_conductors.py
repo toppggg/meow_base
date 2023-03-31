@@ -16,7 +16,7 @@ from meow_base.core.correctness.vars import JOB_TYPE_PYTHON, SHA256, \
 from meow_base.conductors import LocalPythonConductor, LocalBashConductor
 from meow_base.functionality.file_io import read_file, read_yaml, write_file, \
     write_notebook, write_yaml, lines_to_string, make_dir
-from meow_base.functionality.hashing import get_file_hash
+from meow_base.functionality.hashing import get_hash
 from meow_base.functionality.meow import create_watchdog_event, create_job, \
     create_rule
 from meow_base.functionality.parameterisation import parameterize_bash_script
@@ -69,7 +69,7 @@ class PythonTests(unittest.TestCase):
         with open(file_path, "w") as f:
             f.write("150")
 
-        file_hash = get_file_hash(file_path, SHA256)
+        file_hash = get_hash(file_path, SHA256)
 
         pattern = FileEventPattern(
             "pattern", 
@@ -156,7 +156,7 @@ class PythonTests(unittest.TestCase):
         with open(file_path, "w") as f:
             f.write("Data")
 
-        file_hash = get_file_hash(file_path, SHA256)
+        file_hash = get_hash(file_path, SHA256)
 
         pattern = FileEventPattern(
             "pattern", 
@@ -243,7 +243,7 @@ class PythonTests(unittest.TestCase):
         with open(file_path, "w") as f:
             f.write("Data")
 
-        file_hash = get_file_hash(file_path, SHA256)
+        file_hash = get_hash(file_path, SHA256)
 
         pattern = FileEventPattern(
             "pattern", 
@@ -366,7 +366,7 @@ class PythonTests(unittest.TestCase):
         with open(file_path, "w") as f:
             f.write("Data")
 
-        file_hash = get_file_hash(file_path, SHA256)
+        file_hash = get_hash(file_path, SHA256)
 
         pattern = FileEventPattern(
             "pattern", 
@@ -431,7 +431,7 @@ class PythonTests(unittest.TestCase):
         with open(file_path, "w") as f:
             f.write("Data")
 
-        file_hash = get_file_hash(file_path, SHA256)
+        file_hash = get_hash(file_path, SHA256)
 
         pattern = FileEventPattern(
             "pattern", 
@@ -502,7 +502,7 @@ class PythonTests(unittest.TestCase):
         with open(file_path, "w") as f:
             f.write("Data")
 
-        file_hash = get_file_hash(file_path, SHA256)
+        file_hash = get_hash(file_path, SHA256)
 
         pattern = FileEventPattern(
             "pattern", 
@@ -570,7 +570,7 @@ class PythonTests(unittest.TestCase):
         with open(file_path, "w") as f:
             f.write("Data")
 
-        file_hash = get_file_hash(file_path, SHA256)
+        file_hash = get_hash(file_path, SHA256)
 
         pattern = FileEventPattern(
             "pattern", 
@@ -757,7 +757,7 @@ class BashTests(unittest.TestCase):
         with open(file_path, "w") as f:
             f.write("150")
 
-        file_hash = get_file_hash(file_path, SHA256)
+        file_hash = get_hash(file_path, SHA256)
 
         pattern = FileEventPattern(
             "pattern", 
@@ -847,7 +847,7 @@ class BashTests(unittest.TestCase):
         with open(file_path, "w") as f:
             f.write("150")
 
-        file_hash = get_file_hash(file_path, SHA256)
+        file_hash = get_hash(file_path, SHA256)
 
         pattern = FileEventPattern(
             "pattern", 
@@ -913,7 +913,7 @@ class BashTests(unittest.TestCase):
         with open(file_path, "w") as f:
             f.write("150")
 
-        file_hash = get_file_hash(file_path, SHA256)
+        file_hash = get_hash(file_path, SHA256)
 
         pattern = FileEventPattern(
             "pattern", 
@@ -997,7 +997,7 @@ class BashTests(unittest.TestCase):
         with open(file_path, "w") as f:
             f.write("150")
 
-        file_hash = get_file_hash(file_path, SHA256)
+        file_hash = get_hash(file_path, SHA256)
 
         pattern = FileEventPattern(
             "pattern", 
@@ -1066,7 +1066,7 @@ class BashTests(unittest.TestCase):
         with open(file_path, "w") as f:
             f.write("150")
 
-        file_hash = get_file_hash(file_path, SHA256)
+        file_hash = get_hash(file_path, SHA256)
 
         pattern = FileEventPattern(
             "pattern", 
