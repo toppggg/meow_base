@@ -22,9 +22,9 @@ from meow_base.core.base_recipe import BaseRecipe
 from meow_base.core.base_monitor import BaseMonitor
 from meow_base.core.base_pattern import BasePattern
 from meow_base.core.rule import Rule
-from meow_base.core.correctness.validation import check_type, valid_string, \
+from meow_base.functionality.validation import check_type, valid_string, \
     valid_dict, valid_list, valid_dir_path
-from meow_base.core.correctness.vars import VALID_RECIPE_NAME_CHARS, \
+from meow_base.core.vars import VALID_RECIPE_NAME_CHARS, \
     VALID_VARIABLE_NAME_CHARS, FILE_EVENTS, FILE_CREATE_EVENT, \
     FILE_MODIFY_EVENT, FILE_MOVED_EVENT, DEBUG_INFO, DIR_EVENTS, \
     FILE_RETROACTIVE_EVENT, SHA256, VALID_PATH_CHARS, FILE_CLOSED_EVENT, \

@@ -12,10 +12,10 @@ from typing import Any, Tuple, Dict, List
 
 from meow_base.core.base_recipe import BaseRecipe
 from meow_base.core.base_handler import BaseHandler
-from meow_base.core.correctness.meow import valid_event
-from meow_base.core.correctness.validation import check_script, valid_string, \
+from meow_base.core.meow import valid_event
+from meow_base.functionality.validation import check_script, valid_string, \
     valid_dict, valid_dir_path
-from meow_base.core.correctness.vars import VALID_VARIABLE_NAME_CHARS, \
+from meow_base.core.vars import VALID_VARIABLE_NAME_CHARS, \
     PYTHON_FUNC, DEBUG_INFO, EVENT_TYPE_WATCHDOG, \
     DEFAULT_JOB_QUEUE_DIR, EVENT_RULE, EVENT_PATH, JOB_TYPE_PYTHON, \
     WATCHDOG_HASH, JOB_PARAMETERS, JOB_ID, WATCHDOG_BASE, META_FILE, \
@@ -179,7 +179,7 @@ def python_job_func(job_dir):
     import os
     from datetime import datetime
     from io import StringIO
-    from meow_base.core.correctness.vars import JOB_EVENT, JOB_ID, \
+    from meow_base.core.vars import JOB_EVENT, JOB_ID, \
         EVENT_PATH, META_FILE, PARAMS_FILE, \
         JOB_STATUS, SHA256, STATUS_SKIPPED, JOB_END_TIME, \
         JOB_ERROR, STATUS_FAILED, get_base_file, \

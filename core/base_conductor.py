@@ -8,9 +8,9 @@ Author(s): David Marchant
 
 from typing import Any, Tuple, Dict
 
-from meow_base.core.correctness.vars import VALID_CONDUCTOR_NAME_CHARS, \
+from meow_base.core.vars import VALID_CONDUCTOR_NAME_CHARS, \
     get_drt_imp_msg
-from meow_base.core.correctness.validation import check_implementation, \
+from meow_base.functionality.validation import check_implementation, \
     valid_string
 from meow_base.functionality.naming import generate_conductor_id
 

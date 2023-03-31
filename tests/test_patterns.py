@@ -6,7 +6,7 @@ import unittest
 from multiprocessing import Pipe
 from time import sleep
 
-from meow_base.core.correctness.vars import FILE_CREATE_EVENT, EVENT_TYPE, \
+from meow_base.core.vars import FILE_CREATE_EVENT, EVENT_TYPE, \
     EVENT_RULE, WATCHDOG_BASE, EVENT_TYPE_WATCHDOG, EVENT_PATH, SWEEP_START, \
     SWEEP_JUMP, SWEEP_STOP, DIR_EVENTS
 from meow_base.functionality.file_io import make_dir

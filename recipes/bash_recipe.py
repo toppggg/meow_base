@@ -7,10 +7,10 @@ from typing import Any, Dict, List, Tuple
 
 from meow_base.core.base_handler import BaseHandler
 from meow_base.core.base_recipe import BaseRecipe
-from meow_base.core.correctness.meow import valid_event
-from meow_base.core.correctness.validation import check_type, valid_dict, \
+from meow_base.core.meow import valid_event
+from meow_base.functionality.validation import check_type, valid_dict, \
     valid_string, valid_dir_path
-from meow_base.core.correctness.vars import DEBUG_INFO, DEFAULT_JOB_QUEUE_DIR, \
+from meow_base.core.vars import DEBUG_INFO, DEFAULT_JOB_QUEUE_DIR, \
     VALID_VARIABLE_NAME_CHARS, EVENT_PATH, EVENT_RULE, EVENT_TYPE, JOB_ID, \
     EVENT_TYPE_WATCHDOG, JOB_TYPE_BASH, JOB_PARAMETERS, WATCHDOG_HASH, \
     WATCHDOG_BASE, META_FILE, STATUS_QUEUED, JOB_STATUS, \

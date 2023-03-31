@@ -12,13 +12,13 @@ from datetime import datetime
 from typing import Any, Tuple, Dict
 
 from meow_base.core.base_conductor import BaseConductor
-from meow_base.core.correctness.meow import valid_job
-from meow_base.core.correctness.vars import JOB_TYPE_PYTHON, PYTHON_FUNC, \
+from meow_base.core.meow import valid_job
+from meow_base.core.vars import JOB_TYPE_PYTHON, PYTHON_FUNC, \
     JOB_STATUS, STATUS_RUNNING, JOB_START_TIME, META_FILE, \
     BACKUP_JOB_ERROR_FILE, STATUS_DONE, JOB_END_TIME, STATUS_FAILED, \
     JOB_ERROR, JOB_TYPE, JOB_TYPE_PAPERMILL, DEFAULT_JOB_QUEUE_DIR, \
     DEFAULT_JOB_OUTPUT_DIR
-from meow_base.core.correctness.validation import valid_dir_path
+from meow_base.functionality.validation import valid_dir_path
 from meow_base.functionality.file_io import make_dir, read_yaml, write_file, \
     write_yaml
 

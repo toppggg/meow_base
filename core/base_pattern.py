@@ -10,9 +10,9 @@ import itertools
 
 from typing import Any, Union, Tuple, Dict, List
 
-from meow_base.core.correctness.vars import VALID_PATTERN_NAME_CHARS, \
+from meow_base.core.vars import VALID_PATTERN_NAME_CHARS, \
     SWEEP_JUMP, SWEEP_START, SWEEP_STOP, get_drt_imp_msg
-from meow_base.core.correctness.validation import valid_string, check_type, \
+from meow_base.functionality.validation import valid_string, check_type, \
     check_implementation, valid_dict
 
 

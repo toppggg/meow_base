@@ -8,7 +8,7 @@ from meow_base.core.base_handler import BaseHandler
 from meow_base.core.base_monitor import BaseMonitor
 from meow_base.core.base_pattern import BasePattern
 from meow_base.core.base_recipe import BaseRecipe
-from meow_base.core.correctness.vars import SWEEP_STOP, SWEEP_JUMP, SWEEP_START
+from meow_base.core.vars import SWEEP_STOP, SWEEP_JUMP, SWEEP_START
 from meow_base.patterns.file_event_pattern import FileEventPattern
 from shared import setup, teardown
 

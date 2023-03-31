@@ -12,9 +12,9 @@ from typing import Union, Dict
 from meow_base.core.base_pattern import BasePattern
 from meow_base.core.base_recipe import BaseRecipe
 from meow_base.core.rule import Rule
-from meow_base.core.correctness.vars import VALID_CHANNELS, \
+from meow_base.core.vars import VALID_CHANNELS, \
     VALID_MONITOR_NAME_CHARS, get_drt_imp_msg 
-from meow_base.core.correctness.validation import check_implementation, \
+from meow_base.functionality.validation import check_implementation, \
     valid_string
 from meow_base.functionality.meow import create_rules
 from meow_base.functionality.naming import generate_monitor_id

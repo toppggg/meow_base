@@ -17,10 +17,10 @@ from typing import Any, Union, Dict, List, Type
 from meow_base.core.base_conductor import BaseConductor
 from meow_base.core.base_handler import BaseHandler
 from meow_base.core.base_monitor import BaseMonitor
-from meow_base.core.correctness.vars import DEBUG_WARNING, DEBUG_INFO, \
+from meow_base.core.vars import DEBUG_WARNING, DEBUG_INFO, \
     EVENT_TYPE, VALID_CHANNELS, META_FILE, DEFAULT_JOB_OUTPUT_DIR, \
     DEFAULT_JOB_QUEUE_DIR, EVENT_PATH
-from meow_base.core.correctness.validation import check_type, valid_list, \
+from meow_base.functionality.validation import check_type, valid_list, \
     valid_dir_path
 from meow_base.functionality.debug import setup_debugging, print_debug
 from meow_base.functionality.file_io import make_dir, read_yaml

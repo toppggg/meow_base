@@ -11,9 +11,9 @@ from typing import Any, Dict, Union, List
 from meow_base.core.base_pattern import BasePattern
 from meow_base.core.base_recipe import BaseRecipe
 from meow_base.core.rule import Rule
-from meow_base.core.correctness.validation import check_type, valid_dict, \
+from meow_base.functionality.validation import check_type, valid_dict, \
     valid_list
-from meow_base.core.correctness.vars import EVENT_PATH, EVENT_RULE, \
+from meow_base.core.vars import EVENT_PATH, EVENT_RULE, \
     EVENT_TYPE, EVENT_TYPE_WATCHDOG, JOB_CREATE_TIME, JOB_EVENT, JOB_ID, \
     JOB_PATTERN, JOB_RECIPE, JOB_REQUIREMENTS, JOB_RULE, JOB_STATUS, \
     JOB_TYPE, STATUS_QUEUED, WATCHDOG_BASE, WATCHDOG_HASH, SWEEP_JUMP, \

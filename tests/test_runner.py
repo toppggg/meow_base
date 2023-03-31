@@ -13,7 +13,7 @@ from meow_base.core.base_conductor import BaseConductor
 from meow_base.core.base_handler import BaseHandler
 from meow_base.core.base_monitor import BaseMonitor
 from meow_base.conductors import LocalPythonConductor
-from meow_base.core.correctness.vars import JOB_TYPE_PAPERMILL, JOB_ERROR, \
+from meow_base.core.vars import JOB_TYPE_PAPERMILL, JOB_ERROR, \
     META_FILE, JOB_TYPE_PYTHON, JOB_CREATE_TIME, get_result_file
 from meow_base.core.runner import MeowRunner
 from meow_base.functionality.file_io import make_dir, read_file, \
@@ -972,7 +972,7 @@ class MeowTests(unittest.TestCase):
 
     # Test some actual scientific analysis, but in a simple progression
     def testScientificAnalysisAllGood(self)->None:
-        if os.environ["SKIP_LONG"]:
+        if os.environ["SKIP_LONG"] and os.environ["SKIP_LONG"] == '1':
             warn("Skipping testScientificAnalysisAllGood")
             return
         
@@ -1096,7 +1096,7 @@ class MeowTests(unittest.TestCase):
 
     # Test some actual scientific analysis, in a predicatable loop
     def testScientificAnalysisPredictableLoop(self)->None:
-        if os.environ["SKIP_LONG"]:
+        if os.environ["SKIP_LONG"] and os.environ["SKIP_LONG"] == '1':
             warn("Skipping testScientificAnalysisPredictableLoop")
             return
         
@@ -1235,7 +1235,7 @@ class MeowTests(unittest.TestCase):
 
     # Test some actual scientific analysis, in an unpredicatable loop
     def testScientificAnalysisRandomLoop(self)->None:
-        if os.environ["SKIP_LONG"]:
+        if os.environ["SKIP_LONG"] and os.environ["SKIP_LONG"] == '1':
             warn("Skipping testScientificAnalysisRandomLoop")
             return
 
@@ -1387,7 +1387,7 @@ class MeowTests(unittest.TestCase):
 
     # Test some actual scientific analysis, in an unpredicatable loop
     def testScientificAnalysisMassiveRandomLoop(self)->None:
-        if os.environ["SKIP_LONG"]:
+        if os.environ["SKIP_LONG"] and os.environ["SKIP_LONG"] == '1':
             warn("Skipping testScientificAnalysisMassiveRandomLoop")
             return
 

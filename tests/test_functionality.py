@@ -12,7 +12,7 @@ from time import sleep
 from typing import Dict
 
 from meow_base.core.rule import Rule
-from meow_base.core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
+from meow_base.core.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
     SHA256, EVENT_TYPE, EVENT_PATH, EVENT_TYPE_WATCHDOG, \
     WATCHDOG_BASE, WATCHDOG_HASH, EVENT_RULE, JOB_PARAMETERS, \
     PYTHON_FUNC, JOB_ID, JOB_EVENT, \

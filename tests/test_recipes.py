@@ -8,8 +8,8 @@ import unittest
 from multiprocessing import Pipe
 from typing import Dict
 
-from meow_base.core.correctness.meow import valid_job
-from meow_base.core.correctness.vars import EVENT_TYPE, WATCHDOG_BASE, \
+from meow_base.core.meow import valid_job
+from meow_base.core.vars import EVENT_TYPE, WATCHDOG_BASE, \
     EVENT_RULE, EVENT_TYPE_WATCHDOG, EVENT_PATH, SHA256, WATCHDOG_HASH, \
     JOB_ID, JOB_TYPE_PYTHON, JOB_PARAMETERS, PYTHON_FUNC, \
     JOB_STATUS, META_FILE, JOB_ERROR, PARAMS_FILE, SWEEP_STOP, SWEEP_JUMP, \

@@ -6,7 +6,7 @@ import unittest
 from datetime import datetime
 from typing import Dict
 
-from meow_base.core.correctness.vars import JOB_TYPE_PYTHON, SHA256, \
+from meow_base.core.vars import JOB_TYPE_PYTHON, SHA256, \
     JOB_PARAMETERS, PYTHON_FUNC, JOB_ID, BACKUP_JOB_ERROR_FILE, \
     JOB_EVENT, META_FILE, PARAMS_FILE, JOB_STATUS, JOB_ERROR, JOB_TYPE, \
     JOB_PATTERN, STATUS_DONE, JOB_TYPE_PAPERMILL, JOB_RECIPE, JOB_RULE, \

@@ -9,8 +9,8 @@ from os import listdir
 from os.path import isfile
 
 
-from meow_base.core.correctness.vars import HASH_BUFFER_SIZE, SHA256
-from meow_base.core.correctness.validation import check_type, \
+from meow_base.core.vars import HASH_BUFFER_SIZE, SHA256
+from meow_base.functionality.validation import check_type, \
     valid_existing_file_path, valid_existing_dir_path
 
 def _get_file_sha256(file_path:str)->str:
