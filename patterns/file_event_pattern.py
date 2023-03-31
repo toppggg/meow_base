@@ -65,7 +65,12 @@ class FileEventPattern(BasePattern):
     def _is_valid_triggering_path(self, triggering_path:str)->None:
         """Validation check for 'triggering_path' variable from main 
         constructor."""
-        valid_string(triggering_path, VALID_PATH_CHARS+'*', min_length=1)
+        valid_string(
+            triggering_path, 
+            VALID_PATH_CHARS+'*', 
+            min_length=1, 
+            hint="FileEventPattern._is_valid_triggering_path.triggering_path"
+        )
         if len(triggering_path) < 1:
             raise ValueError (
                 f"triggiering path '{triggering_path}' is too short. " 
@@ -75,30 +80,65 @@ class FileEventPattern(BasePattern):
     def _is_valid_triggering_file(self, triggering_file:str)->None:
         """Validation check for 'triggering_file' variable from main 
         constructor."""
-        valid_string(triggering_file, VALID_VARIABLE_NAME_CHARS)
+        valid_string(
+            triggering_file, 
+            VALID_VARIABLE_NAME_CHARS,
+            hint="FileEventPattern._is_valid_triggering_file.triggering_file"
+        )
 
     def _is_valid_recipe(self, recipe:str)->None:
         """Validation check for 'recipe' variable from main constructor. 
         Called within parent BasePattern constructor."""
-        valid_string(recipe, VALID_RECIPE_NAME_CHARS)
+        valid_string(
+            recipe, 
+            VALID_RECIPE_NAME_CHARS,
+            hint="FileEventPattern._is_valid_recipe.recipe"
+        )
 
     def _is_valid_parameters(self, parameters:Dict[str,Any])->None:
         """Validation check for 'parameters' variable from main constructor. 
         Called within parent BasePattern constructor."""
-        valid_dict(parameters, str, Any, strict=False, min_length=0)
+        valid_dict(
+            parameters, 
+            str, 
+            Any, 
+            strict=False, 
+            min_length=0, 
+            hint="FileEventPattern._is_valid_parameters.parameters"
+        )
         for k in parameters.keys():
-            valid_string(k, VALID_VARIABLE_NAME_CHARS)
+            valid_string(
+                k, 
+                VALID_VARIABLE_NAME_CHARS,
+                hint=f"FileEventPattern._is_valid_parameters.parameters[{k}]"
+            )
 
     def _is_valid_output(self, outputs:Dict[str,str])->None:
         """Validation check for 'output' variable from main constructor. 
         Called within parent BasePattern constructor."""
-        valid_dict(outputs, str, str, strict=False, min_length=0)
+        valid_dict(
+            outputs, 
+            str, 
+            str, 
+            strict=False, 
+            min_length=0,
+            hint="FileEventPattern._is_valid_outputs.outputs"
+        )
         for k in outputs.keys():
-            valid_string(k, VALID_VARIABLE_NAME_CHARS)
+            valid_string(
+                k, 
+                VALID_VARIABLE_NAME_CHARS,
+                hint=f"FileEventPattern._is_valid_outputs.outputs[{k}]"
+            )
 
     def _is_valid_event_mask(self, event_mask)->None:
         """Validation check for 'event_mask' variable from main constructor."""
-        valid_list(event_mask, str, min_length=1)
+        valid_list(
+            event_mask, 
+            str, 
+            min_length=1, 
+            hint="FileEventPattern._is_valid_event_mask.event_mask"
+        )
         for mask in event_mask:
             if mask not in FILE_EVENTS:
                 raise ValueError(f"Invalid event mask '{mask}'. Valid are: "

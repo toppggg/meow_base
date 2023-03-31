@@ -59,7 +59,11 @@ class BasePattern:
         """Validation check for 'name' variable from main constructor. Is 
         automatically called during initialisation. This does not need to be 
         overridden by child classes."""
-        valid_string(name, VALID_PATTERN_NAME_CHARS)
+        valid_string(
+            name, 
+            VALID_PATTERN_NAME_CHARS, 
+            hint="BasePattern._is_valid_name.name"
+        )
 
     def _is_valid_recipe(self, recipe:Any)->None:
         """Validation check for 'recipe' variable from main constructor. Must 
