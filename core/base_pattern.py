@@ -62,7 +62,7 @@ class BasePattern:
         valid_string(
             name, 
             VALID_PATTERN_NAME_CHARS, 
-            hint="BasePattern._is_valid_name.name"
+            hint="BasePattern.name"
         )
 
     def _is_valid_recipe(self, recipe:Any)->None:

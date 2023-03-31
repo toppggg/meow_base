@@ -69,7 +69,7 @@ class FileEventPattern(BasePattern):
             triggering_path, 
             VALID_PATH_CHARS+'*', 
             min_length=1, 
-            hint="FileEventPattern._is_valid_triggering_path.triggering_path"
+            hint="FileEventPattern.triggering_path"
         )
         if len(triggering_path) < 1:
             raise ValueError (
@@ -83,7 +83,7 @@ class FileEventPattern(BasePattern):
         valid_string(
             triggering_file, 
             VALID_VARIABLE_NAME_CHARS,
-            hint="FileEventPattern._is_valid_triggering_file.triggering_file"
+            hint="FileEventPattern.triggering_file"
         )
 
     def _is_valid_recipe(self, recipe:str)->None:
@@ -92,7 +92,7 @@ class FileEventPattern(BasePattern):
         valid_string(
             recipe, 
             VALID_RECIPE_NAME_CHARS,
-            hint="FileEventPattern._is_valid_recipe.recipe"
+            hint="FileEventPattern.recipe"
         )
 
     def _is_valid_parameters(self, parameters:Dict[str,Any])->None:
@@ -104,13 +104,13 @@ class FileEventPattern(BasePattern):
             Any, 
             strict=False, 
             min_length=0, 
-            hint="FileEventPattern._is_valid_parameters.parameters"
+            hint="FileEventPattern.parameters"
         )
         for k in parameters.keys():
             valid_string(
                 k, 
                 VALID_VARIABLE_NAME_CHARS,
-                hint=f"FileEventPattern._is_valid_parameters.parameters[{k}]"
+                hint=f"FileEventPattern.parameters[{k}]"
             )
 
     def _is_valid_output(self, outputs:Dict[str,str])->None:
@@ -122,13 +122,13 @@ class FileEventPattern(BasePattern):
             str, 
             strict=False, 
             min_length=0,
-            hint="FileEventPattern._is_valid_outputs.outputs"
+            hint="FileEventPattern.outputs"
         )
         for k in outputs.keys():
             valid_string(
                 k, 
                 VALID_VARIABLE_NAME_CHARS,
-                hint=f"FileEventPattern._is_valid_outputs.outputs[{k}]"
+                hint=f"FileEventPattern.outputs[{k}]"
             )
 
     def _is_valid_event_mask(self, event_mask)->None:
@@ -137,7 +137,7 @@ class FileEventPattern(BasePattern):
             event_mask, 
             str, 
             min_length=1, 
-            hint="FileEventPattern._is_valid_event_mask.event_mask"
+            hint="FileEventPattern.event_mask"
         )
         for mask in event_mask:
             if mask not in FILE_EVENTS:
