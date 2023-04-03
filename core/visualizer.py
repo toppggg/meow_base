@@ -1,8 +1,11 @@
 import time
-import datetime
 import sys
 import os
 import threading
+import datetime as dt
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import numpy as np
 
 from typing import Any, Union, Dict
 
@@ -29,6 +32,8 @@ class Visualizer:
 
     _kill = False
 
+    _figure = False
+
 
     def __init__(self)->None:
         self._patterns = {}    
@@ -50,28 +55,27 @@ class Visualizer:
             
             if time_dif >= 1:
             
-                # if (time_this_round//60 - self._last_update//60) >= 1: #If the minute has changed, reset the array remaining fields to 0
-                #     self._copy_arrays()#copy seconds array into minutes array
-                #     for i in range (self._last_update % 60, 60):
-                #         for rule in self._rules:
-                #             self._visualized_seconds_array[rule][i] = 0
+                if (time_this_round//60 - self._last_update//60) >= 1: #If the minute has changed, reset the array remaining fields to 0
+                    self._copy_arrays()#copy seconds array into minutes array
+                    for i in range (self._last_update % 60, 60):
+                        for rule in self._rules:
+                            self._visualized_seconds_array[rule][i] = 0
                     
-                #     for i in range(0,time_this_round%60): #in range (0,0)
-                #         for rule in self._rules:
-                #             self._visualized_seconds_array[rule][i] = 0
-                # else : 
-                #     for i in range(self._last_update%60, time_this_round%60):
-                #         for rule in self._rules:
-                #             self._visualized_seconds_array[rule][i] = 0
-                #         # self._visualized_seconds_array[i] = 0
+                    for i in range(0,time_this_round%60): #in range (0,0)
+                        for rule in self._rules:
+                            self._visualized_seconds_array[rule][i] = 0
+                else : 
+                    for i in range(self._last_update%60, time_this_round%60):
+                        for rule in self._rules:
+                            self._visualized_seconds_array[rule][i] = 0
+                        # self._visualized_seconds_array[i] = 0
                 # #Go through "tmp sec" dict, and copy into second array.
-
-            # print array to file.
+                
+                # print array to file.
                 visualizer_dir = "visualizer_print"
-
-                with open(os.path.join(visualizer_dir, "array"), "a") as f:
+                with open(os.path.join(visualizer_dir, "array"), "w") as f:
                     f.write(str(self._visualized_seconds_array) + "\n")
-
+                
                 self._last_update = time_this_round
 
             # time.sleep(0.5)
@@ -109,7 +113,45 @@ class Visualizer:
     def new_rule(self, rule: BaseRule)->None:       # {rule, [60]}
         self._rules[rule.__str__()] = rule
         self._visualized_seconds_array[rule.__str__()] = [0] * 60
-        pass
+        if not self._figure:
+            updateThread = threading.Thread(target=self.matplotlib,args=())
+            updateThread.start()
+            # self.matplotlib(int(time.time()))
+            self._figure = True
+
+        
 
     def _copy_arrays(self):
         pass
+
+    def matplotlib(self):
+        figure = plt.figure()
+        ax = figure.add_subplot(1, 1, 1)
+        time_this_round = int(time.time())
+        time_initial = dt.datetime.now()
+        xs = [(time_initial - dt.timedelta(seconds=float(i))).strftime('%H:%M:%S') for i in range(60, 0, -1)]
+        ys = [i for i in range(time_this_round - 60, time_this_round)]
+        for rule in self._rules:
+            ys = self._visualized_seconds_array[rule]
+            # ys = ruleys[(time_this_round % 60):60].append(ruleys[0:(time_this_round % 60)])
+
+        def animate(i, xs, ys):
+            time_this_round = int(time.time())
+            xs.append(dt.datetime.now().strftime('%H:%M:%S'))
+            # ys = np.random.randint(1,30,60)
+            for rule in self._rules:
+                ruleys = self._visualized_seconds_array[rule]
+                ys = ruleys[(time_this_round % 60):60] + (ruleys[0:(time_this_round % 60)])
+            xs = xs[-60:]
+
+            ax.clear()
+            ax.plot(xs, ys)
+
+            # Format plot
+            plt.xticks(np.arange(0, 60, step=5),rotation=45, ha='right')
+            plt.subplots_adjust(bottom=0.30)
+            plt.title('Rule over time')
+            plt.ylabel('Rule')
+        
+        ani = animation.FuncAnimation(figure, animate, fargs=(xs, ys), interval=1000)
+        plt.show()
