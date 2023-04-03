@@ -42,6 +42,9 @@ SHA256 = "sha256"
 EVENT_TYPE = "event_type"
 EVENT_PATH = "event_path"
 EVENT_RULE = "rule"
+# Potential extentions that the visualizer should handle
+# EVENT_TRACE = "trace" 
+# EVENT_EXECUTE_TIME = "execute_time"
 
 # watchdog events
 EVENT_TYPE_WATCHDOG = "watchdog"

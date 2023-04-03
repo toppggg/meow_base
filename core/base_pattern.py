@@ -126,7 +126,7 @@ class BasePattern:
                     )
 
     def __str__(self) -> str :
-        return f'{self.name}, recipe: {self.recipe} '
+        return f'{self.name}, matching recipe: {self.recipe} '
 
     def expand_sweeps(self)->List[Tuple[str,Any]]:
         """Function to get all combinations of sweep parameters"""

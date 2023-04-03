@@ -68,3 +68,6 @@ class BaseRecipe:
         """Validation check for 'requirements' variable from main constructor. 
         Must be implemented by any child class."""
         pass
+
+    def __str__(self):
+        return f"{self.name}"
