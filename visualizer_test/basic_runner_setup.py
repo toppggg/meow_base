@@ -34,7 +34,7 @@ def main():
 
 def testMeowRunnerPythonExecution()->None:
     pattern_one = FileEventPattern(
-        "pattern_one", os.path.join("start", "*.txt"), "recipe_one", "infile", 
+        "pattern_one", os.path.join("start", "*.tx"), "recipe_one", "infile", 
         parameters={
             "num":10000,
             "outfile":os.path.join("{BASE}", "output", "{FILENAME}")
@@ -99,9 +99,15 @@ def testMeowRunnerPythonExecution()->None:
 
     
     for i in range(0, 15):
-        for j in range (1,rand.randint(30,30)) :
-            with open(os.path.join(start_dir, f"{i}_{j}.txt"), "w") as f: 
-                f.write(str(25000/(i*j + 1) + 25000 / (j+1))) 
+        for j in range(0, 10):
+            for k in range (1,rand.randint(0,3)) :
+                with open(os.path.join(start_dir, f"{i}_{j}_{k}.txt"), "w") as f: 
+                    f.write(str(25000/(i*j + 1) + 25000 / (j+1))) 
+                    
+            for k in range (1,rand.randint(1,3)) :
+                with open(os.path.join(start_dir, f"{i}_{j}_{k}.tx"), "w") as f: 
+                    f.write(str(25000/(i*j + 1) + 25000 / (j+1))) 
+                                
         loops = 0
         
         while loops < 15:

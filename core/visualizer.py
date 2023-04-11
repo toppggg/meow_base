@@ -84,8 +84,8 @@ class Visualizer:
         time_this_round = int(time.time())
         time_dif = time_this_round - self._last_update
         
-        if time_dif < 1: #update has not been run yet this second
-            self.update()
+        # if time_dif < 1: #update has not been run yet this second
+        self.update()
 
         visualizer_dir = "visualizer_print"
         if event["rule"].__str__() not in self._rules: #Check if the rule already exists, otherwise add it to the rules that should be visualized
@@ -125,8 +125,11 @@ class Visualizer:
         pass
 
     def matplotlib(self):
-        figure = plt.figure()
-        ax = figure.add_subplot(1, 1, 1)
+        figure, ax = plt.subplots()
+
+        # figure = plt.figure()
+        # ax = figure.add_subplot(1, 1, 1)
+
         time_this_round = int(time.time())
         time_initial = dt.datetime.now()
         xs = [(time_initial - dt.timedelta(seconds=float(i))).strftime('%H:%M:%S') for i in range(60, 0, -1)]
@@ -134,24 +137,32 @@ class Visualizer:
         for rule in self._rules:
             ys = self._visualized_seconds_array[rule]
             # ys = ruleys[(time_this_round % 60):60].append(ruleys[0:(time_this_round % 60)])
+        
 
-        def animate(i, xs, ys):
+        def animate_total(i, xs, ys):
+            bottom = np.zeros(60)
             time_this_round = int(time.time())
             xs.append(dt.datetime.now().strftime('%H:%M:%S'))
             # ys = np.random.randint(1,30,60)
-            for rule in self._rules:
+            xs = xs[-60:]
+            ax.clear()
+            width = 1
+            for rule in self._rules.keys():
                 ruleys = self._visualized_seconds_array[rule]
                 ys = ruleys[(time_this_round % 60):60] + (ruleys[0:(time_this_round % 60)])
-            xs = xs[-60:]
+                ys = np.array(ys)
+                p = ax.bar(xs, ys, bottom=bottom, width=width)
+                bottom += ys
+            # xs = xs[-60:]
 
-            ax.clear()
-            ax.plot(xs, ys)
+            # ax.clear()
+            # ax.plot(xs, ys)
 
             # Format plot
             plt.xticks(np.arange(0, 60, step=5),rotation=45, ha='right')
-            plt.subplots_adjust(bottom=0.30)
+            # plt.subplots_adjust(bottom=0.30)
             plt.title('Rule over time')
             plt.ylabel('Rule')
         
-        ani = animation.FuncAnimation(figure, animate, fargs=(xs, ys), interval=1000)
+        ani = animation.FuncAnimation(figure, animate_total, fargs=(xs, ys), interval=1000)
         plt.show()
