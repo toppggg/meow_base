@@ -27,6 +27,7 @@ class Visualizer:
     # _data_to_show: Dict[str, Any] # use rule.rule to match, and increase the int by 1
 
     _visualized_seconds_array: Dict[str, list]
+    _visualized_minutes_array: Dict[str, list]
 
     _last_update: int
 
@@ -41,6 +42,7 @@ class Visualizer:
         self._rules = {}
         self._last_update = int(time.time())
         self._visualized_seconds_array = {}
+        self._visualized_minutes_array = {}
         
         
         # updateThread = threading.Thread(target=self.update)
@@ -54,18 +56,20 @@ class Visualizer:
             time_dif = time_this_round - self._last_update
             
             if time_dif >= 1:
-            
+                if not time_this_round % 60:
+                    self.sec_to_min(time_this_round)
+
                 if (time_this_round//60 - self._last_update//60) >= 1: #If the minute has changed, reset the array remaining fields to 0
-                    self._copy_arrays()#copy seconds array into minutes array
-                    for i in range (self._last_update % 60, 60):
+                    
+                    for i in range ((self._last_update % 60) + 1, 60):
                         for rule in self._rules:
                             self._visualized_seconds_array[rule][i] = 0
                     
-                    for i in range(0,time_this_round%60): #in range (0,0)
+                    for i in range(0,(time_this_round % 60) + 1): #in range (0,0)
                         for rule in self._rules:
                             self._visualized_seconds_array[rule][i] = 0
                 else : 
-                    for i in range(self._last_update%60, time_this_round%60):
+                    for i in range((self._last_update % 60) + 1 , (time_this_round % 60) + 1):
                         for rule in self._rules:
                             self._visualized_seconds_array[rule][i] = 0
                         # self._visualized_seconds_array[i] = 0
@@ -99,34 +103,28 @@ class Visualizer:
             f.write(event["rule"].__str__() + "\n")
         
         # timestamp = time.ctime(time.time()) 
-        timestamp = int(time.time())
-        array_index = (timestamp - 3) % 60
+        array_index = (time_this_round) % 60
         self._visualized_seconds_array[event["rule"].__str__()][array_index] += 1
         # tmp[array_index] += 1
         # self._visualized_seconds_array.update()
         
 
 
-    #Johans leg
-
 
     def new_rule(self, rule: BaseRule)->None:       # {rule, [60]}
         self._rules[rule.__str__()] = rule
         self._visualized_seconds_array[rule.__str__()] = [0] * 60
+        self._visualized_minutes_array[rule.__str__()] = [0] * 60
         if not self._figure:
             updateThread = threading.Thread(target=self.matplotlib,args=())
             updateThread.start()
             # self.matplotlib(int(time.time()))
             self._figure = True
 
-        
-
-    def _copy_arrays(self):
-        pass
 
     def matplotlib(self):
         figure, ax = plt.subplots()
-
+        
         # figure = plt.figure()
         # ax = figure.add_subplot(1, 1, 1)
 
@@ -137,11 +135,11 @@ class Visualizer:
         for rule in self._rules:
             ys = self._visualized_seconds_array[rule]
             # ys = ruleys[(time_this_round % 60):60].append(ruleys[0:(time_this_round % 60)])
-        
 
         def animate_total(i, xs, ys):
             bottom = np.zeros(60)
             time_this_round = int(time.time())
+            self.update()
             xs.append(dt.datetime.now().strftime('%H:%M:%S'))
             # ys = np.random.randint(1,30,60)
             xs = xs[-60:]
@@ -149,9 +147,9 @@ class Visualizer:
             width = 1
             for rule in self._rules.keys():
                 ruleys = self._visualized_seconds_array[rule]
-                ys = ruleys[(time_this_round % 60):60] + (ruleys[0:(time_this_round % 60)])
+                ys = ruleys[(time_this_round % 60)+1:60] + (ruleys[0:((time_this_round % 60) + 1)])
                 ys = np.array(ys)
-                p = ax.bar(xs, ys, bottom=bottom, width=width)
+                p = ax.bar(xs, ys, label=self._rules[rule].__str__(), bottom=bottom, width=width)
                 bottom += ys
             # xs = xs[-60:]
 
@@ -159,10 +157,22 @@ class Visualizer:
             # ax.plot(xs, ys)
 
             # Format plot
-            plt.xticks(np.arange(0, 60, step=5),rotation=45, ha='right')
+            ax.legend(loc="upper right")
+            plt.xticks(np.arange(0, 60, step=1),rotation=45, ha='right')
             # plt.subplots_adjust(bottom=0.30)
             plt.title('Rule over time')
             plt.ylabel('Rule')
         
         ani = animation.FuncAnimation(figure, animate_total, fargs=(xs, ys), interval=1000)
         plt.show()
+
+    def sec_to_min(self, time_this_round : int):
+        minute_offset = (time_this_round // 60) % 60
+        if not minute_offset:
+            #implement day array // todo:
+            x = 0
+        for rule in self._rules:
+            self._visualized_minutes_array[rule][minute_offset] = sum(self._visualized_seconds_array[rule])
+        visualizer_dir = "visualizer_print"
+        with open(os.path.join(visualizer_dir, "minutes"), "w") as f:
+            f.write(str(self._visualized_minutes_array) + "\n" + str(self._visualized_seconds_array) + "\n")

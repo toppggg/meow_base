@@ -111,7 +111,7 @@ def testMeowRunnerPythonExecution()->None:
         loops = 0
         
         while loops < 15:
-            sleep(3)
+            sleep(1)
             runner_debug_stream.seek(0)
             messages = runner_debug_stream.readlines()
             
@@ -131,7 +131,7 @@ def testMeowRunnerPythonExecution()->None:
 
             runner.visualizer.update()
             
-
+    sleep(5)
     runner.stop()
 
 

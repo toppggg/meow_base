@@ -85,4 +85,7 @@ class BaseRule:
                 "does not set a recipe_type.")
 
     def __str__(self) -> str :
-        return f'\n rule_name:{self.name} \n   recipe: {self.recipe} \n   pattern: {self.pattern}'
+        return self.name
+
+    def __print_name_recipe_pattern__(self) -> str :
+        return f'\n rule_name:{self.name} \n   recipe: {self.recipe} \n   pattern: {self.pattern}'    
