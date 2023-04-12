@@ -77,8 +77,8 @@ class Visualizer:
                 
                 # print array to file.
                 visualizer_dir = "visualizer_print"
-                with open(os.path.join(visualizer_dir, "array"), "w") as f:
-                    f.write(str(self._visualized_seconds_array) + "\n")
+                with open(os.path.join(visualizer_dir, "array"), "a") as f:
+                    f.write(str(time_this_round % 60) + " : " + str(self._visualized_seconds_array) + "\n")
                 
                 self._last_update = time_this_round
 
@@ -107,8 +107,7 @@ class Visualizer:
         self._visualized_seconds_array[event["rule"].__str__()][array_index] += 1
         # tmp[array_index] += 1
         # self._visualized_seconds_array.update()
-        
-
+    
 
 
     def new_rule(self, rule: BaseRule)->None:       # {rule, [60]}
@@ -140,14 +139,15 @@ class Visualizer:
             bottom = np.zeros(60)
             time_this_round = int(time.time())
             self.update()
-            xs.append(dt.datetime.now().strftime('%H:%M:%S'))
+            for i in range (0,60):
+                xs[i] = dt.datetime.fromtimestamp(time_this_round - (60 - i)).strftime('%H:%M:%S')
             # ys = np.random.randint(1,30,60)
-            xs = xs[-60:]
+            # xs = xs[-60:]
             ax.clear()
             width = 1
             for rule in self._rules.keys():
                 ruleys = self._visualized_seconds_array[rule]
-                ys = ruleys[(time_this_round % 60)+1:60] + (ruleys[0:((time_this_round % 60) + 1)])
+                ys = ruleys[(time_this_round % 60) + 1 : 60] + (ruleys[0 : ((time_this_round % 60) + 1)])
                 ys = np.array(ys)
                 p = ax.bar(xs, ys, label=self._rules[rule].__str__(), bottom=bottom, width=width)
                 bottom += ys
