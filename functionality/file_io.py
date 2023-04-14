@@ -4,6 +4,7 @@ This file contains functions for reading and writing different types of files.
 Author(s): David Marchant
 """
 
+import fcntl
 import json
 import yaml
 
@@ -93,6 +94,51 @@ def write_yaml(source:Any, filename:str):
     """
     with open(filename, 'w') as param_file:
         yaml.dump(source, param_file, default_flow_style=False)
+
+# TODO test me
+def threadsafe_read_status(filepath:str):
+    lock_path = f"{filepath}.lock"
+    lock_handle = open(lock_path, 'a')
+    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+
+    try:
+        status = read_yaml(filepath)
+    except Exception as e:
+        lock_handle.close()
+        raise e
+
+    lock_handle.close()
+
+    return status
+
+# TODO test me
+def threadsafe_write_status(source:dict[str,Any], filepath:str):
+    lock_path = f"{filepath}.lock"
+    lock_handle = open(lock_path, 'a')
+    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+
+    try:
+        write_yaml(source, filepath)
+    except Exception as e:
+        lock_handle.close()
+        raise e
+
+    lock_handle.close()
+
+# TODO test me
+def threadsafe_update_status(updates:dict[str,Any], filepath:str):
+    lock_path = f"{filepath}.lock"
+    lock_handle = open(lock_path, 'a')
+    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+
+    try:
+        status = read_yaml(filepath)
+        write_yaml({**status, **updates}, filepath)
+    except Exception as e:
+        lock_handle.close()
+        raise e
+
+    lock_handle.close()
 
 def read_notebook(filepath:str):
     valid_path(filepath, extension="ipynb")
