@@ -131,7 +131,7 @@ def threadsafe_update_status(updates:dict[str,Any], filepath:str):
     try:
         status = read_yaml(filepath)
 
-        write_yaml(generous_merge(status, updates), filepath)
+        write_yaml({**status, **updates}, filepath)
     except Exception as e:
         lock_handle.close()
         raise e
@@ -160,18 +160,3 @@ def lines_to_string(lines:List[str])->str:
     """Function to convert a list of str lines, into one continuous string 
     separated by newline characters"""
     return "\n".join(lines)
-
-def generous_merge(source:dict[str,Any], update:dict[str,Any], top:bool=True):
-    result = {}
-
-    for k, v in source.items():
-        if k in update:
-            if isinstance(v, dict):
-                result[k] = generous_merge(v, update[k], top=False)
-            else:
-                result[k] = update[k]
-
-        else:
-            result[k] = v
-
-    return result
