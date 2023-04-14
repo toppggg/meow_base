@@ -15,7 +15,7 @@ from meow_base.core.rule import Rule
 from meow_base.core.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
     SHA256, EVENT_TYPE, EVENT_PATH, EVENT_TYPE_WATCHDOG, \
     WATCHDOG_BASE, WATCHDOG_HASH, EVENT_RULE, JOB_PARAMETERS, \
-    PYTHON_FUNC, JOB_ID, JOB_EVENT, \
+    PYTHON_FUNC, JOB_ID, JOB_EVENT, JOB_ERROR, STATUS_DONE, \
     JOB_TYPE, JOB_PATTERN, JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, \
     JOB_REQUIREMENTS, STATUS_QUEUED, JOB_TYPE_PAPERMILL
 from meow_base.functionality.debug import setup_debugging
@@ -492,6 +492,73 @@ data"""
         ]
         
         self.assertEqual(data, expected_bytes)
+
+    def testThreadsafeUpdateProctectedStatus(self)->None:
+        first_yaml_dict = {
+            JOB_CREATE_TIME: "now",
+            JOB_STATUS: "Wham",
+            JOB_ERROR: "first error.",
+            JOB_ID: "id"
+        }
+
+        filepath = os.path.join(TEST_MONITOR_BASE, "file.yaml")
+
+        self.assertFalse(os.path.exists(filepath))
+        threadsafe_write_status(first_yaml_dict, filepath)
+        self.assertTrue(os.path.exists(filepath))
+        self.assertTrue(os.path.exists(f"{filepath}.lock"))
+
+        status = threadsafe_read_status(filepath)
+        
+        self.assertEqual(first_yaml_dict, status)
+
+        second_yaml_dict = {
+            JOB_CREATE_TIME: "changed",
+            JOB_STATUS: STATUS_DONE,
+            JOB_ERROR: "changed.",
+            JOB_ID: "changed"
+        }
+
+        filepath = os.path.join(TEST_MONITOR_BASE, "file.yaml")
+
+        threadsafe_update_status(second_yaml_dict, filepath)
+        self.assertTrue(os.path.exists(filepath))
+        self.assertTrue(os.path.exists(f"{filepath}.lock"))
+
+        status = threadsafe_read_status(filepath)
+
+        expected_second_yaml_dict = {
+            JOB_CREATE_TIME: "now",
+            JOB_STATUS: STATUS_DONE,
+            JOB_ERROR: "first error. changed.",
+            JOB_ID: "changed"
+        }
+        
+        self.assertEqual(expected_second_yaml_dict, status)
+
+        third_yaml_dict = {
+            JOB_CREATE_TIME: "editted",
+            JOB_STATUS: "editted",
+            JOB_ERROR: "editted.",
+            JOB_ID: "editted"
+        }
+
+        filepath = os.path.join(TEST_MONITOR_BASE, "file.yaml")
+
+        threadsafe_update_status(third_yaml_dict, filepath)
+        self.assertTrue(os.path.exists(filepath))
+        self.assertTrue(os.path.exists(f"{filepath}.lock"))
+
+        status = threadsafe_read_status(filepath)
+
+        expected_third_yaml_dict = {
+            JOB_CREATE_TIME: "now",
+            JOB_STATUS: STATUS_DONE,
+            JOB_ERROR: "first error. changed. editted.",
+            JOB_ID: "editted"
+        }
+        
+        self.assertEqual(expected_third_yaml_dict, status)
 
 
 class HashingTests(unittest.TestCase):

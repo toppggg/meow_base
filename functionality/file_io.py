@@ -12,6 +12,8 @@ from os import makedirs, remove, rmdir, walk
 from os.path import exists, isfile, join
 from typing import Any, Dict, List
 
+from meow_base.core.vars import JOB_END_TIME, JOB_ERROR, JOB_STATUS, \
+    STATUS_FAILED, STATUS_DONE, JOB_CREATE_TIME, JOB_START_TIME
 from meow_base.functionality.validation import valid_path
 
 
@@ -131,7 +133,22 @@ def threadsafe_update_status(updates:dict[str,Any], filepath:str):
     try:
         status = read_yaml(filepath)
 
-        write_yaml({**status, **updates}, filepath)
+        for k, v in status.items():
+            if k in updates:
+                # Do not overwrite final job status
+                if k == JOB_STATUS \
+                        and v in [STATUS_DONE, STATUS_FAILED]:
+                    continue
+                # Do not overwrite an existing time
+                elif k in [JOB_START_TIME, JOB_CREATE_TIME, JOB_END_TIME]:
+                    continue
+                # Do not overwrite an existing error messages
+                elif k == JOB_ERROR:
+                    updates[k] = f"{v} {updates[k]}"
+
+                status[k] = updates[k]
+
+        write_yaml(status, filepath)
     except Exception as e:
         lock_handle.close()
         raise e
