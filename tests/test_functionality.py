@@ -484,6 +484,7 @@ data"""
             'A: a\n', 
             'B: 42\n',
             'C:\n', 
+            '  D: true\n',
             '  E:\n',
             '  - 1\n',
             '  - 2\n',
@@ -492,6 +493,7 @@ data"""
         ]
         
         self.assertEqual(data, expected_bytes)
+
 
 class HashingTests(unittest.TestCase):
     def setUp(self)->None:

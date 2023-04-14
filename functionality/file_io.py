@@ -95,7 +95,6 @@ def write_yaml(source:Any, filename:str):
     with open(filename, 'w') as param_file:
         yaml.dump(source, param_file, default_flow_style=False)
 
-# TODO test me
 def threadsafe_read_status(filepath:str):
     lock_path = f"{filepath}.lock"
     lock_handle = open(lock_path, 'a')
@@ -111,7 +110,6 @@ def threadsafe_read_status(filepath:str):
 
     return status
 
-# TODO test me
 def threadsafe_write_status(source:dict[str,Any], filepath:str):
     lock_path = f"{filepath}.lock"
     lock_handle = open(lock_path, 'a')
@@ -125,7 +123,6 @@ def threadsafe_write_status(source:dict[str,Any], filepath:str):
 
     lock_handle.close()
 
-# TODO test me
 def threadsafe_update_status(updates:dict[str,Any], filepath:str):
     lock_path = f"{filepath}.lock"
     lock_handle = open(lock_path, 'a')
@@ -133,7 +130,8 @@ def threadsafe_update_status(updates:dict[str,Any], filepath:str):
 
     try:
         status = read_yaml(filepath)
-        write_yaml({**status, **updates}, filepath)
+
+        write_yaml(generous_merge(status, updates), filepath)
     except Exception as e:
         lock_handle.close()
         raise e
@@ -162,3 +160,18 @@ def lines_to_string(lines:List[str])->str:
     """Function to convert a list of str lines, into one continuous string 
     separated by newline characters"""
     return "\n".join(lines)
+
+def generous_merge(source:dict[str,Any], update:dict[str,Any], top:bool=True):
+    result = {}
+
+    for k, v in source.items():
+        if k in update:
+            if isinstance(v, dict):
+                result[k] = generous_merge(v, update[k], top=False)
+            else:
+                result[k] = update[k]
+
+        else:
+            result[k] = v
+
+    return result
