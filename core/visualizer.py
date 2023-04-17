@@ -6,6 +6,13 @@ import datetime as dt
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
+import plotly.express as px
+import plotly.graph_objects as go
+import pandas as pd
+from dash import Dash, dcc, html, Input, Output
+# import dash_bootstrap_components as dbc
+import copy
+import requests
 
 from typing import Any, Union, Dict
 
@@ -14,7 +21,7 @@ from meow_base.core.base_rule import BaseRule
 from meow_base.core.correctness.vars import get_drt_imp_msg, VALID_CHANNELS
 from meow_base.core.base_pattern import BasePattern
 
-sys.path.append("C:\\Users\\Johan\OneDrive\\Universitet\\Datalogi\\6. semester\\Bachelor\meow")
+sys.path.append("D:\Datalogi\Bachelor\MEOW_AsgerJohan")
 
 class Visualizer:
     # A collection of patterns
@@ -115,10 +122,58 @@ class Visualizer:
         self._visualized_seconds_array[rule.__str__()] = [0] * 60
         self._visualized_minutes_array[rule.__str__()] = [0] * 60
         if not self._figure:
-            updateThread = threading.Thread(target=self.matplotlib,args=())
+            
+            
+            global updateThread
+            updateThread = threading.Thread(target=self.plot,args=())
             updateThread.start()
             # self.matplotlib(int(time.time()))
             self._figure = True
+
+
+    def plot(self) :
+
+        app = Dash()
+        app.layout = html.Div([
+            html.H1(id="count-up"),
+            dcc.Graph(id="fig"),
+            dcc.Interval(id="interval", interval=1000 ),
+            ])
+            
+
+        @app.callback(
+            Output("fig", "figure"),
+            Input("interval", "n_intervals")
+        )
+        def update_figure(n_intervals):
+            self.update()
+            time_this_round = int(time.time())
+            
+            data = copy.deepcopy(self._visualized_seconds_array)
+
+            xs = [""]*60
+            for i in range (0,60):
+                xs[i] = dt.datetime.fromtimestamp(time_this_round - (60 - i)).strftime('%H:%M:%S')
+
+            for rule in data :
+                data[rule] = data[rule][(time_this_round % 60) + 1 : 60] + (data[rule][0 : ((time_this_round % 60) + 1)])
+
+            # data['timeStamp'] = xs
+            df = pd.DataFrame(data, index=xs)
+
+            # testdf = df.from_dict(self._visualized_seconds_array, orient="columns")
+            # testdf.reindex(xs)
+            with open(os.path.join("visualizer_print", "Pandas"), "w") as f:
+                f.write(str(df) + "\n")
+            # index1=pd.date_range(start=dt.datetime.fromtimestamp(time_this_round-59),
+                                    #    end=dt.datetime.fromtimestamp(time_this_round), freq='S')
+            # df.insert(0,"timeStamp",index1,True)
+            # df.set_index("timeStamp")
+            fig = px.bar(df)
+           
+            return fig
+
+        app.run()
 
 
     def matplotlib(self):
@@ -136,6 +191,7 @@ class Visualizer:
             # ys = ruleys[(time_this_round % 60):60].append(ruleys[0:(time_this_round % 60)])
 
         def animate_total(i, xs, ys):
+            
             bottom = np.zeros(60)
             time_this_round = int(time.time())
             self.update()
@@ -158,7 +214,7 @@ class Visualizer:
 
             # Format plot
             ax.legend(loc="upper right")
-            plt.xticks(np.arange(0, 60, step=1),rotation=45, ha='right')
+            plt.xticks(np.arange(0, 60, step=2),rotation=45, ha='right')
             # plt.subplots_adjust(bottom=0.30)
             plt.title('Rule over time')
             plt.ylabel('Rule')
