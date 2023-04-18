@@ -173,7 +173,7 @@ class PythonHandler(BaseHandler):
         )
         
         # Send job directory, as actual definitons will be read from within it
-        self.to_runner.send(job_dir)
+        self.send_to_runner(job_dir)
 
 
 # Papermill job execution code, to be run within the conductor

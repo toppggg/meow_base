@@ -21,7 +21,7 @@ from meow_base.core.vars import DEBUG_WARNING, DEBUG_INFO, \
     EVENT_TYPE, VALID_CHANNELS, META_FILE, DEFAULT_JOB_OUTPUT_DIR, \
     DEFAULT_JOB_QUEUE_DIR, EVENT_PATH
 from meow_base.functionality.validation import check_type, valid_list, \
-    valid_dir_path
+    valid_dir_path, check_implementation
 from meow_base.functionality.debug import setup_debugging, print_debug
 from meow_base.functionality.file_io import make_dir, threadsafe_read_status
 from meow_base.functionality.process_io import wait
@@ -276,12 +276,20 @@ class MeowRunner:
         startable = []
         # Start all handlers, if they need it
         for handler in self.handlers:
-            if hasattr(handler, "start") and handler not in startable:
-                startable.append()
+            try:
+                check_implementation(handler.start, BaseHandler)
+                if handler not in startable:
+                    startable.append(handler)
+            except NotImplementedError:
+                pass
         # Start all conductors, if they need it
         for conductor in self.conductors:
-            if hasattr(conductor, "start") and conductor not in startable:
-                startable.append()
+            try:
+                check_implementation(conductor.start, BaseConductor)
+                if conductor not in startable:
+                    startable.append(conductor)
+            except NotImplementedError:
+                pass
         for starting in startable:
             starting.start()
         
@@ -330,12 +338,20 @@ class MeowRunner:
         stopable = []
         # Stop all handlers, if they need it
         for handler in self.handlers:
-            if hasattr(handler, "stop") and handler not in stopable:
-                stopable.append()
+            try:
+                check_implementation(handler.stop, BaseHandler)
+                if handler not in stopable:
+                    stopable.append(handler)
+            except NotImplementedError:
+                pass
         # Stop all conductors, if they need it
         for conductor in self.conductors:
-            if hasattr(conductor, "stop") and conductor not in stopable:
-                stopable.append()
+            try:
+                check_implementation(conductor.stop, BaseConductor)
+                if conductor not in stopable:
+                    stopable.append(conductor)
+            except NotImplementedError:
+                pass
         for stopping in stopable:
             stopping.stop()
 

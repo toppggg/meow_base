@@ -180,7 +180,7 @@ class BashHandler(BaseHandler):
         threadsafe_write_status(meow_job, meta_file)
         
         # Send job directory, as actual definitons will be read from within it
-        self.to_runner.send(job_dir)
+        self.send_to_runner(job_dir)
 
 
 def assemble_bash_job_script()->List[str]:

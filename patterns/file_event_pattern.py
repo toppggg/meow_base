@@ -256,7 +256,7 @@ class WatchdogMonitor(BaseMonitor):
                         f"Event at {src_path} hit rule {rule.name}", 
                         DEBUG_INFO)
                     # Send the event to the runner
-                    self.to_runner.send(meow_event)
+                    self.send_to_runner(meow_event)
 
         except Exception as e:
             self._rules_lock.release()
@@ -559,7 +559,7 @@ class WatchdogMonitor(BaseMonitor):
                         f"Retroactive event for file at at {globble} hit rule "
                         f"{rule.name}", DEBUG_INFO)
                     # Send it to the runner
-                    self.to_runner.send(meow_event)
+                    self.send_to_runner(meow_event)
 
         except Exception as e:
             self._rules_lock.release()

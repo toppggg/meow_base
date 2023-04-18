@@ -31,6 +31,8 @@ class BaseHandler:
         from it implements its validation functions."""
         check_implementation(type(self).handle, BaseHandler)
         check_implementation(type(self).valid_handle_criteria, BaseHandler)
+        check_implementation(type(self).prompt_runner_for_event, BaseHandler)
+        check_implementation(type(self).send_job_to_runner, BaseHandler)
         if not name:
             name = generate_handler_id()
         self._is_valid_name(name)
@@ -49,6 +51,25 @@ class BaseHandler:
         automatically called during initialisation. This does not need to be 
         overridden by child classes."""
         valid_string(name, VALID_HANDLER_NAME_CHARS)
+
+    def prompt_runner_for_event(self):
+        pass
+
+    def send_job_to_runner(self, msg):
+        #self.to_runner.send(msg)
+        pass
+
+    def start(self)->None:
+        """Function to start the handler as an ongoing process/thread. May be 
+        overidden by any child process. Note that by default this will raise an 
+        execption that is automatically handled within a runner instance."""
+        raise NotImplementedError
+
+    def stop(self)->None:
+        """Function to stop the handler as an ongoing process/thread. May be 
+        overidden by any child process. Note that by default this will raise an 
+        execption that is automatically handled within a runner instance."""
+        raise NotImplementedError
 
     def valid_handle_criteria(self, event:Dict[str,Any])->Tuple[bool,str]:
         """Function to determine given an event defintion, if this handler can 

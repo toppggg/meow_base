@@ -185,7 +185,7 @@ class PapermillHandler(BaseHandler):
         )
         
         # Send job directory, as actual definitons will be read from within it
-        self.to_runner.send(job_dir)
+        self.send_to_runner(job_dir)
 
 def get_recipe_from_notebook(name:str, notebook_filename:str, 
         parameters:Dict[str,Any]={}, requirements:Dict[str,Any]={}

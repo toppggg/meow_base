@@ -54,6 +54,7 @@ class BaseMonitor:
         check_implementation(type(self).remove_recipe, BaseMonitor)
         check_implementation(type(self).get_recipes, BaseMonitor)
         check_implementation(type(self).get_rules, BaseMonitor)
+        check_implementation(type(self).send_event_to_runner, BaseMonitor)
         # Ensure that patterns and recipes cannot be trivially modified from 
         # outside the monitor, as this will cause internal consistency issues
         self._patterns = deepcopy(patterns)
@@ -87,6 +88,9 @@ class BaseMonitor:
         """Validation check for 'recipes' variable from main constructor. Must 
         be implemented by any child class."""
         pass
+
+    def send_event_to_runner(self, msg):
+        self.to_runner.send(msg)
 
     def start(self)->None:
         """Function to start the monitor as an ongoing process/thread. Must be 

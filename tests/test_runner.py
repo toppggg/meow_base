@@ -152,7 +152,7 @@ class MeowTests(unittest.TestCase):
 
         self.assertIsInstance(runner.from_monitors, list)
         self.assertEqual(len(runner.from_monitors), 1)
-        runner.monitors[0].to_runner.send("monitor test message")
+        runner.monitors[0].send_to_runner("monitor test message")
         message = None
         if runner.from_monitors[0].poll(3):
             message = runner.from_monitors[0].recv()
@@ -165,8 +165,7 @@ class MeowTests(unittest.TestCase):
 
         self.assertIsInstance(runner.from_handlers, list)
         self.assertEqual(len(runner.from_handlers), 1)
-        runner.handlers[0].to_runner.send(
-            "handler test message")
+        runner.handlers[0].send_to_runner("handler test message")
         message = None
         if runner.from_handlers[0].poll(3):
             message = runner.from_handlers[0].recv()
@@ -189,7 +188,7 @@ class MeowTests(unittest.TestCase):
         self.assertIsInstance(runner.from_monitors, list)
         self.assertEqual(len(runner.from_monitors), len(monitors))
         for rm in runner.monitors:
-            rm.to_runner.send("monitor test message")
+            rm.send_to_runner("monitor test message")
         messages = [None] * len(monitors)
         for i, rfm in enumerate(runner.from_monitors):
             if rfm.poll(3):
@@ -205,7 +204,7 @@ class MeowTests(unittest.TestCase):
         self.assertIsInstance(runner.from_handlers, list)
         self.assertEqual(len(runner.from_handlers), len(handlers))
         for rh in runner.handlers:
-            rh.to_runner.send("handler test message")
+            rh.send_to_runner("handler test message")
         message = None
         if runner.from_handlers[0].poll(3):
             message = runner.from_handlers[0].recv()
