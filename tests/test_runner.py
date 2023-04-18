@@ -29,7 +29,8 @@ from shared import TEST_JOB_QUEUE, TEST_JOB_OUTPUT, TEST_MONITOR_BASE, \
     MAKER_RECIPE, APPENDING_NOTEBOOK, COMPLETE_PYTHON_SCRIPT, TEST_DIR, \
     FILTER_RECIPE, POROSITY_CHECK_NOTEBOOK, SEGMENT_FOAM_NOTEBOOK, \
     GENERATOR_NOTEBOOK, FOAM_PORE_ANALYSIS_NOTEBOOK, IDMC_UTILS_PYTHON_SCRIPT, \
-    TEST_DATA, GENERATE_PYTHON_SCRIPT, setup, teardown, backup_before_teardown
+    TEST_DATA, GENERATE_PYTHON_SCRIPT, \
+    setup, teardown, backup_before_teardown, count_non_locks
 
 pattern_check = FileEventPattern(
     "pattern_check", 
@@ -329,7 +330,8 @@ class MeowTests(unittest.TestCase):
         runner.stop()
 
         job_dir = os.path.join(TEST_JOB_OUTPUT, job_id)
-        self.assertEqual(len(os.listdir(job_dir)), 5)
+        print(os.listdir(job_dir))
+        self.assertEqual(count_non_locks(job_dir), 5)
 
         result = read_notebook(
             os.path.join(job_dir, get_result_file(JOB_TYPE_PAPERMILL)))
@@ -426,7 +428,7 @@ class MeowTests(unittest.TestCase):
         runner.stop()
 
         mid_job_dir = os.path.join(TEST_JOB_OUTPUT, job_id)
-        self.assertEqual(len(os.listdir(mid_job_dir)), 5)
+        self.assertEqual(count_non_locks(mid_job_dir), 5)
 
         result = read_notebook(
             os.path.join(mid_job_dir, get_result_file(JOB_TYPE_PAPERMILL)))
@@ -441,7 +443,7 @@ class MeowTests(unittest.TestCase):
         self.assertEqual(data, "Initial Data\nA line from Pattern 1")
 
         final_job_dir = os.path.join(TEST_JOB_OUTPUT, job_id)
-        self.assertEqual(len(os.listdir(final_job_dir)), 5)
+        self.assertEqual(count_non_locks(final_job_dir), 5)
 
         result = read_notebook(os.path.join(final_job_dir, 
             get_result_file(JOB_TYPE_PAPERMILL)))
@@ -645,7 +647,7 @@ class MeowTests(unittest.TestCase):
             final_job_id = job_ids[0]
 
         mid_job_dir = os.path.join(TEST_JOB_OUTPUT, mid_job_id)
-        self.assertEqual(len(os.listdir(mid_job_dir)), 5)
+        self.assertEqual(count_non_locks(mid_job_dir), 5)
 
         mid_metafile = os.path.join(mid_job_dir, META_FILE)
         mid_status = read_yaml(mid_metafile)
@@ -664,7 +666,7 @@ class MeowTests(unittest.TestCase):
         self.assertEqual(mid_output, "7806.25")
 
         final_job_dir = os.path.join(TEST_JOB_OUTPUT, final_job_id)
-        self.assertEqual(len(os.listdir(final_job_dir)), 5)
+        self.assertEqual(count_non_locks(final_job_dir), 5)
 
         final_metafile = os.path.join(final_job_dir, META_FILE)
         final_status = read_yaml(final_metafile)

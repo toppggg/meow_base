@@ -19,8 +19,8 @@ from meow_base.core.vars import JOB_TYPE_PYTHON, PYTHON_FUNC, \
     JOB_ERROR, JOB_TYPE, JOB_TYPE_PAPERMILL, DEFAULT_JOB_QUEUE_DIR, \
     DEFAULT_JOB_OUTPUT_DIR
 from meow_base.functionality.validation import valid_dir_path
-from meow_base.functionality.file_io import make_dir, read_yaml, write_file, \
-    write_yaml
+from meow_base.functionality.file_io import make_dir, write_file, \
+    threadsafe_read_status, threadsafe_update_status
 
 class LocalPythonConductor(BaseConductor):
     def __init__(self, job_queue_dir:str=DEFAULT_JOB_QUEUE_DIR, 
@@ -63,13 +63,17 @@ class LocalPythonConductor(BaseConductor):
         abort = False
         try:
             meta_file = os.path.join(job_dir, META_FILE)
-            job = read_yaml(meta_file)
+            job = threadsafe_read_status(meta_file)
             valid_job(job)
 
             # update the status file with running status
-            job[JOB_STATUS] = STATUS_RUNNING
-            job[JOB_START_TIME] = datetime.now()
-            write_yaml(job, meta_file)
+            threadsafe_update_status(
+                {
+                    JOB_STATUS: STATUS_RUNNING,
+                    JOB_START_TIME: datetime.now()
+                }, 
+                meta_file
+            )
 
         except Exception as e:
             # If something has gone wrong at this stage then its bad, so we 
@@ -84,27 +88,27 @@ class LocalPythonConductor(BaseConductor):
                 job_function = job[PYTHON_FUNC]
                 job_function(job_dir)
 
-                # get up to date job data
-                job = read_yaml(meta_file)
-
                 # Update the status file with the finalised status
-                job[JOB_STATUS] = STATUS_DONE
-                job[JOB_END_TIME] = datetime.now()
-                write_yaml(job, meta_file)
+                threadsafe_update_status(
+                    {
+                        JOB_STATUS: STATUS_DONE,
+                        JOB_END_TIME: datetime.now()
+                    }, 
+                    meta_file
+                )
 
             except Exception as e:
-                # get up to date job data
-                job = read_yaml(meta_file)
-
                 # Update the status file with the error status. Don't overwrite
                 # any more specific error messages already created
-                if JOB_STATUS not in job:
-                    job[JOB_STATUS] = STATUS_FAILED
-                if JOB_END_TIME not in job:
-                    job[JOB_END_TIME] = datetime.now()
-                if JOB_ERROR not in job:
-                    job[JOB_ERROR] = f"Job execution failed. {e}"
-                write_yaml(job, meta_file)
+                threadsafe_update_status(
+                    {
+                        JOB_STATUS: STATUS_FAILED,
+                        JOB_END_TIME: datetime.now(),
+                        JOB_ERROR: f"Job execution failed. {e}"
+                    }, 
+                    meta_file
+                )
+
 
         # Move the contents of the execution directory to the final output 
         # directory. 

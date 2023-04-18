@@ -13,7 +13,7 @@ from typing import Dict
 
 from meow_base.core.rule import Rule
 from meow_base.core.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
-    SHA256, EVENT_TYPE, EVENT_PATH, EVENT_TYPE_WATCHDOG, \
+    SHA256, EVENT_TYPE, EVENT_PATH, EVENT_TYPE_WATCHDOG, LOCK_EXT, \
     WATCHDOG_BASE, WATCHDOG_HASH, EVENT_RULE, JOB_PARAMETERS, \
     PYTHON_FUNC, JOB_ID, JOB_EVENT, JOB_ERROR, STATUS_DONE, \
     JOB_TYPE, JOB_PATTERN, JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, \
@@ -348,7 +348,7 @@ data"""
         self.assertFalse(os.path.exists(filepath))
         threadsafe_write_status(first_yaml_dict, filepath)
         self.assertTrue(os.path.exists(filepath))
-        self.assertTrue(os.path.exists(f"{filepath}.lock"))
+        self.assertTrue(os.path.exists(filepath + LOCK_EXT))
 
         with open(filepath, 'r') as f:
             data = f.readlines()
@@ -381,7 +381,7 @@ data"""
 
         threadsafe_write_status(second_yaml_dict, filepath)
         self.assertTrue(os.path.exists(filepath))
-        self.assertTrue(os.path.exists(f"{filepath}.lock"))
+        self.assertTrue(os.path.exists(filepath + LOCK_EXT))
 
         with open(filepath, 'r') as f:
             data = f.readlines()
@@ -444,7 +444,7 @@ data"""
         self.assertFalse(os.path.exists(filepath))
         threadsafe_write_status(first_yaml_dict, filepath)
         self.assertTrue(os.path.exists(filepath))
-        self.assertTrue(os.path.exists(f"{filepath}.lock"))
+        self.assertTrue(os.path.exists(filepath + LOCK_EXT))
 
         with open(filepath, 'r') as f:
             data = f.readlines()
@@ -475,7 +475,7 @@ data"""
 
         threadsafe_update_status(second_yaml_dict, filepath)
         self.assertTrue(os.path.exists(filepath))
-        self.assertTrue(os.path.exists(f"{filepath}.lock"))
+        self.assertTrue(os.path.exists(filepath + LOCK_EXT))
 
         with open(filepath, 'r') as f:
             data = f.readlines()
@@ -498,7 +498,8 @@ data"""
             JOB_CREATE_TIME: "now",
             JOB_STATUS: "Wham",
             JOB_ERROR: "first error.",
-            JOB_ID: "id"
+            JOB_ID: "id",
+            JOB_TYPE: "type"
         }
 
         filepath = os.path.join(TEST_MONITOR_BASE, "file.yaml")
@@ -506,7 +507,7 @@ data"""
         self.assertFalse(os.path.exists(filepath))
         threadsafe_write_status(first_yaml_dict, filepath)
         self.assertTrue(os.path.exists(filepath))
-        self.assertTrue(os.path.exists(f"{filepath}.lock"))
+        self.assertTrue(os.path.exists(filepath + LOCK_EXT))
 
         status = threadsafe_read_status(filepath)
         
@@ -523,7 +524,7 @@ data"""
 
         threadsafe_update_status(second_yaml_dict, filepath)
         self.assertTrue(os.path.exists(filepath))
-        self.assertTrue(os.path.exists(f"{filepath}.lock"))
+        self.assertTrue(os.path.exists(filepath + LOCK_EXT))
 
         status = threadsafe_read_status(filepath)
 
@@ -531,7 +532,8 @@ data"""
             JOB_CREATE_TIME: "now",
             JOB_STATUS: STATUS_DONE,
             JOB_ERROR: "first error. changed.",
-            JOB_ID: "changed"
+            JOB_ID: "changed",
+            JOB_TYPE: "type"
         }
         
         self.assertEqual(expected_second_yaml_dict, status)
@@ -540,14 +542,15 @@ data"""
             JOB_CREATE_TIME: "editted",
             JOB_STATUS: "editted",
             JOB_ERROR: "editted.",
-            JOB_ID: "editted"
+            JOB_ID: "editted",
+            "something_new": "new"
         }
 
         filepath = os.path.join(TEST_MONITOR_BASE, "file.yaml")
 
         threadsafe_update_status(third_yaml_dict, filepath)
         self.assertTrue(os.path.exists(filepath))
-        self.assertTrue(os.path.exists(f"{filepath}.lock"))
+        self.assertTrue(os.path.exists(filepath + LOCK_EXT))
 
         status = threadsafe_read_status(filepath)
 
@@ -555,8 +558,13 @@ data"""
             JOB_CREATE_TIME: "now",
             JOB_STATUS: STATUS_DONE,
             JOB_ERROR: "first error. changed. editted.",
-            JOB_ID: "editted"
+            JOB_ID: "editted",
+            JOB_TYPE: "type",
+            "something_new": "new"
         }
+
+        print(expected_third_yaml_dict)
+        print(status)
         
         self.assertEqual(expected_third_yaml_dict, status)
 

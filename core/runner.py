@@ -23,7 +23,7 @@ from meow_base.core.vars import DEBUG_WARNING, DEBUG_INFO, \
 from meow_base.functionality.validation import check_type, valid_list, \
     valid_dir_path
 from meow_base.functionality.debug import setup_debugging, print_debug
-from meow_base.functionality.file_io import make_dir, read_yaml
+from meow_base.functionality.file_io import make_dir, threadsafe_read_status
 from meow_base.functionality.process_io import wait
 
 
@@ -177,7 +177,7 @@ class MeowRunner:
                         job_dir = from_handler.recv()
                         try:
                             metafile = os.path.join(job_dir, META_FILE)
-                            job = read_yaml(metafile)
+                            job = threadsafe_read_status(metafile)
                         except Exception as e:
                             print_debug(self._print_target, self.debug_level, 
                                 "Could not load necessary job definitions for "
