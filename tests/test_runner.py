@@ -4,6 +4,7 @@ import importlib
 import os
 import unittest
 
+from multiprocessing import Pipe
 from random import shuffle
 from shutil import copy
 from time import sleep
@@ -134,12 +135,12 @@ class MeowTests(unittest.TestCase):
         monitor_two = WatchdogMonitor(TEST_MONITOR_BASE, {}, {})
         monitors = [ monitor_one, monitor_two ]
 
-        handler_one = PapermillHandler()
-        handler_two = PapermillHandler()
+        handler_one = PapermillHandler(pause_time=0)
+        handler_two = PapermillHandler(pause_time=0)
         handlers = [ handler_one, handler_two ]
 
-        conductor_one = LocalPythonConductor()
-        conductor_two = LocalPythonConductor()
+        conductor_one = LocalPythonConductor(pause_time=0)
+        conductor_two = LocalPythonConductor(pause_time=0)
         conductors = [ conductor_one, conductor_two ]
 
         runner = MeowRunner(monitor_one, handler_one, conductor_one)
@@ -150,31 +151,59 @@ class MeowTests(unittest.TestCase):
         self.assertEqual(len(runner.monitors), 1)
         self.assertEqual(runner.monitors[0], monitor_one)
 
-        self.assertIsInstance(runner.from_monitors, list)
-        self.assertEqual(len(runner.from_monitors), 1)
-        runner.monitors[0].send_to_runner("monitor test message")
-        message = None
-        if runner.from_monitors[0].poll(3):
-            message = runner.from_monitors[0].recv()
-        self.assertIsNotNone(message)
-        self.assertEqual(message, "monitor test message")
-
         self.assertIsInstance(runner.handlers, list)
         for handler in runner.handlers:
             self.assertIsInstance(handler, BaseHandler)
-
-        self.assertIsInstance(runner.from_handlers, list)
-        self.assertEqual(len(runner.from_handlers), 1)
-        runner.handlers[0].send_to_runner("handler test message")
-        message = None
-        if runner.from_handlers[0].poll(3):
-            message = runner.from_handlers[0].recv()
-        self.assertIsNotNone(message)
-        self.assertEqual(message, "handler test message")
+        self.assertEqual(len(runner.handlers), 1)
+        self.assertEqual(runner.handlers[0], handler_one)
 
         self.assertIsInstance(runner.conductors, list)        
         for conductor in runner.conductors:
             self.assertIsInstance(conductor, BaseConductor)
+        self.assertEqual(len(runner.conductors), 1)
+        self.assertEqual(runner.conductors[0], conductor_one)
+
+        self.assertIsInstance(runner.event_connections, list)
+        self.assertEqual(len(runner.event_connections), 2)
+
+        runner.monitors[0].send_event_to_runner("monitor test message")
+        message = None
+        from_monitor = [i[0] for i in runner.event_connections \
+                        if isinstance(i[1], BaseMonitor)][0]
+        if from_monitor.poll(3):
+            message = from_monitor.recv()
+        self.assertIsNotNone(message)
+        self.assertEqual(message, "monitor test message")
+
+        runner.handlers[0].prompt_runner_for_event()
+        message = None
+        from_handler = [i[0] for i in runner.event_connections \
+                        if isinstance(i[1], BaseHandler)][0]
+        if from_handler.poll(3):
+            message = from_handler.recv()
+        self.assertIsNotNone(message)
+        self.assertEqual(message, 1)
+
+        self.assertIsInstance(runner.job_connections, list)
+        self.assertEqual(len(runner.job_connections), 2)
+
+        runner.handlers[0].send_job_to_runner("handler test message")
+        message = None
+        from_handler = [i[0] for i in runner.job_connections \
+                        if isinstance(i[1], BaseHandler)][0]
+        if from_handler.poll(3):
+            message = from_handler.recv()
+        self.assertIsNotNone(message)
+        self.assertEqual(message, "handler test message")
+
+        runner.conductors[0].prompt_runner_for_job()
+        message = None
+        from_conductor = [i[0] for i in runner.job_connections \
+                        if isinstance(i[1], BaseConductor)][0]
+        if from_conductor.poll(3):
+            message = from_conductor.recv()
+        self.assertIsNotNone(message)
+        self.assertEqual(message, 1)
 
         runner = MeowRunner(monitors, handlers, conductors)
 
@@ -182,38 +211,69 @@ class MeowTests(unittest.TestCase):
         for m in runner.monitors:
             self.assertIsInstance(m, BaseMonitor)
         self.assertEqual(len(runner.monitors), len(monitors))
-        self.assertIn(monitor_one, runner.monitors)
-        self.assertIn(monitor_two, runner.monitors)
-
-        self.assertIsInstance(runner.from_monitors, list)
-        self.assertEqual(len(runner.from_monitors), len(monitors))
-        for rm in runner.monitors:
-            rm.send_to_runner("monitor test message")
-        messages = [None] * len(monitors)
-        for i, rfm in enumerate(runner.from_monitors):
-            if rfm.poll(3):
-                messages[i] = rfm.recv()
-        for m in messages:
-            self.assertIsNotNone(m)
-            self.assertEqual(m, "monitor test message")
+        for monitor in monitors:
+            self.assertIn(monitor, monitors)
 
         self.assertIsInstance(runner.handlers, list)
         for handler in runner.handlers:
             self.assertIsInstance(handler, BaseHandler)
+        self.assertEqual(len(runner.handlers), 2)
+        for handler in handlers:
+            self.assertIn(handler, handlers)
 
-        self.assertIsInstance(runner.from_handlers, list)
-        self.assertEqual(len(runner.from_handlers), len(handlers))
-        for rh in runner.handlers:
-            rh.send_to_runner("handler test message")
-        message = None
-        if runner.from_handlers[0].poll(3):
-            message = runner.from_handlers[0].recv()
-        self.assertIsNotNone(message)
-        self.assertEqual(message, "handler test message")
-
-        self.assertIsInstance(runner.conductors, list)
+        self.assertIsInstance(runner.conductors, list)        
         for conductor in runner.conductors:
             self.assertIsInstance(conductor, BaseConductor)
+        self.assertEqual(len(runner.conductors), len(conductors))
+        for conductor in conductors:
+            self.assertIn(conductor, conductors)
+
+        self.assertIsInstance(runner.event_connections, list)
+        self.assertEqual(len(runner.event_connections), 4)
+
+        for monitor in monitors:
+            monitor.send_event_to_runner("monitor test message")
+    
+            message = None
+            from_monitor = [i[0] for i in runner.event_connections \
+                            if i[1] is monitor][0]
+            if from_monitor.poll(3):
+                message = from_monitor.recv()
+            self.assertIsNotNone(message)
+            self.assertEqual(message, "monitor test message")
+
+        for handler in handlers:
+            handler.prompt_runner_for_event()
+            message = None
+            from_handler = [i[0] for i in runner.event_connections \
+                            if i[1] is handler][0]
+            if from_handler.poll(3):
+                message = from_handler.recv()
+            self.assertIsNotNone(message)
+            self.assertEqual(message, 1)
+
+        self.assertIsInstance(runner.job_connections, list)
+        self.assertEqual(len(runner.job_connections), 4)
+
+        for handler in handlers:
+            handler.send_job_to_runner("handler test message")
+            message = None
+            from_handler = [i[0] for i in runner.job_connections \
+                            if i[1] is handler][0]
+            if from_handler.poll(3):
+                message = from_handler.recv()
+            self.assertIsNotNone(message)
+            self.assertEqual(message, "handler test message")
+
+        for conductor in conductors:
+            conductor.prompt_runner_for_job()
+            message = None
+            from_conductor = [i[0] for i in runner.job_connections \
+                            if i[1] is conductor][0]
+            if from_conductor.poll(3):
+                message = from_conductor.recv()
+            self.assertIsNotNone(message)
+            self.assertEqual(message, 1)
     
     # Test meow runner directory overrides
     def testMeowRunnerDirOverridesSetup(self)->None:
@@ -278,8 +338,6 @@ class MeowTests(unittest.TestCase):
             recipe.name: recipe,
         }
 
-        runner_debug_stream = io.StringIO("")
-
         runner = MeowRunner(
             WatchdogMonitor(
                 TEST_MONITOR_BASE,
@@ -288,13 +346,23 @@ class MeowTests(unittest.TestCase):
                 settletime=1
             ), 
             PapermillHandler(),
-            LocalPythonConductor(),
+            LocalPythonConductor(pause_time=2),
             job_queue_dir=TEST_JOB_QUEUE,
-            job_output_dir=TEST_JOB_OUTPUT,
-            print=runner_debug_stream,
-            logging=3                
-        )        
-   
+            job_output_dir=TEST_JOB_OUTPUT
+        )
+
+        # Intercept messages between the conductor and runner for testing
+        conductor_to_test_conductor, conductor_to_test_test = Pipe(duplex=True)
+        test_to_runner_runner, test_to_runner_test = Pipe(duplex=True)
+
+        runner.conductors[0].to_runner_job = conductor_to_test_conductor
+
+        for i in range(len(runner.job_connections)):
+            _, obj = runner.job_connections[i]
+
+            if obj == runner.conductors[0]:
+                runner.job_connections[i] = (test_to_runner_runner, runner.job_connections[i][1])
+
         runner.start()
 
         start_dir = os.path.join(TEST_MONITOR_BASE, "start")
@@ -303,32 +371,43 @@ class MeowTests(unittest.TestCase):
         with open(os.path.join(start_dir, "A.txt"), "w") as f:
             f.write("Initial Data")
 
-        self.assertTrue(os.path.exists(os.path.join(start_dir, "A.txt")))
-
         loops = 0
-        job_id = None
         while loops < 5:
-            sleep(1)
-            runner_debug_stream.seek(0)
-            messages = runner_debug_stream.readlines()
+            # Initial prompt
+            if conductor_to_test_test.poll(5):
+                msg = conductor_to_test_test.recv()
+            else:
+                raise Exception("Timed out")        
+            self.assertEqual(msg, 1)
+            test_to_runner_test.send(msg)
 
-            for msg in messages:
-                self.assertNotIn("ERROR", msg)
-            
-                if "INFO: Completed execution for job: '" in msg:
-                    job_id = msg.replace(
-                        "INFO: Completed execution for job: '", "")
-                    job_id = job_id[:-2]
-                    loops = 5
+            # Reply
+            if test_to_runner_test.poll(5):
+                msg = test_to_runner_test.recv()
+            else:
+                raise Exception("Timed out")        
+            job_dir = msg
+            conductor_to_test_test.send(msg)
+
+            if isinstance(job_dir, str):
+                # Prompt again once complete
+                if conductor_to_test_test.poll(5):
+                    msg = conductor_to_test_test.recv()
+                else:
+                    raise Exception("Timed out")        
+                self.assertEqual(msg, 1)
+                loops = 5
+
             loops += 1
 
-        self.assertIsNotNone(job_id)
+        job_dir = job_dir.replace(TEST_JOB_QUEUE, TEST_JOB_OUTPUT)
+
+        self.assertTrue(os.path.exists(os.path.join(start_dir, "A.txt")))
         self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), 1)
-        self.assertIn(job_id, os.listdir(TEST_JOB_OUTPUT))
+        self.assertTrue(os.path.exists(job_dir))
 
         runner.stop()
 
-        job_dir = os.path.join(TEST_JOB_OUTPUT, job_id)
         print(os.listdir(job_dir))
         self.assertEqual(count_non_locks(job_dir), 5)
 
@@ -372,8 +451,6 @@ class MeowTests(unittest.TestCase):
             recipe.name: recipe,
         }
 
-        runner_debug_stream = io.StringIO("")
-
         runner = MeowRunner(
             WatchdogMonitor(
                 TEST_MONITOR_BASE,
@@ -384,12 +461,22 @@ class MeowTests(unittest.TestCase):
             PapermillHandler(
                 job_queue_dir=TEST_JOB_QUEUE,
             ),
-            LocalPythonConductor(),
+            LocalPythonConductor(pause_time=2),
             job_queue_dir=TEST_JOB_QUEUE,
-            job_output_dir=TEST_JOB_OUTPUT,
-            print=runner_debug_stream,
-            logging=3
-        )        
+            job_output_dir=TEST_JOB_OUTPUT
+        )
+
+        # Intercept messages between the conductor and runner for testing
+        conductor_to_test_conductor, conductor_to_test_test = Pipe(duplex=True)
+        test_to_runner_runner, test_to_runner_test = Pipe(duplex=True)
+
+        runner.conductors[0].to_runner_job = conductor_to_test_conductor
+
+        for i in range(len(runner.job_connections)):
+            _, obj = runner.job_connections[i]
+
+            if obj == runner.conductors[0]:
+                runner.job_connections[i] = (test_to_runner_runner, runner.job_connections[i][1])
    
         runner.start()
 
@@ -403,30 +490,38 @@ class MeowTests(unittest.TestCase):
 
         loops = 0
         job_ids = []
-        while len(job_ids) < 2 and loops < 5:
-            sleep(1)
-            runner_debug_stream.seek(0)
-            messages = runner_debug_stream.readlines()
+        while loops < 15:
+            # Initial prompt
+            if conductor_to_test_test.poll(5):
+                msg = conductor_to_test_test.recv()
+            else:
+                raise Exception("Timed out")        
+            self.assertEqual(msg, 1)
+            test_to_runner_test.send(msg)
 
-            for msg in messages:
-                self.assertNotIn("ERROR", msg)
-            
-                if "INFO: Completed execution for job: '" in msg:
-                    job_id = msg.replace(
-                        "INFO: Completed execution for job: '", "")
-                    job_id = job_id[:-2]
-                    if job_id not in job_ids:
-                        job_ids.append(job_id)
+            # Reply
+            if test_to_runner_test.poll(5):
+                msg = test_to_runner_test.recv()
+            else:
+                raise Exception("Timed out")        
+            conductor_to_test_test.send(msg)
+
+            if len(job_ids) == 2:
+                break
+
+            if isinstance(msg, str):
+                job_ids.append(msg.replace(TEST_JOB_QUEUE+os.path.sep, ''))
+
             loops += 1
+
+        runner.stop()
 
         self.assertEqual(len(job_ids), 2)
         self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), 2)
         self.assertIn(job_ids[0], os.listdir(TEST_JOB_OUTPUT))
         self.assertIn(job_ids[1], os.listdir(TEST_JOB_OUTPUT))
 
-        runner.stop()
-
-        mid_job_dir = os.path.join(TEST_JOB_OUTPUT, job_id)
+        mid_job_dir = os.path.join(TEST_JOB_OUTPUT, job_ids[0])
         self.assertEqual(count_non_locks(mid_job_dir), 5)
 
         result = read_notebook(
@@ -441,7 +536,7 @@ class MeowTests(unittest.TestCase):
         
         self.assertEqual(data, "Initial Data\nA line from Pattern 1")
 
-        final_job_dir = os.path.join(TEST_JOB_OUTPUT, job_id)
+        final_job_dir = os.path.join(TEST_JOB_OUTPUT, job_ids[1])
         self.assertEqual(count_non_locks(final_job_dir), 5)
 
         result = read_notebook(os.path.join(final_job_dir, 
@@ -476,8 +571,6 @@ class MeowTests(unittest.TestCase):
             recipe.name: recipe,
         }
 
-        runner_debug_stream = io.StringIO("")
-
         runner = MeowRunner(
             WatchdogMonitor(
                 TEST_MONITOR_BASE,
@@ -488,12 +581,23 @@ class MeowTests(unittest.TestCase):
             PythonHandler(
                 job_queue_dir=TEST_JOB_QUEUE
             ),
-            LocalPythonConductor(),
+            LocalPythonConductor(pause_time=2),
             job_queue_dir=TEST_JOB_QUEUE,
-            job_output_dir=TEST_JOB_OUTPUT,
-            print=runner_debug_stream,
-            logging=3                
-        )        
+            job_output_dir=TEST_JOB_OUTPUT
+        )
+
+        # Intercept messages between the conductor and runner for testing
+        conductor_to_test_conductor, conductor_to_test_test = Pipe(duplex=True)
+        test_to_runner_runner, test_to_runner_test = Pipe(duplex=True)
+
+        runner.conductors[0].to_runner_job = conductor_to_test_conductor
+
+        for i in range(len(runner.job_connections)):
+            _, obj = runner.job_connections[i]
+
+            if obj == runner.conductors[0]:
+                runner.job_connections[i] = (test_to_runner_runner, runner.job_connections[i][1])
+      
    
         runner.start()
 
@@ -506,29 +610,41 @@ class MeowTests(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(start_dir, "A.txt")))
 
         loops = 0
-        job_id = None
         while loops < 5:
-            sleep(1)
-            runner_debug_stream.seek(0)
-            messages = runner_debug_stream.readlines()
+            # Initial prompt
+            if conductor_to_test_test.poll(5):
+                msg = conductor_to_test_test.recv()
+            else:
+                raise Exception("Timed out")        
+            self.assertEqual(msg, 1)
+            test_to_runner_test.send(msg)
 
-            for msg in messages:
-                self.assertNotIn("ERROR", msg)
-            
-                if "INFO: Completed execution for job: '" in msg:
-                    job_id = msg.replace(
-                        "INFO: Completed execution for job: '", "")
-                    job_id = job_id[:-2]
-                    loops = 5
+            # Reply
+            if test_to_runner_test.poll(5):
+                msg = test_to_runner_test.recv()
+            else:
+                raise Exception("Timed out")        
+            job_dir = msg
+            conductor_to_test_test.send(msg)
+
+            if isinstance(job_dir, str):
+                # Prompt again once complete
+                if conductor_to_test_test.poll(5):
+                    msg = conductor_to_test_test.recv()
+                else:
+                    raise Exception("Timed out")        
+                self.assertEqual(msg, 1)
+                loops = 5
+
             loops += 1
 
-        self.assertIsNotNone(job_id)
+        job_dir = job_dir.replace(TEST_JOB_QUEUE, TEST_JOB_OUTPUT)
+
+        self.assertTrue(os.path.exists(os.path.join(start_dir, "A.txt")))
         self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), 1)
-        self.assertIn(job_id, os.listdir(TEST_JOB_OUTPUT))
+        self.assertTrue(os.path.exists(job_dir))
 
         runner.stop()
-
-        job_dir = os.path.join(TEST_JOB_OUTPUT, job_id)
 
         metafile = os.path.join(job_dir, META_FILE)
         status = read_yaml(metafile)
@@ -578,8 +694,6 @@ class MeowTests(unittest.TestCase):
             recipe.name: recipe,
         }
 
-        runner_debug_stream = io.StringIO("")
-
         runner = MeowRunner(
             WatchdogMonitor(
                 TEST_MONITOR_BASE,
@@ -590,12 +704,22 @@ class MeowTests(unittest.TestCase):
             PythonHandler(
                 job_queue_dir=TEST_JOB_QUEUE
             ),
-            LocalPythonConductor(),
+            LocalPythonConductor(pause_time=2),
             job_queue_dir=TEST_JOB_QUEUE,
-            job_output_dir=TEST_JOB_OUTPUT,
-            print=runner_debug_stream,
-            logging=3
+            job_output_dir=TEST_JOB_OUTPUT
         )        
+
+        # Intercept messages between the conductor and runner for testing
+        conductor_to_test_conductor, conductor_to_test_test = Pipe(duplex=True)
+        test_to_runner_runner, test_to_runner_test = Pipe(duplex=True)
+
+        runner.conductors[0].to_runner_job = conductor_to_test_conductor
+
+        for i in range(len(runner.job_connections)):
+            _, obj = runner.job_connections[i]
+
+            if obj == runner.conductors[0]:
+                runner.job_connections[i] = (test_to_runner_runner, runner.job_connections[i][1])
    
         runner.start()
 
@@ -607,22 +731,31 @@ class MeowTests(unittest.TestCase):
 
         self.assertTrue(os.path.exists(os.path.join(start_dir, "A.txt")))
 
+
         loops = 0
         job_ids = []
-        while len(job_ids) < 2 and loops < 5:
-            sleep(1)
-            runner_debug_stream.seek(0)
-            messages = runner_debug_stream.readlines()
+        while loops < 15:
+            # Initial prompt
+            if conductor_to_test_test.poll(5):
+                msg = conductor_to_test_test.recv()
+            else:
+                raise Exception("Timed out")        
+            self.assertEqual(msg, 1)
+            test_to_runner_test.send(msg)
 
-            for msg in messages:
-                self.assertNotIn("ERROR", msg)
-            
-                if "INFO: Completed execution for job: '" in msg:
-                    job_id = msg.replace(
-                        "INFO: Completed execution for job: '", "")
-                    job_id = job_id[:-2]
-                    if job_id not in job_ids:
-                        job_ids.append(job_id)
+            # Reply
+            if test_to_runner_test.poll(5):
+                msg = test_to_runner_test.recv()
+            else:
+                raise Exception("Timed out")        
+            conductor_to_test_test.send(msg)
+
+            if len(job_ids) == 2:
+                break
+
+            if isinstance(msg, str):
+                job_ids.append(msg.replace(TEST_JOB_QUEUE+os.path.sep, ''))
+
             loops += 1
 
         runner.stop()
@@ -704,8 +837,6 @@ class MeowTests(unittest.TestCase):
             recipe.name: recipe,
         }
 
-        runner_debug_stream = io.StringIO("")
-
         runner = MeowRunner(
             WatchdogMonitor(
                 TEST_MONITOR_BASE,
@@ -716,12 +847,22 @@ class MeowTests(unittest.TestCase):
             PythonHandler(
                 job_queue_dir=TEST_JOB_QUEUE
             ),
-            LocalPythonConductor(),
+            LocalPythonConductor(pause_time=2),
             job_queue_dir=TEST_JOB_QUEUE,
-            job_output_dir=TEST_JOB_OUTPUT,
-            print=runner_debug_stream,
-            logging=3                
-        )        
+            job_output_dir=TEST_JOB_OUTPUT
+        )   
+
+        # Intercept messages between the conductor and runner for testing
+        conductor_to_test_conductor, conductor_to_test_test = Pipe(duplex=True)
+        test_to_runner_runner, test_to_runner_test = Pipe(duplex=True)
+
+        runner.conductors[0].to_runner_job = conductor_to_test_conductor
+
+        for i in range(len(runner.job_connections)):
+            _, obj = runner.job_connections[i]
+
+            if obj == runner.conductors[0]:
+                runner.job_connections[i] = (test_to_runner_runner, runner.job_connections[i][1])
    
         runner.start()
 
@@ -735,21 +876,28 @@ class MeowTests(unittest.TestCase):
 
         loops = 0
         job_ids = []
-        while loops < 5:
-            sleep(1)
-            runner_debug_stream.seek(0)
-            messages = runner_debug_stream.readlines()
+        while loops < 60:
+            # Initial prompt
+            if conductor_to_test_test.poll(5):
+                msg = conductor_to_test_test.recv()
+            else:
+                raise Exception("Timed out")        
+            self.assertEqual(msg, 1)
+            test_to_runner_test.send(msg)
 
-            for msg in messages:
-                self.assertNotIn("ERROR", msg)
-            
-                if "INFO: Completed execution for job: '" in msg:
-                    job_id = msg.replace(
-                        "INFO: Completed execution for job: '", "")
-                    job_id = job_id[:-2]
-                    if job_id not in job_ids:
-                        job_ids.append(job_id)
-                        loops = 0
+            # Reply
+            if test_to_runner_test.poll(5):
+                msg = test_to_runner_test.recv()
+            else:
+                raise Exception("Timed out")        
+            conductor_to_test_test.send(msg)
+
+            if len(job_ids) == 46:
+                break
+
+            if isinstance(msg, str):
+                job_ids.append(msg.replace(TEST_JOB_QUEUE+os.path.sep, ''))
+
             loops += 1
 
         runner.stop()
@@ -802,8 +950,6 @@ class MeowTests(unittest.TestCase):
             recipe_one.name: recipe_one,
         }
 
-        runner_debug_stream = io.StringIO("")
-
         runner = MeowRunner(
             WatchdogMonitor(
                 TEST_MONITOR_BASE,
@@ -814,13 +960,23 @@ class MeowTests(unittest.TestCase):
             PythonHandler(
                 job_queue_dir=TEST_JOB_QUEUE
             ),
-            LocalPythonConductor(),
+            LocalPythonConductor(pause_time=2),
             job_queue_dir=TEST_JOB_QUEUE,
-            job_output_dir=TEST_JOB_OUTPUT,
-            print=runner_debug_stream,
-            logging=3                
-        )        
-   
+            job_output_dir=TEST_JOB_OUTPUT
+        ) 
+
+        # Intercept messages between the conductor and runner for testing
+        conductor_to_test_conductor, conductor_to_test_test = Pipe(duplex=True)
+        test_to_runner_runner, test_to_runner_test = Pipe(duplex=True)
+
+        runner.conductors[0].to_runner_job = conductor_to_test_conductor
+
+        for i in range(len(runner.job_connections)):
+            _, obj = runner.job_connections[i]
+
+            if obj == runner.conductors[0]:
+                runner.job_connections[i] = (test_to_runner_runner, runner.job_connections[i][1])
+
         runner.start()
 
         start_dir = os.path.join(TEST_MONITOR_BASE, "start")
@@ -833,19 +989,28 @@ class MeowTests(unittest.TestCase):
 
         loops = 0
         job_ids = set()
-        while loops < 5:
-            sleep(1)
-            runner_debug_stream.seek(0)
-            messages = runner_debug_stream.readlines()
+        while loops < 15:
+            # Initial prompt
+            if conductor_to_test_test.poll(5):
+                msg = conductor_to_test_test.recv()
+            else:
+                raise Exception("Timed out")        
+            self.assertEqual(msg, 1)
+            test_to_runner_test.send(msg)
 
-            for msg in messages:
-                self.assertNotIn("ERROR", msg)
-            
-                if "INFO: Completed execution for job: '" in msg:
-                    job_id = msg.replace(
-                        "INFO: Completed execution for job: '", "")
-                    job_ids.add(job_id[:-2])
-                    loops = 5
+            # Reply
+            if test_to_runner_test.poll(5):
+                msg = test_to_runner_test.recv()
+            else:
+                raise Exception("Timed out")        
+            conductor_to_test_test.send(msg)
+
+            if len(job_ids) == 2:
+                break
+
+            if isinstance(msg, str):
+                job_ids.add(msg.replace(TEST_JOB_QUEUE+os.path.sep, ''))
+
             loops += 1
 
         self.assertEqual(len(job_ids), 1)
@@ -856,19 +1021,28 @@ class MeowTests(unittest.TestCase):
         runner.monitors[0].add_pattern(pattern_two)
 
         loops = 0
-        while loops < 5:
-            sleep(1)
-            runner_debug_stream.seek(0)
-            messages = runner_debug_stream.readlines()
+        while loops < 15:
+            # Initial prompt
+            if conductor_to_test_test.poll(5):
+                msg = conductor_to_test_test.recv()
+            else:
+                raise Exception("Timed out")        
+            self.assertEqual(msg, 1)
+            test_to_runner_test.send(msg)
 
-            for msg in messages:
-                self.assertNotIn("ERROR", msg)
-            
-                if "INFO: Completed execution for job: '" in msg:
-                    job_id = msg.replace(
-                        "INFO: Completed execution for job: '", "")
-                    job_ids.add(job_id[:-2])
-                    loops = 5
+            # Reply
+            if test_to_runner_test.poll(5):
+                msg = test_to_runner_test.recv()
+            else:
+                raise Exception("Timed out")        
+            conductor_to_test_test.send(msg)
+
+            if len(job_ids) == 2:
+                break
+
+            if isinstance(msg, str):
+                job_ids.add(msg.replace(TEST_JOB_QUEUE+os.path.sep, ''))
+
             loops += 1
 
         self.assertEqual(len(job_ids), 1)
@@ -879,19 +1053,28 @@ class MeowTests(unittest.TestCase):
         runner.monitors[0].add_recipe(recipe_two)
 
         loops = 0
-        while loops < 5:
-            sleep(1)
-            runner_debug_stream.seek(0)
-            messages = runner_debug_stream.readlines()
+        while loops < 15:
+            # Initial prompt
+            if conductor_to_test_test.poll(5):
+                msg = conductor_to_test_test.recv()
+            else:
+                raise Exception("Timed out")        
+            self.assertEqual(msg, 1)
+            test_to_runner_test.send(msg)
 
-            for msg in messages:
-                self.assertNotIn("ERROR", msg)
-            
-                if "INFO: Completed execution for job: '" in msg:
-                    job_id = msg.replace(
-                        "INFO: Completed execution for job: '", "")
-                    job_ids.add(job_id[:-2])
-                    loops = 5
+            # Reply
+            if test_to_runner_test.poll(5):
+                msg = test_to_runner_test.recv()
+            else:
+                raise Exception("Timed out")        
+            conductor_to_test_test.send(msg)
+
+            if len(job_ids) == 2:
+                break
+
+            if isinstance(msg, str):
+                job_ids.add(msg.replace(TEST_JOB_QUEUE+os.path.sep, ''))
+
             loops += 1
 
         self.assertEqual(len(job_ids), 2)
@@ -949,8 +1132,6 @@ class MeowTests(unittest.TestCase):
             maker_recipe.name: maker_recipe
         }
 
-        runner_debug_stream = io.StringIO("")
-
         runner = MeowRunner(
             WatchdogMonitor(
                 TEST_MONITOR_BASE,
@@ -961,21 +1142,34 @@ class MeowTests(unittest.TestCase):
             PythonHandler(
                 job_queue_dir=TEST_JOB_QUEUE
             ),
-            LocalPythonConductor(),
+            LocalPythonConductor(pause_time=2),
             job_queue_dir=TEST_JOB_QUEUE,
-            job_output_dir=TEST_JOB_OUTPUT,
-            print=runner_debug_stream,
-            logging=3                
-        )        
+            job_output_dir=TEST_JOB_OUTPUT
+        )    
+
+        # Intercept messages between the conductor and runner for testing
+        conductor_to_test_conductor, conductor_to_test_test = Pipe(duplex=True)
+        test_to_runner_runner, test_to_runner_test = Pipe(duplex=True)
+
+        runner.conductors[0].to_runner_job = conductor_to_test_conductor
+
+        for i in range(len(runner.job_connections)):
+            _, obj = runner.job_connections[i]
+
+            if obj == runner.conductors[0]:
+                runner.job_connections[i] = (test_to_runner_runner, runner.job_connections[i][1])    
 
         # TODO finish me
 #        runner.start()
 
     # Test some actual scientific analysis, but in a simple progression
     def testScientificAnalysisAllGood(self)->None:
-        if os.environ["SKIP_LONG"] and os.environ["SKIP_LONG"] == '1':
-            warn("Skipping testScientificAnalysisAllGood")
-            return
+        try:
+            if os.environ["SKIP_LONG"] and os.environ["SKIP_LONG"] == '1':
+                warn("Skipping testScientificAnalysisAllGood")
+                return
+        except KeyError:
+            pass
         
         patterns = {
             'pattern_check': pattern_check,
@@ -991,8 +1185,6 @@ class MeowTests(unittest.TestCase):
             'recipe_generator': recipe_generator
         }
 
-        runner_debug_stream = io.StringIO("")
-
         runner = MeowRunner(
             WatchdogMonitor(
                 TEST_MONITOR_BASE,
@@ -1003,12 +1195,22 @@ class MeowTests(unittest.TestCase):
             PapermillHandler(
                 job_queue_dir=TEST_JOB_QUEUE
             ),
-            LocalPythonConductor(),
+            LocalPythonConductor(pause_time=2),
             job_queue_dir=TEST_JOB_QUEUE,
-            job_output_dir=TEST_JOB_OUTPUT,
-            print=runner_debug_stream,
-            logging=3                
+            job_output_dir=TEST_JOB_OUTPUT
         )
+
+        # Intercept messages between the conductor and runner for testing
+        conductor_to_test_conductor, conductor_to_test_test = Pipe(duplex=True)
+        test_to_runner_runner, test_to_runner_test = Pipe(duplex=True)
+
+        runner.conductors[0].to_runner_job = conductor_to_test_conductor
+
+        for i in range(len(runner.job_connections)):
+            _, obj = runner.job_connections[i]
+
+            if obj == runner.conductors[0]:
+                runner.job_connections[i] = (test_to_runner_runner, runner.job_connections[i][1])
 
         good = 3
         big = 0
@@ -1047,47 +1249,34 @@ class MeowTests(unittest.TestCase):
 
         runner.start()
 
-        idle_loops = 0
-        total_loops = 0
-        messages = None
-        while idle_loops < 15 and total_loops < 150:
-            sleep(1)
-            runner_debug_stream.seek(0)
-            new_messages = runner_debug_stream.readlines()
-
-            if messages == new_messages:               
-                idle_loops += 1
+        loops = 0
+        idles = 0
+        while loops < 150 and idles < 15:
+            # Initial prompt
+            if conductor_to_test_test.poll(45):
+                msg = conductor_to_test_test.recv()
             else:
-                idle_loops = 0
-                messages = new_messages
-            total_loops += 1
+                break       
+            self.assertEqual(msg, 1)
+            test_to_runner_test.send(msg)
 
-        for message in messages:
-            print(message.replace('\n', ''))
+            # Reply
+            if test_to_runner_test.poll(5):
+                msg = test_to_runner_test.recv()
+                if msg == 1:
+                    idles += 1
+            else:
+                break      
+            conductor_to_test_test.send(msg)
+
+            loops += 1
 
         runner.stop()
 
-        print(f"total_loops:{total_loops}, idle_loops:{idle_loops}")
-
-        if len(os.listdir(TEST_JOB_OUTPUT)) != good * 3:
-            backup_before_teardown(TEST_JOB_OUTPUT, 
-                f"Backup-all_good-{TEST_JOB_OUTPUT}")
-            backup_before_teardown(TEST_JOB_QUEUE, 
-                f"Backup-all_good-{TEST_JOB_QUEUE}")
-            backup_before_teardown(TEST_MONITOR_BASE, 
-                f"Backup-all_good-{TEST_MONITOR_BASE}")
         self.assertEqual(len(os.listdir(TEST_JOB_OUTPUT)), good * 3)
         for job_dir in os.listdir(TEST_JOB_OUTPUT):
             metafile = os.path.join(TEST_JOB_OUTPUT, job_dir, META_FILE)
             status = read_yaml(metafile)
-
-            if JOB_ERROR in status:
-                backup_before_teardown(TEST_JOB_OUTPUT, 
-                    f"Backup-all_good-{TEST_JOB_OUTPUT}")
-                backup_before_teardown(TEST_JOB_QUEUE, 
-                    f"Backup-all_good-{TEST_JOB_QUEUE}")
-                backup_before_teardown(TEST_MONITOR_BASE, 
-                    f"Backup-all_good-{TEST_MONITOR_BASE}")
 
             self.assertNotIn(JOB_ERROR, status)
 
@@ -1097,9 +1286,13 @@ class MeowTests(unittest.TestCase):
 
     # Test some actual scientific analysis, in a predicatable loop
     def testScientificAnalysisPredictableLoop(self)->None:
-        if os.environ["SKIP_LONG"] and os.environ["SKIP_LONG"] == '1':
-            warn("Skipping testScientificAnalysisPredictableLoop")
-            return
+        try:
+            if os.environ["SKIP_LONG"] and os.environ["SKIP_LONG"] == '1':
+                warn("Skipping testScientificAnalysisAllGood")
+                return
+        except KeyError:
+            pass
+
         
         patterns = {
             'pattern_check': pattern_check,
@@ -1115,8 +1308,6 @@ class MeowTests(unittest.TestCase):
             'recipe_generator': recipe_generator
         }
 
-        runner_debug_stream = io.StringIO("")
-
         runner = MeowRunner(
             WatchdogMonitor(
                 TEST_MONITOR_BASE,
@@ -1127,12 +1318,22 @@ class MeowTests(unittest.TestCase):
             PapermillHandler(
                 job_queue_dir=TEST_JOB_QUEUE
             ),
-            LocalPythonConductor(),
+            LocalPythonConductor(pause_time=2),
             job_queue_dir=TEST_JOB_QUEUE,
-            job_output_dir=TEST_JOB_OUTPUT,
-            print=runner_debug_stream,
-            logging=3                
+            job_output_dir=TEST_JOB_OUTPUT
         )
+
+        # Intercept messages between the conductor and runner for testing
+        conductor_to_test_conductor, conductor_to_test_test = Pipe(duplex=True)
+        test_to_runner_runner, test_to_runner_test = Pipe(duplex=True)
+
+        runner.conductors[0].to_runner_job = conductor_to_test_conductor
+
+        for i in range(len(runner.job_connections)):
+            _, obj = runner.job_connections[i]
+
+            if obj == runner.conductors[0]:
+                runner.job_connections[i] = (test_to_runner_runner, runner.job_connections[i][1])
 
         good = 10
         big = 5
@@ -1172,26 +1373,32 @@ class MeowTests(unittest.TestCase):
         
         runner.start()
 
-        idle_loops = 0
-        total_loops = 0
-        messages = None
-        while idle_loops < 45 and total_loops < 600:
-            sleep(1)
-            runner_debug_stream.seek(0)
-            new_messages = runner_debug_stream.readlines()
-
-            if messages == new_messages:               
-                idle_loops += 1
+        loops = 0
+        idles = 0
+        while loops < 600 and idles < 15:
+            # Initial prompt
+            if conductor_to_test_test.poll(45):
+                msg = conductor_to_test_test.recv()
             else:
-                idle_loops = 0
-                messages = new_messages
-            total_loops += 1
+                break       
+            self.assertEqual(msg, 1)
+            test_to_runner_test.send(msg)
 
-        for message in messages:
-            print(message.replace('\n', ''))
+            # Reply
+            if test_to_runner_test.poll(15):
+                msg = test_to_runner_test.recv()
+                if msg == 1:
+                    idles += 1
+                else:
+                    idles = 0
+            else:
+                break      
+            conductor_to_test_test.send(msg)
+
+            loops += 1
 
         runner.stop()
-        print(f"total_loops:{total_loops}, idle_loops:{idle_loops}")
+        print(f"total_loops:{loops}, idle_loops:{idles}")
 
         jobs = len(os.listdir(TEST_JOB_OUTPUT))
         if jobs != (good*3 + big*5 + small*5):
@@ -1232,13 +1439,16 @@ class MeowTests(unittest.TestCase):
             backup_before_teardown(TEST_MONITOR_BASE, 
                 f"Backup-predictable-{TEST_MONITOR_BASE}")
 
-        self.assertEqual(results, good+big+small)         
+        self.assertEqual(results, good+big+small)              
 
     # Test some actual scientific analysis, in an unpredicatable loop
     def testScientificAnalysisRandomLoop(self)->None:
-        if os.environ["SKIP_LONG"] and os.environ["SKIP_LONG"] == '1':
-            warn("Skipping testScientificAnalysisRandomLoop")
-            return
+        try:
+            if os.environ["SKIP_LONG"] and os.environ["SKIP_LONG"] == '1':
+                warn("Skipping testScientificAnalysisAllGood")
+                return
+        except KeyError:
+            pass
 
         pattern_regenerate_random = FileEventPattern(
             "pattern_regenerate_random",
@@ -1273,8 +1483,6 @@ class MeowTests(unittest.TestCase):
             'recipe_generator': recipe_generator
         }
 
-        runner_debug_stream = io.StringIO("")
-
         runner = MeowRunner(
             WatchdogMonitor(
                 TEST_MONITOR_BASE,
@@ -1285,12 +1493,22 @@ class MeowTests(unittest.TestCase):
             PapermillHandler(
                 job_queue_dir=TEST_JOB_QUEUE
             ),
-            LocalPythonConductor(),
+            LocalPythonConductor(pause_time=2),
             job_queue_dir=TEST_JOB_QUEUE,
-            job_output_dir=TEST_JOB_OUTPUT,
-            print=runner_debug_stream,
-            logging=3                
+            job_output_dir=TEST_JOB_OUTPUT
         )
+
+        # Intercept messages between the conductor and runner for testing
+        conductor_to_test_conductor, conductor_to_test_test = Pipe(duplex=True)
+        test_to_runner_runner, test_to_runner_test = Pipe(duplex=True)
+
+        runner.conductors[0].to_runner_job = conductor_to_test_conductor
+
+        for i in range(len(runner.job_connections)):
+            _, obj = runner.job_connections[i]
+
+            if obj == runner.conductors[0]:
+                runner.job_connections[i] = (test_to_runner_runner, runner.job_connections[i][1])
 
         good = 10
         big = 5
@@ -1330,26 +1548,32 @@ class MeowTests(unittest.TestCase):
         
         runner.start()
 
-        idle_loops = 0
-        total_loops = 0
-        messages = None
-        while idle_loops < 60 and total_loops < 600:
-            sleep(1)
-            runner_debug_stream.seek(0)
-            new_messages = runner_debug_stream.readlines()
-
-            if messages == new_messages:               
-                idle_loops += 1
+        loops = 0
+        idles = 0
+        while loops < 600 and idles < 15:
+            # Initial prompt
+            if conductor_to_test_test.poll(60):
+                msg = conductor_to_test_test.recv()
             else:
-                idle_loops = 0
-                messages = new_messages
-            total_loops += 1
+                break       
+            self.assertEqual(msg, 1)
+            test_to_runner_test.send(msg)
 
-        for message in messages:
-            print(message.replace('\n', ''))
+            # Reply
+            if test_to_runner_test.poll(15):
+                msg = test_to_runner_test.recv()
+                if msg == 1:
+                    idles += 1
+                else:
+                    idles = 0
+            else:
+                break      
+            conductor_to_test_test.send(msg)
+
+            loops += 1
 
         runner.stop()
-        print(f"total_loops:{total_loops}, idle_loops:{idle_loops}")
+        print(f"total_loops:{loops}, idle_loops:{idles}")
 
         for job_dir in os.listdir(TEST_JOB_OUTPUT):
             metafile = os.path.join(TEST_JOB_OUTPUT, job_dir, META_FILE)
@@ -1388,9 +1612,13 @@ class MeowTests(unittest.TestCase):
 
     # Test some actual scientific analysis, in an unpredicatable loop
     def testScientificAnalysisMassiveRandomLoop(self)->None:
-        if os.environ["SKIP_LONG"] and os.environ["SKIP_LONG"] == '1':
-            warn("Skipping testScientificAnalysisMassiveRandomLoop")
-            return
+        try:
+            if os.environ["SKIP_LONG"] and os.environ["SKIP_LONG"] == '1':
+                warn("Skipping testScientificAnalysisAllGood")
+                return
+        except KeyError:
+            pass
+
 
         pattern_regenerate_random = FileEventPattern(
             "pattern_regenerate_random",
@@ -1425,8 +1653,6 @@ class MeowTests(unittest.TestCase):
             'recipe_generator': recipe_generator
         }
 
-        runner_debug_stream = io.StringIO("")
-
         runner = MeowRunner(
             WatchdogMonitor(
                 TEST_MONITOR_BASE,
@@ -1437,12 +1663,22 @@ class MeowTests(unittest.TestCase):
             PapermillHandler(
                 job_queue_dir=TEST_JOB_QUEUE
             ),
-            LocalPythonConductor(),
+            LocalPythonConductor(pause_time=2),
             job_queue_dir=TEST_JOB_QUEUE,
-            job_output_dir=TEST_JOB_OUTPUT,
-            print=runner_debug_stream,
-            logging=3                
+            job_output_dir=TEST_JOB_OUTPUT
         )
+
+        # Intercept messages between the conductor and runner for testing
+        conductor_to_test_conductor, conductor_to_test_test = Pipe(duplex=True)
+        test_to_runner_runner, test_to_runner_test = Pipe(duplex=True)
+
+        runner.conductors[0].to_runner_job = conductor_to_test_conductor
+
+        for i in range(len(runner.job_connections)):
+            _, obj = runner.job_connections[i]
+
+            if obj == runner.conductors[0]:
+                runner.job_connections[i] = (test_to_runner_runner, runner.job_connections[i][1])
 
         good = 5
         big = 15
@@ -1482,26 +1718,32 @@ class MeowTests(unittest.TestCase):
         
         runner.start()
 
-        idle_loops = 0
-        total_loops = 0
-        messages = None
-        while idle_loops < 60 and total_loops < 1200:
-            sleep(1)
-            runner_debug_stream.seek(0)
-            new_messages = runner_debug_stream.readlines()
-
-            if messages == new_messages:               
-                idle_loops += 1
+        loops = 0
+        idles = 0
+        while loops < 1200 and idles < 15:
+            # Initial prompt
+            if conductor_to_test_test.poll(60):
+                msg = conductor_to_test_test.recv()
             else:
-                idle_loops = 0
-                messages = new_messages
-            total_loops += 1
+                break       
+            self.assertEqual(msg, 1)
+            test_to_runner_test.send(msg)
 
-        for message in messages:
-            print(message.replace('\n', ''))
+            # Reply
+            if test_to_runner_test.poll(15):
+                msg = test_to_runner_test.recv()
+                if msg == 1:
+                    idles += 1
+                else:
+                    idles = 0
+            else:
+                break      
+            conductor_to_test_test.send(msg)
+
+            loops += 1
 
         runner.stop()
-        print(f"total_loops:{total_loops}, idle_loops:{idle_loops}")
+        print(f"total_loops:{loops}, idle_loops:{idles}")
 
         for job_dir in os.listdir(TEST_JOB_OUTPUT):
             metafile = os.path.join(TEST_JOB_OUTPUT, job_dir, META_FILE)

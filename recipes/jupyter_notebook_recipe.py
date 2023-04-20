@@ -71,13 +71,13 @@ class PapermillHandler(BaseHandler):
     # Where print messages are sent
     _print_target:Any
     def __init__(self, job_queue_dir:str=DEFAULT_JOB_QUEUE_DIR, name:str="",
-            print:Any=sys.stdout, logging:int=0)->None:
+            print:Any=sys.stdout, logging:int=0, pause_time:int=5)->None:
         """PapermillHandler Constructor. This creats jobs to be executed using 
         the papermill module. This does not run as a continuous thread to 
         handle execution, but is invoked according to a factory pattern using 
         the handle function. Note that if this handler is given to a MeowRunner
         object, the job_queue_dir will be overwridden."""
-        super().__init__(name=name)
+        super().__init__(name=name, pause_time=pause_time)
         self._is_valid_job_queue_dir(job_queue_dir)
         self.job_queue_dir = job_queue_dir
         self._print_target, self.debug_level = setup_debugging(print, logging)
@@ -185,7 +185,7 @@ class PapermillHandler(BaseHandler):
         )
         
         # Send job directory, as actual definitons will be read from within it
-        self.send_to_runner(job_dir)
+        self.send_job_to_runner(job_dir)
 
 def get_recipe_from_notebook(name:str, notebook_filename:str, 
         parameters:Dict[str,Any]={}, requirements:Dict[str,Any]={}

@@ -65,13 +65,13 @@ class BashHandler(BaseHandler):
     # Where print messages are sent
     _print_target:Any
     def __init__(self, job_queue_dir:str=DEFAULT_JOB_QUEUE_DIR, name:str="",
-            print:Any=sys.stdout, logging:int=0)->None:
+            print:Any=sys.stdout, logging:int=0, pause_time:int=5)->None:
         """BashHandler Constructor. This creates jobs to be executed as 
         bash scripts. This does not run as a continuous thread to 
         handle execution, but is invoked according to a factory pattern using 
         the handle function. Note that if this handler is given to a MeowRunner
         object, the job_queue_dir will be overwridden by its"""
-        super().__init__(name=name)
+        super().__init__(name=name, pause_time=pause_time)
         self._is_valid_job_queue_dir(job_queue_dir)
         self.job_queue_dir = job_queue_dir
         self._print_target, self.debug_level = setup_debugging(print, logging)
@@ -180,7 +180,7 @@ class BashHandler(BaseHandler):
         threadsafe_write_status(meow_job, meta_file)
         
         # Send job directory, as actual definitons will be read from within it
-        self.send_to_runner(job_dir)
+        self.send_job_to_runner(job_dir)
 
 
 def assemble_bash_job_script()->List[str]:

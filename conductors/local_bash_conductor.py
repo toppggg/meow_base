@@ -27,12 +27,13 @@ from meow_base.functionality.file_io import make_dir, write_file, \
 
 class LocalBashConductor(BaseConductor):
     def __init__(self, job_queue_dir:str=DEFAULT_JOB_QUEUE_DIR, 
-            job_output_dir:str=DEFAULT_JOB_OUTPUT_DIR, name:str="")->None:
+            job_output_dir:str=DEFAULT_JOB_OUTPUT_DIR, name:str="", 
+            pause_time:int=5)->None:
         """LocalBashConductor Constructor. This should be used to execute 
         Bash jobs, and will then pass any internal job runner files to the 
         output directory. Note that if this handler is given to a MeowRunner
         object, the job_queue_dir and job_output_dir will be overwridden."""
-        super().__init__(name=name)
+        super().__init__(name=name, pause_time=pause_time)
         self._is_valid_job_queue_dir(job_queue_dir)
         self.job_queue_dir = job_queue_dir
         self._is_valid_job_output_dir(job_output_dir)
