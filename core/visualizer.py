@@ -40,7 +40,7 @@ class Visualizer:
 
     _kill = False
 
-    _figure = False
+    _figure_initialized = False
 
 
     def __init__(self)->None:
@@ -115,21 +115,16 @@ class Visualizer:
         # tmp[array_index] += 1
         # self._visualized_seconds_array.update()
     
-
-
     def new_rule(self, rule: BaseRule)->None:       # {rule, [60]}
         self._rules[rule.__str__()] = rule
         self._visualized_seconds_array[rule.__str__()] = [0] * 60
         self._visualized_minutes_array[rule.__str__()] = [0] * 60
-        if not self._figure:
-            
+        if not self._figure_initialized:
             
             global updateThread
             updateThread = threading.Thread(target=self.plot,args=())
             updateThread.start()
-            # self.matplotlib(int(time.time()))
-            self._figure = True
-
+            self._figure_initialized = True
 
     def plot(self) :
 
@@ -174,7 +169,6 @@ class Visualizer:
             return fig
 
         app.run()
-
 
     def matplotlib(self):
         figure, ax = plt.subplots()
