@@ -1,10 +1,16 @@
 
+"""
+This file contains certain meow specific defintions, most notably the 
+dictionaries passed around within the runner.
+
+Author(s): David Marchant
+"""
 from datetime import datetime
 from typing import Any, Dict, Type
 
-from meow_base.core.base_rule import BaseRule
-from meow_base.core.correctness.validation import check_type
-from meow_base.core.correctness.vars import EVENT_TYPE, EVENT_PATH, \
+from meow_base.core.rule import Rule
+from meow_base.functionality.validation import check_type
+from meow_base.core.vars import EVENT_TYPE, EVENT_PATH, \
     JOB_EVENT, JOB_TYPE, JOB_ID, JOB_PATTERN, JOB_RECIPE, JOB_RULE, \
     JOB_STATUS, JOB_CREATE_TIME, EVENT_RULE, WATCHDOG_BASE, WATCHDOG_HASH
 
@@ -12,8 +18,7 @@ from meow_base.core.correctness.vars import EVENT_TYPE, EVENT_PATH, \
 EVENT_KEYS = {
     EVENT_TYPE: str,
     EVENT_PATH: str,
-    # Should be a Rule but can't import here due to circular dependencies
-    EVENT_RULE: BaseRule
+    EVENT_RULE: Rule
 }
 
 WATCHDOG_EVENT_KEYS = {

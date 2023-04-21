@@ -6,9 +6,10 @@ Author(s): David Marchant
 import os
 
 from distutils.dir_util import copy_tree
+from typing import List
 
-from meow_base.core.correctness.vars import DEFAULT_JOB_OUTPUT_DIR, \
-    DEFAULT_JOB_QUEUE_DIR
+from meow_base.core.vars import DEFAULT_JOB_OUTPUT_DIR, \
+    DEFAULT_JOB_QUEUE_DIR, LOCK_EXT
 from meow_base.functionality.file_io import make_dir, rmtree
 from meow_base.patterns.file_event_pattern import FileEventPattern
 from meow_base.recipes.jupyter_notebook_recipe import JupyterNotebookRecipe
@@ -38,44 +39,57 @@ def teardown():
     rmtree(DEFAULT_JOB_QUEUE_DIR)
     rmtree("visualizer_print")
     rmtree("first")
-    if os.path.exists("temp_phantom_info.h5"):
-        os.remove("temp_phantom_info.h5")
-    if os.path.exists("temp_phantom.h5"):
-        os.remove("temp_phantom.h5")
+    for f in [
+                "temp_phantom_info.h5", 
+                "temp_phantom.h5", 
+                f"doesNotExist{LOCK_EXT}"
+            ]:
+        if os.path.exists(f):
+            os.remove(f)
 
 def backup_before_teardown(backup_source:str, backup_dest:str):
     make_dir(backup_dest, ensure_clean=True)
     copy_tree(backup_source, backup_dest)
 
+# Necessary, as the creation of locks is not deterministic
+def list_non_locks(dir:str)->List[str]:
+    return [f for f in os.listdir(dir) if not f.endswith(LOCK_EXT)]
 
-# Recipe funcs
-BAREBONES_PYTHON_SCRIPT = [
+# Necessary, as the creation of locks is not deterministic
+def count_non_locks(dir:str)->int:
+    return len(list_non_locks(dir))
+
+
+# Bash scripts
+BAREBONES_BASH_SCRIPT = [
     ""
 ]
-COMPLETE_PYTHON_SCRIPT = [
-    "import os",
-    "# Setup parameters",
-    "num = 1000",
-    "infile = 'somehere"+ os.path.sep +"particular'",
-    "outfile = 'nowhere"+ os.path.sep +"particular'",
-    "",
-    "with open(infile, 'r') as file:",
-    "    s = float(file.read())",
-    ""
-    "for i in range(num):",
-    "    s += i",
-    "",
-    "div_by = 4",
-    "result = s / div_by",
-    "",
-    "print(result)",
-    "",
-    "os.makedirs(os.path.dirname(outfile), exist_ok=True)",
-    "",
-    "with open(outfile, 'w') as file:",
-    "    file.write(str(result))",
-    "",
-    "print('done')"
+COMPLETE_BASH_SCRIPT = [
+    '#!/bin/bash',
+    '',
+    'num=1000',
+    'infile="data"',
+    'outfile="output"',
+    '',
+    'echo "starting"',
+    '',
+    'read var < $infile',
+    'for (( i=0; i<$num; i++ ))',
+    'do',
+    '    var=$((var+i))',
+    'done',
+    '',
+    'div_by=4',
+    'echo $var',
+    'result=$((var/div_by))',
+    '',
+    'echo $result',
+    '',
+    'mkdir -p $(dirname $outfile)',
+    '',
+    'echo $result > $outfile',
+    '',
+    'echo "done"'
 ]
 
 # Jupyter notebooks
@@ -1227,7 +1241,35 @@ GENERATOR_NOTEBOOK = {
 }
 
 # Python scripts
-IDMC_UTILS_MODULE = [
+BAREBONES_PYTHON_SCRIPT = [
+    ""
+]
+COMPLETE_PYTHON_SCRIPT = [
+    "import os",
+    "# Setup parameters",
+    "num = 1000",
+    "infile = 'somehere"+ os.path.sep +"particular'",
+    "outfile = 'nowhere"+ os.path.sep +"particular'",
+    "",
+    "with open(infile, 'r') as file:",
+    "    s = float(file.read())",
+    ""
+    "for i in range(num):",
+    "    s += i",
+    "",
+    "div_by = 4",
+    "result = s / div_by",
+    "",
+    "print(result)",
+    "",
+    "os.makedirs(os.path.dirname(outfile), exist_ok=True)",
+    "",
+    "with open(outfile, 'w') as file:",
+    "    file.write(str(result))",
+    "",
+    "print('done')"
+]
+IDMC_UTILS_PYTHON_SCRIPT = [
     "import matplotlib.pyplot as plt",
     "from sklearn import mixture",
     "import numpy as np",
@@ -1336,7 +1378,7 @@ IDMC_UTILS_MODULE = [
     "    else:",
     "        return means, stds, weights"
 ]
-GENERATE_SCRIPT = [
+GENERATE_PYTHON_SCRIPT = [
     "import numpy as np",
     "import random",
     "import foam_ct_phantom.foam_ct_phantom as foam_ct_phantom",
@@ -1363,7 +1405,13 @@ GENERATE_SCRIPT = [
     "    np.save(filename, dataset)",
     "    del dataset"
 ]
-
+COUNTING_PYTHON_SCRIPT = [
+    "import os",
+    "",
+    "dir_to_count = '.'",
+    "",
+    "print(f'There are {len(os.listdir(dir_to_count))} files in the directory.')"
+]
 
 valid_pattern_one = FileEventPattern(
     "pattern_one", "path_one", "recipe_one", "file_one")

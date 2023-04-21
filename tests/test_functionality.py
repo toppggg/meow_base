@@ -11,18 +11,19 @@ from sys import prefix, base_prefix
 from time import sleep
 from typing import Dict
 
-from meow_base.core.base_rule import BaseRule
-from meow_base.core.correctness.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
-    SHA256, EVENT_TYPE, EVENT_PATH, EVENT_TYPE_WATCHDOG, \
-    WATCHDOG_BASE, WATCHDOG_HASH, EVENT_RULE, JOB_PARAMETERS, JOB_HASH, \
-    PYTHON_FUNC, JOB_ID, JOB_EVENT, \
+from meow_base.core.rule import Rule
+from meow_base.core.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
+    SHA256, EVENT_TYPE, EVENT_PATH, EVENT_TYPE_WATCHDOG, LOCK_EXT, \
+    WATCHDOG_BASE, WATCHDOG_HASH, EVENT_RULE, JOB_PARAMETERS, \
+    PYTHON_FUNC, JOB_ID, JOB_EVENT, JOB_ERROR, STATUS_DONE, \
     JOB_TYPE, JOB_PATTERN, JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, \
     JOB_REQUIREMENTS, STATUS_QUEUED, JOB_TYPE_PAPERMILL
 from meow_base.functionality.debug import setup_debugging
 from meow_base.functionality.file_io import lines_to_string, make_dir, \
     read_file, read_file_lines, read_notebook, read_yaml, rmtree, write_file, \
-    write_notebook, write_yaml    
-from meow_base.functionality.hashing import get_file_hash
+    write_notebook, write_yaml, threadsafe_read_status, \
+    threadsafe_update_status, threadsafe_write_status
+from meow_base.functionality.hashing import get_hash
 from meow_base.functionality.meow import KEYWORD_BASE, KEYWORD_DIR, \
     KEYWORD_EXTENSION, KEYWORD_FILENAME, KEYWORD_JOB, KEYWORD_PATH, \
     KEYWORD_PREFIX, KEYWORD_REL_DIR, KEYWORD_REL_PATH, \
@@ -330,6 +331,243 @@ data"""
 
         self.assertEqual(lines_to_string(l), "a\nb\nc")
 
+    def testThreadsafeWriteStatus(self)->None:
+        first_yaml_dict = {
+            "A": "a",
+            "B": 1,
+            "C": {
+                "D": True,
+                "E": [
+                    1, 2, 3
+                ]
+            }
+        }
+
+        filepath = os.path.join(TEST_MONITOR_BASE, "file.yaml")
+
+        self.assertFalse(os.path.exists(filepath))
+        threadsafe_write_status(first_yaml_dict, filepath)
+        self.assertTrue(os.path.exists(filepath))
+        self.assertTrue(os.path.exists(filepath + LOCK_EXT))
+
+        with open(filepath, 'r') as f:
+            data = f.readlines()
+        
+        expected_bytes = [
+            'A: a\n', 
+            'B: 1\n',
+            'C:\n', 
+            '  D: true\n',
+            '  E:\n',
+            '  - 1\n',
+            '  - 2\n',
+            '  - 3\n'
+        ]
+        
+        self.assertEqual(data, expected_bytes)
+
+        second_yaml_dict = {
+            "F": "a",
+            "G": 1,
+            "H": {
+                "I": True,
+                "J": [
+                    1, 2, 3
+                ]
+            }
+        }
+
+        filepath = os.path.join(TEST_MONITOR_BASE, "file.yaml")
+
+        threadsafe_write_status(second_yaml_dict, filepath)
+        self.assertTrue(os.path.exists(filepath))
+        self.assertTrue(os.path.exists(filepath + LOCK_EXT))
+
+        with open(filepath, 'r') as f:
+            data = f.readlines()
+        
+        expected_bytes = [
+            'F: a\n', 
+            'G: 1\n',
+            'H:\n', 
+            '  I: true\n',
+            '  J:\n',
+            '  - 1\n',
+            '  - 2\n',
+            '  - 3\n'
+        ]
+        
+        self.assertEqual(data, expected_bytes)
+
+    def testThreadsafeReadStatus(self)->None:
+        yaml_dict = {
+            "A": "a",
+            "B": 1,
+            "C": {
+                "D": True,
+                "E": [
+                    1, 2, 3
+                ]
+            }
+        }
+
+        filepath = os.path.join(TEST_MONITOR_BASE, "file.yaml")
+        threadsafe_write_status(yaml_dict, filepath)
+
+        read_dict = threadsafe_read_status(filepath)
+        self.assertEqual(yaml_dict, read_dict)
+
+        with self.assertRaises(FileNotFoundError):
+            threadsafe_read_status("doesNotExist")
+
+        filepath = os.path.join(TEST_MONITOR_BASE, "T.txt")
+        with open(filepath, "w") as f:
+            f.write("Data")
+
+        data = threadsafe_read_status(filepath)
+        self.assertEqual(data, "Data")
+
+    def testThreadsafeUpdateStatus(self)->None:
+        first_yaml_dict = {
+            "A": "a",
+            "B": 1,
+            "C": {
+                "D": True,
+                "E": [
+                    1, 2, 3
+                ]
+            }
+        }
+
+        filepath = os.path.join(TEST_MONITOR_BASE, "file.yaml")
+
+        self.assertFalse(os.path.exists(filepath))
+        threadsafe_write_status(first_yaml_dict, filepath)
+        self.assertTrue(os.path.exists(filepath))
+        self.assertTrue(os.path.exists(filepath + LOCK_EXT))
+
+        with open(filepath, 'r') as f:
+            data = f.readlines()
+        
+        expected_bytes = [
+            'A: a\n', 
+            'B: 1\n',
+            'C:\n', 
+            '  D: true\n',
+            '  E:\n',
+            '  - 1\n',
+            '  - 2\n',
+            '  - 3\n'
+        ]
+        
+        self.assertEqual(data, expected_bytes)
+
+        second_yaml_dict = {
+            "B": 42,
+            "C": {
+                "E": [
+                    1, 2, 3, 4
+                ]
+            }
+        }
+
+        filepath = os.path.join(TEST_MONITOR_BASE, "file.yaml")
+
+        threadsafe_update_status(second_yaml_dict, filepath)
+        self.assertTrue(os.path.exists(filepath))
+        self.assertTrue(os.path.exists(filepath + LOCK_EXT))
+
+        with open(filepath, 'r') as f:
+            data = f.readlines()
+        
+        expected_bytes = [
+            'A: a\n', 
+            'B: 42\n',
+            'C:\n', 
+            '  E:\n',
+            '  - 1\n',
+            '  - 2\n',
+            '  - 3\n',
+            '  - 4\n'
+        ]
+        
+        self.assertEqual(data, expected_bytes)
+
+    def testThreadsafeUpdateProctectedStatus(self)->None:
+        first_yaml_dict = {
+            JOB_CREATE_TIME: "now",
+            JOB_STATUS: "Wham",
+            JOB_ERROR: "first error.",
+            JOB_ID: "id",
+            JOB_TYPE: "type"
+        }
+
+        filepath = os.path.join(TEST_MONITOR_BASE, "file.yaml")
+
+        self.assertFalse(os.path.exists(filepath))
+        threadsafe_write_status(first_yaml_dict, filepath)
+        self.assertTrue(os.path.exists(filepath))
+        self.assertTrue(os.path.exists(filepath + LOCK_EXT))
+
+        status = threadsafe_read_status(filepath)
+        
+        self.assertEqual(first_yaml_dict, status)
+
+        second_yaml_dict = {
+            JOB_CREATE_TIME: "changed",
+            JOB_STATUS: STATUS_DONE,
+            JOB_ERROR: "changed.",
+            JOB_ID: "changed"
+        }
+
+        filepath = os.path.join(TEST_MONITOR_BASE, "file.yaml")
+
+        threadsafe_update_status(second_yaml_dict, filepath)
+        self.assertTrue(os.path.exists(filepath))
+        self.assertTrue(os.path.exists(filepath + LOCK_EXT))
+
+        status = threadsafe_read_status(filepath)
+
+        expected_second_yaml_dict = {
+            JOB_CREATE_TIME: "now",
+            JOB_STATUS: STATUS_DONE,
+            JOB_ERROR: "first error. changed.",
+            JOB_ID: "changed",
+            JOB_TYPE: "type"
+        }
+        
+        self.assertEqual(expected_second_yaml_dict, status)
+
+        third_yaml_dict = {
+            JOB_CREATE_TIME: "editted",
+            JOB_STATUS: "editted",
+            JOB_ERROR: "editted.",
+            JOB_ID: "editted",
+            "something_new": "new"
+        }
+
+        filepath = os.path.join(TEST_MONITOR_BASE, "file.yaml")
+
+        threadsafe_update_status(third_yaml_dict, filepath)
+        self.assertTrue(os.path.exists(filepath))
+        self.assertTrue(os.path.exists(filepath + LOCK_EXT))
+
+        status = threadsafe_read_status(filepath)
+
+        expected_third_yaml_dict = {
+            JOB_CREATE_TIME: "now",
+            JOB_STATUS: STATUS_DONE,
+            JOB_ERROR: "first error. changed. editted.",
+            JOB_ID: "editted",
+            JOB_TYPE: "type",
+            "something_new": "new"
+        }
+
+        print(expected_third_yaml_dict)
+        print(status)
+        
+        self.assertEqual(expected_third_yaml_dict, status)
+
 
 class HashingTests(unittest.TestCase):
     def setUp(self)->None:
@@ -340,7 +578,7 @@ class HashingTests(unittest.TestCase):
         super().tearDown()
         teardown()
 
-    # Test that get_file_hash produces the expected hash
+    # Test that get_hash produces the expected hash
     def testGetFileHashSha256(self)->None:
         file_path = os.path.join(TEST_MONITOR_BASE, "hased_file.txt")
         with open(file_path, 'w') as hashed_file:
@@ -354,12 +592,12 @@ class HashingTests(unittest.TestCase):
         hash = get_file_hash(file_path, SHA256)
         self.assertEqual(hash, expected_hash)
     
-    # Test that get_file_hash raises on a missing file
+    # Test that get_hash raises on a missing file
     def testGetFileHashSha256NoFile(self)->None:
         file_path = os.path.join(TEST_MONITOR_BASE, "file.txt")
 
         with self.assertRaises(FileNotFoundError):        
-            get_file_hash(file_path, SHA256)
+            get_hash(file_path, SHA256)
 
 
 class MeowTests(unittest.TestCase):
@@ -446,7 +684,6 @@ class MeowTests(unittest.TestCase):
                     "infile":"file_path",
                     "outfile":"result_path"
                 },
-                JOB_HASH: "file_hash",
                 PYTHON_FUNC:max
             }
         )
@@ -584,7 +821,7 @@ class MeowTests(unittest.TestCase):
     def testCreateRule(self)->None:
         rule = create_rule(valid_pattern_one, valid_recipe_one)
 
-        self.assertIsInstance(rule, BaseRule)
+        self.assertIsInstance(rule, Rule)
 
         with self.assertRaises(ValueError):
             rule = create_rule(valid_pattern_one, valid_recipe_two)
@@ -610,7 +847,7 @@ class MeowTests(unittest.TestCase):
         self.assertEqual(len(rules), 2)
         for k, rule in rules.items():
             self.assertIsInstance(k, str)
-            self.assertIsInstance(rule, BaseRule)
+            self.assertIsInstance(rule, Rule)
             self.assertEqual(k, rule.name)
 
     # Test that create_rules creates nothing from invalid pattern inputs
@@ -893,6 +1130,7 @@ class ProcessIoTests(unittest.TestCase):
             elif readable == pipe_one_reader:
                 msg = readable.recv()
                 self.assertEqual(msg, 1)
+
 
 class RequirementsTest(unittest.TestCase):
     def setUp(self)->None:

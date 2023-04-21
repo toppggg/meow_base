@@ -21,6 +21,9 @@ CHAR_NUMERIC = '0123456789'
 
 VALID_NAME_CHARS = CHAR_UPPERCASE + CHAR_LOWERCASE + CHAR_NUMERIC + "_-"
 
+VALID_CONDUCTOR_NAME_CHARS = VALID_NAME_CHARS
+VALID_HANDLER_NAME_CHARS = VALID_NAME_CHARS
+VALID_MONITOR_NAME_CHARS = VALID_NAME_CHARS
 VALID_RECIPE_NAME_CHARS = VALID_NAME_CHARS
 VALID_PATTERN_NAME_CHARS = VALID_NAME_CHARS
 VALID_RULE_NAME_CHARS = VALID_NAME_CHARS
@@ -86,6 +89,7 @@ DEFAULT_JOB_OUTPUT_DIR = "job_output"
 
 # meow jobs
 JOB_TYPE = "job_type"
+JOB_TYPE_BASH = "bash"
 JOB_TYPE_PYTHON = "python"
 JOB_TYPE_PAPERMILL = "papermill"
 PYTHON_FUNC = "func"
@@ -94,12 +98,17 @@ JOB_TYPES = {
     JOB_TYPE_PAPERMILL: [
         "base.ipynb",
         "job.ipynb",
-        "result.ipynb",
+        "result.ipynb"
     ],
     JOB_TYPE_PYTHON: [
         "base.py",
         "job.py",
-        "result.py",
+        "result.py"
+    ],
+    JOB_TYPE_BASH: [
+        "base.sh",
+        "job.sh",
+        "result.sh"
     ]
 }
 
@@ -139,21 +148,8 @@ DEBUG_ERROR = 1
 DEBUG_WARNING = 2
 DEBUG_INFO = 3
 
-# Visualizer Event keys
-    #base requirement
-PATTERN_NAME = "Pattern_name"
-RECIPE_NAME = "Recipe_Name"
-    #Optional/Ideas
-RULE_NAME = "Rule_Name"
-# RULE_ID = "Rule_ID"
-EVENT_ID = "Event_ID"
-ERROR_CODE = "Error_Code"
-
-#Event send to visualizer
-VISUALIZER_EVENT_KEYS = {
-    PATTERN_NAME: str,
-    RECIPE_NAME: str,
-}
+# Locking
+LOCK_EXT = ".lock"
 
 # debug message functions
 def get_drt_imp_msg(base_class):

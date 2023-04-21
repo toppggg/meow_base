@@ -1,17 +1,16 @@
 
 import unittest
  
-from typing import Any, Union, Tuple, Dict
+from typing import Any, Union, Tuple, Dict, List
 
 from meow_base.core.base_conductor import BaseConductor
 from meow_base.core.base_handler import BaseHandler
 from meow_base.core.base_monitor import BaseMonitor
 from meow_base.core.base_pattern import BasePattern
 from meow_base.core.base_recipe import BaseRecipe
-from meow_base.core.base_rule import BaseRule
-from meow_base.core.correctness.vars import SWEEP_STOP, SWEEP_JUMP, SWEEP_START
+from meow_base.core.vars import SWEEP_STOP, SWEEP_JUMP, SWEEP_START
 from meow_base.patterns.file_event_pattern import FileEventPattern
-from shared import valid_pattern_one, valid_recipe_one, setup, teardown
+from shared import setup, teardown
 
 
 class BaseRecipeTests(unittest.TestCase):
@@ -147,35 +146,7 @@ class BasePatternTests(unittest.TestCase):
         self.assertEqual(len(values), 0)
 
 
-class BaseRuleTests(unittest.TestCase):
-    def setUp(self)->None:
-        super().setUp()
-        setup()
-
-    def tearDown(self)->None:
-        super().tearDown()
-        teardown()
-
-    # Test that BaseRecipe instantiation
-    def testBaseRule(self)->None:
-        with self.assertRaises(TypeError):
-            BaseRule("name", "", "")
-
-        class NewRule(BaseRule):
-            pass
-        with self.assertRaises(NotImplementedError):
-            NewRule("name", "", "")
-
-        class FullRule(BaseRule):
-            pattern_type = "pattern"
-            recipe_type = "recipe"
-            def _is_valid_recipe(self, recipe:Any)->None:
-                pass
-            def _is_valid_pattern(self, pattern:Any)->None:
-                pass
-        FullRule("name", valid_pattern_one, valid_recipe_one)
-
-
+# TODO test for base functions
 class BaseMonitorTests(unittest.TestCase):
     def setUp(self)->None:
         super().setUp()
@@ -201,32 +172,15 @@ class BaseMonitorTests(unittest.TestCase):
                 pass
             def stop(self):
                 pass
-            def _is_valid_patterns(self, patterns:Dict[str,BasePattern])->None:
-                pass
-            def _is_valid_recipes(self, recipes:Dict[str,BaseRecipe])->None:
-                pass
-            def add_pattern(self, pattern:BasePattern)->None:
-                pass
-            def update_pattern(self, pattern:BasePattern)->None:
-                pass
-            def remove_pattern(self, pattern:Union[str,BasePattern])->None:
-                pass
-            def get_patterns(self)->None:
-                pass
-            def add_recipe(self, recipe:BaseRecipe)->None:
-                pass
-            def update_recipe(self, recipe:BaseRecipe)->None:
-                pass
-            def remove_recipe(self, recipe:Union[str,BaseRecipe])->None:
-                pass
-            def get_recipes(self)->None:
-                pass
-            def get_rules(self)->None:
-                pass
+            def _get_valid_pattern_types(self)->List[type]:
+                return [BasePattern]
+            def _get_valid_recipe_types(self)->List[type]:
+                return [BaseRecipe]
             
         FullTestMonitor({}, {})
 
 
+# TODO test for base functions
 class BaseHandleTests(unittest.TestCase):
     def setUp(self)->None:
         super().setUp()
@@ -250,12 +204,6 @@ class BaseHandleTests(unittest.TestCase):
         class FullTestHandler(BaseHandler):
             def handle(self, event):
                 pass
-            def start(self):
-                pass
-            def stop(self):
-                pass
-            def _is_valid_inputs(self, inputs:Any)->None:
-                pass
             def valid_handle_criteria(self, event:Dict[str,Any]
                     )->Tuple[bool,str]:
                 pass
@@ -263,6 +211,7 @@ class BaseHandleTests(unittest.TestCase):
         FullTestHandler()
 
 
+# TODO test for base functions
 class BaseConductorTests(unittest.TestCase):
     def setUp(self)->None:
         super().setUp()

@@ -5,13 +5,13 @@ import os
 from datetime import datetime
 from typing import Any, Union
 
-from meow_base.core.correctness.meow import valid_event, valid_job, \
+from meow_base.core.meow import valid_event, valid_job, \
     valid_watchdog_event
-from meow_base.core.correctness.validation import check_type, \
+from meow_base.functionality.validation import check_type, \
     check_implementation, valid_string, valid_dict, valid_list, \
     valid_existing_file_path, valid_dir_path, valid_non_existing_path, \
-    check_callable
-from meow_base.core.correctness.vars import VALID_NAME_CHARS, SHA256, \
+    check_callable, valid_natural, valid_dict_multiple_types
+from meow_base.core.vars import VALID_NAME_CHARS, SHA256, \
     EVENT_TYPE, EVENT_PATH, JOB_TYPE, JOB_EVENT, JOB_ID, JOB_PATTERN, \
     JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, EVENT_RULE, \
     WATCHDOG_BASE, WATCHDOG_HASH
@@ -126,6 +126,36 @@ class ValidationTests(unittest.TestCase):
     def testValidDictOverlyStrict(self)->None:
         with self.assertRaises(ValueError):
             valid_dict({"a": 0, "b": 1}, str, int, strict=True)
+
+    def testValidDictMultipleTypes(self)->None:
+        valid_dict_multiple_types(
+            {"a": 0, "b": 1}, 
+            str, 
+            [int],
+            strict=False
+        )
+
+        valid_dict_multiple_types(
+            {"a": 0, "b": 1}, 
+            str, 
+            [int, str],
+            strict=False
+        )
+        
+        valid_dict_multiple_types(
+            {"a": 0, "b": 'a'}, 
+            str, 
+            [int, str],
+            strict=False
+        )
+
+        with self.assertRaises(TypeError):
+            valid_dict_multiple_types(
+                {"a": 0, "b": 'a'}, 
+                str, 
+                [int],
+                strict=False
+            )
 
     # Test valid_list with sufficent lengths
     def testValidListMinimum(self)->None:
@@ -254,6 +284,18 @@ class ValidationTests(unittest.TestCase):
         
         with self.assertRaises(TypeError):
             check_callable("a")
+
+    # Test natural number check
+    def testValidNatural(self)->None:
+        valid_natural(0)
+        valid_natural(1)
+
+        with self.assertRaises(ValueError):
+            valid_natural(-1)
+
+        with self.assertRaises(TypeError):
+            valid_natural(1.0)
+
 
 class MeowTests(unittest.TestCase):
     def setUp(self)->None:

@@ -11,10 +11,8 @@ skip_long_tests=0
 
 for arg in "$@"
 do
-  echo "Given arg: $arg";
   if [[ $arg == -s ]]
   then
-    echo "skippy the kangaroo"
     skip_long_tests=1
   fi
 done
@@ -31,7 +29,6 @@ do
     && [[ $entry != ./shared.py ]];
   then
     SKIP_LONG=$skip_long_tests pytest $entry "-W ignore::DeprecationWarning"
-#    SKIP_LONG=$skip_long_tests pytest $entry
   fi
 done
 

@@ -13,18 +13,19 @@ from typing import Any, Tuple, Dict
 
 from meow_base.core.base_recipe import BaseRecipe
 from meow_base.core.base_handler import BaseHandler
-from meow_base.core.correctness.meow import valid_event
-from meow_base.core.correctness.validation import check_type, valid_string, \
+from meow_base.core.meow import valid_event
+from meow_base.functionality.validation import check_type, valid_string, \
     valid_dict, valid_path, valid_dir_path, valid_existing_file_path
-from meow_base.core.correctness.vars import VALID_VARIABLE_NAME_CHARS, \
-    PYTHON_FUNC, DEBUG_INFO, EVENT_TYPE_WATCHDOG, JOB_HASH, \
+from meow_base.core.vars import VALID_VARIABLE_NAME_CHARS, \
+    PYTHON_FUNC, DEBUG_INFO, EVENT_TYPE_WATCHDOG, \
     DEFAULT_JOB_QUEUE_DIR, EVENT_PATH, JOB_TYPE_PAPERMILL, WATCHDOG_HASH, \
     JOB_PARAMETERS, JOB_ID, WATCHDOG_BASE, META_FILE, PARAMS_FILE, \
     JOB_STATUS, STATUS_QUEUED, EVENT_RULE, EVENT_TYPE, EVENT_RULE, \
     get_base_file
 from meow_base.functionality.debug import setup_debugging, print_debug
 from meow_base.functionality.file_io import make_dir, read_notebook, \
-    write_notebook, write_yaml
+    write_notebook, write_yaml, threadsafe_write_status, \
+    threadsafe_update_status
 from meow_base.functionality.meow import create_job, replace_keywords
 
 
@@ -69,14 +70,14 @@ class PapermillHandler(BaseHandler):
     debug_level:int
     # Where print messages are sent
     _print_target:Any
-    def __init__(self, job_queue_dir:str=DEFAULT_JOB_QUEUE_DIR, 
-            print:Any=sys.stdout, logging:int=0)->None:
+    def __init__(self, job_queue_dir:str=DEFAULT_JOB_QUEUE_DIR, name:str="",
+            print:Any=sys.stdout, logging:int=0, pause_time:int=5)->None:
         """PapermillHandler Constructor. This creats jobs to be executed using 
         the papermill module. This does not run as a continuous thread to 
         handle execution, but is invoked according to a factory pattern using 
         the handle function. Note that if this handler is given to a MeowRunner
         object, the job_queue_dir will be overwridden."""
-        super().__init__()
+        super().__init__(name=name, pause_time=pause_time)
         self._is_valid_job_queue_dir(job_queue_dir)
         self.job_queue_dir = job_queue_dir
         self._print_target, self.debug_level = setup_debugging(print, logging)
@@ -142,7 +143,6 @@ class PapermillHandler(BaseHandler):
             event, 
             extras={
                 JOB_PARAMETERS:yaml_dict,
-                JOB_HASH: event[WATCHDOG_HASH],
                 PYTHON_FUNC:papermill_job_func,
             }
         )
@@ -164,7 +164,7 @@ class PapermillHandler(BaseHandler):
 
         # write a status file to the job directory
         meta_file = os.path.join(job_dir, META_FILE)
-        write_yaml(meow_job, meta_file)
+        threadsafe_write_status(meow_job, meta_file)
 
         # write an executable notebook to the job directory
         base_file = os.path.join(job_dir, get_base_file(JOB_TYPE_PAPERMILL))
@@ -177,10 +177,15 @@ class PapermillHandler(BaseHandler):
         meow_job[JOB_STATUS] = STATUS_QUEUED
 
         # update the status file with queued status
-        write_yaml(meow_job, meta_file)
+        threadsafe_update_status(
+            {
+                JOB_STATUS: STATUS_QUEUED
+            },
+            meta_file
+        )
         
         # Send job directory, as actual definitons will be read from within it
-        self.to_runner.send(job_dir)
+        self.send_job_to_runner(job_dir)
 
 def get_recipe_from_notebook(name:str, notebook_filename:str, 
         parameters:Dict[str,Any]={}, requirements:Dict[str,Any]={}
@@ -204,13 +209,14 @@ def papermill_job_func(job_dir):
     import os
     import papermill
     from datetime import datetime
-    from meow_base.core.correctness.vars import JOB_EVENT, JOB_ID, \
+    from meow_base.core.vars import JOB_EVENT, JOB_ID, \
         EVENT_PATH, META_FILE, PARAMS_FILE, \
-        JOB_STATUS, JOB_HASH, SHA256, STATUS_SKIPPED, JOB_END_TIME, \
+        JOB_STATUS, SHA256, STATUS_SKIPPED, JOB_END_TIME, \
         JOB_ERROR, STATUS_FAILED, get_job_file, \
         get_result_file
-    from meow_base.functionality.file_io import read_yaml, write_notebook, write_yaml
-    from meow_base.functionality.hashing import get_file_hash
+    from meow_base.functionality.file_io import read_yaml, write_notebook, \
+        threadsafe_read_status, threadsafe_update_status
+    from meow_base.functionality.hashing import get_hash
     from meow_base.functionality.parameterisation import parameterize_jupyter_notebook
 
 
@@ -222,27 +228,33 @@ def papermill_job_func(job_dir):
     param_file = os.path.join(job_dir, PARAMS_FILE)
 
     # Get job defintions   
-    job = read_yaml(meta_file)
+    job = threadsafe_read_status(meta_file)
     yaml_dict = read_yaml(param_file)
 
     # Check the hash of the triggering file, if present. This addresses 
     # potential race condition as file could have been modified since 
     # triggering event
-    if JOB_HASH in job:
+    if JOB_EVENT in job and WATCHDOG_HASH in job[JOB_EVENT]:
         # get current hash
-        triggerfile_hash = get_file_hash(job[JOB_EVENT][EVENT_PATH], SHA256)
+        triggerfile_hash = get_hash(job[JOB_EVENT][EVENT_PATH], SHA256)
         # If hash doesn't match, then abort the job. If its been modified, then
         # another job will have been scheduled anyway.
         if not triggerfile_hash \
-                or triggerfile_hash != job[JOB_HASH]:
-            job[JOB_STATUS] = STATUS_SKIPPED
-            job[JOB_END_TIME] = datetime.now()
+                or triggerfile_hash != job[JOB_EVENT][WATCHDOG_HASH]:
             msg = "Job was skipped as triggering file " + \
                 f"'{job[JOB_EVENT][EVENT_PATH]}' has been modified since " + \
                 "scheduling. Was expected to have hash " + \
-                f"'{job[JOB_HASH]}' but has '{triggerfile_hash}'."
-            job[JOB_ERROR] = msg
-            write_yaml(job, meta_file)
+                f"'{job[JOB_EVENT][WATCHDOG_HASH]}' but has '" + \
+                f"{triggerfile_hash}'."
+            threadsafe_update_status(
+                {
+                    JOB_STATUS: STATUS_SKIPPED,
+                    JOB_END_TIME: datetime.now(),
+                    JOB_ERROR: msg
+                },
+                meta_file
+            )
+
             return
 
     # Create a parameterised version of the executable notebook
@@ -253,20 +265,29 @@ def papermill_job_func(job_dir):
         )
         write_notebook(job_notebook, job_file)
     except Exception as e:
-        job[JOB_STATUS] = STATUS_FAILED
-        job[JOB_END_TIME] = datetime.now()
         msg = f"Job file {job[JOB_ID]} was not created successfully. {e}"
-        job[JOB_ERROR] = msg
-        write_yaml(job, meta_file)
+        threadsafe_update_status(
+            {
+                JOB_STATUS: STATUS_FAILED,
+                JOB_END_TIME: datetime.now(),
+                JOB_ERROR: msg
+            },
+            meta_file
+        )
         return
 
     # Execute the parameterised notebook
     try:
         papermill.execute_notebook(job_file, result_file, {})
     except Exception as e:
-        job[JOB_STATUS] = STATUS_FAILED
-        job[JOB_END_TIME] = datetime.now()
         msg = f"Result file {result_file} was not created successfully. {e}"
-        job[JOB_ERROR] = msg
-        write_yaml(job, meta_file)
+        threadsafe_update_status(
+            {
+                JOB_STATUS: STATUS_FAILED,
+                JOB_END_TIME: datetime.now(),
+                JOB_ERROR: msg
+            },
+            meta_file
+        )
+
         return
