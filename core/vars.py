@@ -45,6 +45,7 @@ SHA256 = "sha256"
 EVENT_TYPE = "event_type"
 EVENT_PATH = "event_path"
 EVENT_RULE = "rule"
+EVENT_ID = "event_id"
 # Potential extentions that the visualizer should handle
 # EVENT_TRACE = "trace" 
 # EVENT_EXECUTE_TIME = "execute_time"
@@ -150,6 +151,12 @@ DEBUG_INFO = 3
 
 # Locking
 LOCK_EXT = ".lock"
+
+# Viszualizer Var
+TO_EVENT_QUEUE = "to_event_queue"
+TO_HANDLER = "to_handler"
+TO_JOB_QUEUE = "to_job_queue"
+TO_CONDUCTOR = "to_conductor"
 
 # debug message functions
 def get_drt_imp_msg(base_class):

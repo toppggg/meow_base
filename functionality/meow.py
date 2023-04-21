@@ -14,11 +14,11 @@ from meow_base.core.rule import Rule
 from meow_base.functionality.validation import check_type, valid_dict, \
     valid_list
 from meow_base.core.vars import EVENT_PATH, EVENT_RULE, \
-    EVENT_TYPE, EVENT_TYPE_WATCHDOG, JOB_CREATE_TIME, JOB_EVENT, JOB_ID, \
+    EVENT_TYPE, EVENT_ID, EVENT_TYPE_WATCHDOG, JOB_CREATE_TIME, JOB_EVENT, JOB_ID, \
     JOB_PATTERN, JOB_RECIPE, JOB_REQUIREMENTS, JOB_RULE, JOB_STATUS, \
     JOB_TYPE, STATUS_QUEUED, WATCHDOG_BASE, WATCHDOG_HASH, SWEEP_JUMP, \
     SWEEP_START, SWEEP_STOP
-from meow_base.functionality.naming import generate_job_id
+from meow_base.functionality.naming import generate_job_id, generate_event_id
 
 # mig trigger keyword replacements
 KEYWORD_PATH = "{PATH}"
@@ -109,7 +109,8 @@ def create_event(event_type:str, path:str, rule:Any, extras:Dict[Any,Any]={}
         **extras, 
         EVENT_PATH: path, 
         EVENT_TYPE: event_type, 
-        EVENT_RULE: rule
+        EVENT_RULE: rule,
+        EVENT_ID: generate_event_id()
     }
 
 def create_watchdog_event(path:str, rule:Any, base:str, hash:str, 

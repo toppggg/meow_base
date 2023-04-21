@@ -23,7 +23,8 @@ from meow_base.functionality.validation import check_type, valid_list, \
 from meow_base.functionality.debug import setup_debugging, print_debug
 from meow_base.functionality.file_io import make_dir, threadsafe_read_status
 from meow_base.functionality.process_io import wait
-from meow_base.core.visualizer import Visualizer
+from meow_base.core.visualizer.visualizer import Visualizer
+from meow_base.core.visualizer.to_visualizer import To_Visualizer
 
 
 class MeowRunner:
@@ -54,7 +55,7 @@ class MeowRunner:
             conductors:Union[BaseConductor,List[BaseConductor]],
             job_queue_dir:str=DEFAULT_JOB_QUEUE_DIR,
             job_output_dir:str=DEFAULT_JOB_OUTPUT_DIR,
-            visualizer_active:bool=0,
+            visualizer=None,
             print:Any=sys.stdout, logging:int=0)->None:
             
         """MeowRunner constructor. This connects all provided monitors, 
@@ -121,9 +122,9 @@ class MeowRunner:
         # Setup debugging
         self._print_target, self.debug_level = setup_debugging(print, logging)
 
-        self.visualizer_active = visualizer_active
-        if visualizer_active : 
-            self.create_visualizer()
+        # self.visualizer_active = visualizer_active
+        if visualizer : 
+            self.to_visualizer = To_Visualizer(visualizer)
         # Setup queues
         self.event_queue = []
         self.job_queue = []
@@ -431,5 +432,15 @@ class MeowRunner:
 
     def create_visualizer (self):
         self.visualizer = Visualizer()
-        #Create visualizer
         
+        To_Visualizer.ToEventQueue(event)
+        To_Visualizer.ToHandler(event)
+        To_Visualizer.ToJobQueue(job)
+        To_Visualizer.ToConductor(job)
+
+
+    # def to_visualizer(param, E):
+        
+    #     pass
+
+    # def to_visualizer_job

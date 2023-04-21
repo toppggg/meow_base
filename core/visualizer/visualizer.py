@@ -13,15 +13,16 @@ from dash import Dash, dcc, html, Input, Output
 # import dash_bootstrap_components as dbc
 import copy
 import requests
-
+from multiprocessing.connection import Connection
 from typing import Any, Union, Dict
 
 from meow_base.core.base_recipe import BaseRecipe
-from meow_base.core.base_rule import BaseRule
-from meow_base.core.correctness.vars import get_drt_imp_msg, VALID_CHANNELS
+from meow_base.core.rule import Rule
+# from meow_base.core.correctness.vars import get_drt_imp_msg, VALID_CHANNELS
 from meow_base.core.base_pattern import BasePattern
 
 sys.path.append("D:\Datalogi\Bachelor\MEOW_AsgerJohan")
+
 
 class Visualizer:
     # A collection of patterns
@@ -29,10 +30,10 @@ class Visualizer:
     # A collection of recipes
     _recipes: Dict[str, BaseRecipe] # Might not be needed?
     # A collection of rules derived from _patterns and _recipes
-    _rules: Dict[str, BaseRule] # Might not be needed?
+    _rules: Dict[str, Rule] # Might not be needed?
     
     # _data_to_show: Dict[str, Any] # use rule.rule to match, and increase the int by 1
-
+    receive_channel: Connection
     _visualized_seconds_array: Dict[str, list]
     _visualized_minutes_array: Dict[str, list]
 
@@ -41,7 +42,6 @@ class Visualizer:
     _kill = False
 
     _figure_initialized = False
-
 
     def __init__(self)->None:
         self._patterns = {}    
@@ -115,10 +115,10 @@ class Visualizer:
         # tmp[array_index] += 1
         # self._visualized_seconds_array.update()
     
-    def new_rule(self, rule: BaseRule)->None:       # {rule, [60]}
-        self._rules[rule.__str__()] = rule
-        self._visualized_seconds_array[rule.__str__()] = [0] * 60
-        self._visualized_minutes_array[rule.__str__()] = [0] * 60
+    def new_rule(self, rule: Rule)->None:       # {rule, [60]}
+        self._rules[rule.name] = rule
+        self._visualized_seconds_array[rule.name] = [0] * 60
+        self._visualized_minutes_array[rule.name] = [0] * 60
         if not self._figure_initialized:
             
             global updateThread
@@ -225,4 +225,4 @@ class Visualizer:
             self._visualized_minutes_array[rule][minute_offset] = sum(self._visualized_seconds_array[rule])
         visualizer_dir = "visualizer_print"
         with open(os.path.join(visualizer_dir, "minutes"), "w") as f:
-            f.write(str(self._visualized_minutes_array) + "\n" + str(self._visualized_seconds_array) + "\n")
+            f.write(str(self._visualized_minutes_array))

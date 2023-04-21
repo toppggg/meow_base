@@ -25,6 +25,9 @@ def _generate_id(prefix:str="", length:int=16, existing_ids:List[str]=[],
 def generate_rule_id():
     return _generate_id(prefix="rule_")
 
+def generate_event_id():
+    return _generate_id(prefix="event_")
+
 def generate_job_id():
     return _generate_id(prefix="job_")
 

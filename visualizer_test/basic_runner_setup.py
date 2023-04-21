@@ -13,8 +13,8 @@ from meow_base.core.base_conductor import BaseConductor
 from meow_base.core.base_handler import BaseHandler
 from meow_base.core.base_monitor import BaseMonitor
 from meow_base.conductors import LocalPythonConductor
-from meow_base.core.correctness.vars import get_result_file, \
-    JOB_TYPE_PAPERMILL, JOB_ERROR, META_FILE, JOB_TYPE_PYTHON, JOB_CREATE_TIME
+# from meow_base.core.correctness.vars import get_result_file, \
+#     JOB_TYPE_PAPERMILL, JOB_ERROR, META_FILE, JOB_TYPE_PYTHON, JOB_CREATE_TIME
 from meow_base.core.runner import MeowRunner
 from meow_base.functionality.file_io import make_dir, read_file, read_notebook, read_yaml
 from meow_base.patterns.file_event_pattern import WatchdogMonitor, FileEventPattern
