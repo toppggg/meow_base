@@ -3,8 +3,11 @@ This file contains functions for reading and writing different types of files.
 
 Author(s): David Marchant
 """
-
-import fcntl
+import os
+# if os.name == 'nt':
+#     import win # Windows
+# else:
+#     import fcntl # other (unix)
 import json
 import yaml
 
@@ -16,6 +19,9 @@ from meow_base.core.vars import JOB_END_TIME, JOB_ERROR, JOB_STATUS, \
     STATUS_FAILED, STATUS_DONE, JOB_CREATE_TIME, JOB_START_TIME, \
     STATUS_SKIPPED, LOCK_EXT
 from meow_base.functionality.validation import valid_path
+import meow_base.functionality.mutex
+
+
 
 
 def make_dir(path:str, can_exist:bool=True, ensure_clean:bool=False):
@@ -101,36 +107,42 @@ def write_yaml(source:Any, filename:str):
 def threadsafe_read_status(filepath:str):
     lock_path = filepath + LOCK_EXT
     lock_handle = open(lock_path, 'a')
-    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+    # fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+    mutex.lock(lock_handle)
 
     try:
         status = read_yaml(filepath)
     except Exception as e:
         lock_handle.close()
+        mutex.unlock(lock_handle)
         raise e
 
     lock_handle.close()
+    mutex.unlock(lock_handle)
 
     return status
 
 def threadsafe_write_status(source:dict[str,Any], filepath:str):
+
     lock_path = filepath + LOCK_EXT
     lock_handle = open(lock_path, 'a')
-    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+    # fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+    mutex.lock(lock_handle) 
 
     try:
         write_yaml(source, filepath)
     except Exception as e:
-        lock_handle.close()
+        mutex.unlock(filepath)
+        lock_handle.close()        
         raise e
-
+    mutex.unlock(filepath)
     lock_handle.close()
 
 def threadsafe_update_status(updates:dict[str,Any], filepath:str):
     lock_path = filepath + LOCK_EXT
     lock_handle = open(lock_path, 'a')
-    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
-
+    # fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+    mutex.lock(lock_handle)
     try:
         status = read_yaml(filepath)
 
@@ -155,9 +167,10 @@ def threadsafe_update_status(updates:dict[str,Any], filepath:str):
 
         write_yaml(status, filepath)
     except Exception as e:
+        mutex.unlock(lock_handle)
         lock_handle.close()
         raise e
-
+    mutex.unlock(lock_handle)
     lock_handle.close()
 
 def read_notebook(filepath:str):
