@@ -17,7 +17,7 @@ from meow_base.core.vars import CHAR_LOWERCASE, CHAR_UPPERCASE, \
     WATCHDOG_BASE, WATCHDOG_HASH, EVENT_RULE, JOB_PARAMETERS, \
     PYTHON_FUNC, JOB_ID, JOB_EVENT, JOB_ERROR, STATUS_DONE, \
     JOB_TYPE, JOB_PATTERN, JOB_RECIPE, JOB_RULE, JOB_STATUS, JOB_CREATE_TIME, \
-    JOB_REQUIREMENTS, STATUS_QUEUED, JOB_TYPE_PAPERMILL
+    JOB_REQUIREMENTS, STATUS_QUEUED, JOB_TYPE_PAPERMILL, STATUS_CREATING
 from meow_base.functionality.debug import setup_debugging
 from meow_base.functionality.file_io import lines_to_string, make_dir, \
     read_file, read_file_lines, read_notebook, read_yaml, rmtree, write_file, \
@@ -27,7 +27,7 @@ from meow_base.functionality.hashing import get_hash
 from meow_base.functionality.meow import KEYWORD_BASE, KEYWORD_DIR, \
     KEYWORD_EXTENSION, KEYWORD_FILENAME, KEYWORD_JOB, KEYWORD_PATH, \
     KEYWORD_PREFIX, KEYWORD_REL_DIR, KEYWORD_REL_PATH, \
-    create_event, create_job, create_rule, create_rules, \
+    create_event, create_job_metadata_dict, create_rule, create_rules, \
     create_watchdog_event, replace_keywords, create_parameter_sweep
 from meow_base.functionality.naming import _generate_id
 from meow_base.functionality.parameterisation import \
@@ -645,7 +645,7 @@ class MeowTests(unittest.TestCase):
         self.assertEqual(event2[EVENT_RULE], rule)
         self.assertEqual(event2["a"], 1)
 
-    # Test that create_job produces valid job dictionary
+    # Test that create_job_metadata_dict produces valid job dictionary
     def testCreateJob(self)->None:
         pattern = FileEventPattern(
             "pattern", 
@@ -672,7 +672,7 @@ class MeowTests(unittest.TestCase):
             }
         )
 
-        job_dict = create_job(
+        job_dict = create_job_metadata_dict(
             JOB_TYPE_PAPERMILL,
             event,
             extras={
@@ -699,7 +699,7 @@ class MeowTests(unittest.TestCase):
         self.assertIn(JOB_RULE, job_dict)
         self.assertEqual(job_dict[JOB_RULE], rule.name)
         self.assertIn(JOB_STATUS, job_dict)
-        self.assertEqual(job_dict[JOB_STATUS], STATUS_QUEUED)
+        self.assertEqual(job_dict[JOB_STATUS], STATUS_CREATING)
         self.assertIn(JOB_CREATE_TIME, job_dict)
         self.assertIsInstance(job_dict[JOB_CREATE_TIME], datetime)
         self.assertIn(JOB_REQUIREMENTS, job_dict)
