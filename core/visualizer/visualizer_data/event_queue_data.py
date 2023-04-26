@@ -5,6 +5,7 @@ class EventQueueData:
 
     event_queue: List[VISUALIZER_STRUCT]
     average_queue_time : dict[VISUALIZER_STRUCT.rule_name,float]
+    
     def __init__(self) -> None:
         pass
 

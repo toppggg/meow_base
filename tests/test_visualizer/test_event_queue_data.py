@@ -57,7 +57,6 @@ class EventQueueDataTest(unittest.TestCase):
                 event_queue_data.remove_rule(r)
 
     def testGetRulesAwaitingJob(self):
-        #todo: create visualizer list, se at den bliver returneret
         vs1 = VISUALIZER_STRUCT("rule_testrulename1", "pattern_testpattern", "recipe_testrecipe","input/test.txt","eventid_1","","")
         vs2 = VISUALIZER_STRUCT("rule_testrulename2", "pattern_testpattern2", "recipe_testrecipe2","input/test.txt","eventid_2","","")
         vs3 = VISUALIZER_STRUCT("rule_testrulename3", "pattern_testpattern3", "recipe_testrecipe2","input/test.txt","eventid_3","","")

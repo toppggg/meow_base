@@ -18,7 +18,8 @@ from meow_base.core.vars import EVENT_TYPE, EVENT_PATH, \
 EVENT_KEYS = {
     EVENT_TYPE: str,
     EVENT_PATH: str,
-    EVENT_RULE: Rule
+    EVENT_RULE: Rule,
+    # EVENT_TIME: datetime
 }
 
 WATCHDOG_EVENT_KEYS = {

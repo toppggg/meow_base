@@ -158,6 +158,7 @@ class MeowRunner:
                             try:
                                 valid, _ = component.valid_handle_criteria(event)
                             except Exception as e:
+                                # msg = "Could not determine validity of " f"event for handler {component.name}. {e}"
                                 print_debug(
                                     self._print_target, 
                                     self.debug_level, 
@@ -165,6 +166,7 @@ class MeowRunner:
                                     f"event for handler {component.name}. {e}", 
                                     DEBUG_INFO
                                 )
+                                # To_Visualizer.debug_message(msg)
                             
                             if valid:
                                 self.event_queue.remove(event)
@@ -430,7 +432,7 @@ class MeowRunner:
         if not os.path.exists(job_output_dir):
             make_dir(job_output_dir)
 
-    def create_visualizer (self):
+    def _create_visualizer (self):
         self.visualizer = Visualizer()
         
         To_Visualizer.ToEventQueue(event)
