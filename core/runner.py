@@ -432,13 +432,13 @@ class MeowRunner:
         if not os.path.exists(job_output_dir):
             make_dir(job_output_dir)
 
-    def _create_visualizer (self):
-        self.visualizer = Visualizer()
+    # def _create_visualizer (self):
+        # self.visualizer = Visualizer()
         
-        To_Visualizer.ToEventQueue(event)
-        To_Visualizer.ToHandler(event)
-        To_Visualizer.ToJobQueue(job)
-        To_Visualizer.ToConductor(job)
+        # To_Visualizer.ToEventQueue(event)
+        # To_Visualizer.ToHandler(event)
+        # To_Visualizer.ToJobQueue(job)
+        # To_Visualizer.ToConductor(job)
 
 
     # def to_visualizer(param, E):
