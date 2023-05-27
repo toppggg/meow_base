@@ -1,5 +1,4 @@
 
-import io
 import importlib
 import os
 import unittest
@@ -7,7 +6,6 @@ import unittest
 from multiprocessing import Pipe
 from random import shuffle
 from shutil import copy
-from time import sleep
 from warnings import warn
 
 from meow_base.core.base_conductor import BaseConductor
@@ -15,7 +13,7 @@ from meow_base.core.base_handler import BaseHandler
 from meow_base.core.base_monitor import BaseMonitor
 from meow_base.conductors import LocalPythonConductor
 from meow_base.core.vars import JOB_TYPE_PAPERMILL, JOB_ERROR, \
-    META_FILE, JOB_TYPE_PYTHON, JOB_CREATE_TIME, get_result_file
+    META_FILE, JOB_TYPE_PYTHON, JOB_CREATE_TIME
 from meow_base.core.runner import MeowRunner
 from meow_base.functionality.file_io import make_dir, read_file, \
     read_notebook, read_yaml, write_file, lines_to_string
@@ -372,7 +370,7 @@ class MeowTests(unittest.TestCase):
             f.write("Initial Data")
 
         loops = 0
-        while loops < 5:
+        while loops < 10:
             # Initial prompt
             if conductor_to_test_test.poll(5):
                 msg = conductor_to_test_test.recv()
@@ -396,7 +394,7 @@ class MeowTests(unittest.TestCase):
                 else:
                     raise Exception("Timed out")        
                 self.assertEqual(msg, 1)
-                loops = 5
+                loops = 10
 
             loops += 1
 
@@ -409,10 +407,10 @@ class MeowTests(unittest.TestCase):
         runner.stop()
 
         print(os.listdir(job_dir))
-        self.assertEqual(count_non_locks(job_dir), 5)
+        self.assertEqual(count_non_locks(job_dir), 4)
 
         result = read_notebook(
-            os.path.join(job_dir, get_result_file(JOB_TYPE_PAPERMILL)))
+            os.path.join(job_dir, "result.ipynb"))
         self.assertIsNotNone(result)
 
         output_path = os.path.join(TEST_MONITOR_BASE, "output", "A.txt")
@@ -522,10 +520,10 @@ class MeowTests(unittest.TestCase):
         self.assertIn(job_ids[1], os.listdir(TEST_JOB_OUTPUT))
 
         mid_job_dir = os.path.join(TEST_JOB_OUTPUT, job_ids[0])
-        self.assertEqual(count_non_locks(mid_job_dir), 5)
+        self.assertEqual(count_non_locks(mid_job_dir), 4)
 
         result = read_notebook(
-            os.path.join(mid_job_dir, get_result_file(JOB_TYPE_PAPERMILL)))
+            os.path.join(mid_job_dir, "result.ipynb"))
         self.assertIsNotNone(result)
 
         mid_output_path = os.path.join(TEST_MONITOR_BASE, "middle", "A.txt")
@@ -537,10 +535,10 @@ class MeowTests(unittest.TestCase):
         self.assertEqual(data, "Initial Data\nA line from Pattern 1")
 
         final_job_dir = os.path.join(TEST_JOB_OUTPUT, job_ids[1])
-        self.assertEqual(count_non_locks(final_job_dir), 5)
+        self.assertEqual(count_non_locks(final_job_dir), 4)
 
         result = read_notebook(os.path.join(final_job_dir, 
-            get_result_file(JOB_TYPE_PAPERMILL)))
+            "result.ipynb"))
         self.assertIsNotNone(result)
 
         final_output_path = os.path.join(TEST_MONITOR_BASE, "output", "A.txt")
@@ -651,11 +649,11 @@ class MeowTests(unittest.TestCase):
 
         self.assertNotIn(JOB_ERROR, status)
 
-        result_path = os.path.join(job_dir, get_result_file(JOB_TYPE_PYTHON))
+        result_path = os.path.join(job_dir, "output.log")
         self.assertTrue(os.path.exists(result_path))
         result = read_file(os.path.join(result_path))
         self.assertEqual(
-            result, "--STDOUT--\n12505000.0\ndone\n\n\n--STDERR--\n\n")
+            result, "12505000.0\ndone\n")
 
         output_path = os.path.join(TEST_MONITOR_BASE, "output", "A.txt")
         self.assertTrue(os.path.exists(output_path))
@@ -779,18 +777,18 @@ class MeowTests(unittest.TestCase):
             final_job_id = job_ids[0]
 
         mid_job_dir = os.path.join(TEST_JOB_OUTPUT, mid_job_id)
-        self.assertEqual(count_non_locks(mid_job_dir), 5)
+        self.assertEqual(count_non_locks(mid_job_dir), 4)
 
         mid_metafile = os.path.join(mid_job_dir, META_FILE)
         mid_status = read_yaml(mid_metafile)
         self.assertNotIn(JOB_ERROR, mid_status)
 
         mid_result_path = os.path.join(
-            mid_job_dir, get_result_file(JOB_TYPE_PYTHON))
+            mid_job_dir, "output.log")
         self.assertTrue(os.path.exists(mid_result_path))
         mid_result = read_file(os.path.join(mid_result_path))
         self.assertEqual(
-            mid_result, "--STDOUT--\n7806.25\ndone\n\n\n--STDERR--\n\n")
+            mid_result, "7806.25\ndone\n")
 
         mid_output_path = os.path.join(TEST_MONITOR_BASE, "middle", "A.txt")
         self.assertTrue(os.path.exists(mid_output_path))
@@ -798,17 +796,17 @@ class MeowTests(unittest.TestCase):
         self.assertEqual(mid_output, "7806.25")
 
         final_job_dir = os.path.join(TEST_JOB_OUTPUT, final_job_id)
-        self.assertEqual(count_non_locks(final_job_dir), 5)
+        self.assertEqual(count_non_locks(final_job_dir), 4)
 
         final_metafile = os.path.join(final_job_dir, META_FILE)
         final_status = read_yaml(final_metafile)
         self.assertNotIn(JOB_ERROR, final_status)
 
-        final_result_path = os.path.join(final_job_dir, get_result_file(JOB_TYPE_PYTHON))
+        final_result_path = os.path.join(final_job_dir, "output.log")
         self.assertTrue(os.path.exists(final_result_path))
         final_result = read_file(os.path.join(final_result_path))
         self.assertEqual(
-            final_result, "--STDOUT--\n2146.5625\ndone\n\n\n--STDERR--\n\n")
+            final_result, "2146.5625\ndone\n")
 
         final_output_path = os.path.join(TEST_MONITOR_BASE, "output", "A.txt")
         self.assertTrue(os.path.exists(final_output_path))
@@ -916,7 +914,7 @@ class MeowTests(unittest.TestCase):
 
             self.assertNotIn(JOB_ERROR, status)
 
-            result_path = os.path.join(job_dir, get_result_file(JOB_TYPE_PYTHON))
+            result_path = os.path.join(job_dir, "output.log")
             self.assertTrue(os.path.exists(result_path))
             
             output_path = os.path.join(TEST_MONITOR_BASE, "output", "A.txt")
@@ -1091,11 +1089,11 @@ class MeowTests(unittest.TestCase):
 
         self.assertNotIn(JOB_ERROR, status)
 
-        result_path = os.path.join(job_dir, get_result_file(JOB_TYPE_PYTHON))
+        result_path = os.path.join(job_dir, "output.log")
         self.assertTrue(os.path.exists(result_path))
         result = read_file(os.path.join(result_path))
         self.assertEqual(
-            result, "--STDOUT--\n12505000.0\ndone\n\n\n--STDERR--\n\n")
+            result, "12505000.0\ndone\n")
 
         output_path = os.path.join(TEST_MONITOR_BASE, "output", "A.txt")
         self.assertTrue(os.path.exists(output_path))
@@ -1281,7 +1279,7 @@ class MeowTests(unittest.TestCase):
             self.assertNotIn(JOB_ERROR, status)
 
             result_path = os.path.join(
-                TEST_JOB_OUTPUT, job_dir, get_result_file(JOB_TYPE_PAPERMILL))
+                TEST_JOB_OUTPUT, job_dir, "result.ipynb")
             self.assertTrue(os.path.exists(result_path))
 
     # Test some actual scientific analysis, in a predicatable loop
@@ -1426,7 +1424,7 @@ class MeowTests(unittest.TestCase):
             self.assertNotIn(JOB_ERROR, status)
 
             result_path = os.path.join(
-                TEST_JOB_OUTPUT, job_dir, get_result_file(JOB_TYPE_PAPERMILL))
+                TEST_JOB_OUTPUT, job_dir, "result.ipynb")
             self.assertTrue(os.path.exists(result_path))
 
         results = len(os.listdir(
@@ -1591,7 +1589,7 @@ class MeowTests(unittest.TestCase):
             self.assertNotIn(JOB_ERROR, status)
 
             result_path = os.path.join(
-                TEST_JOB_OUTPUT, job_dir, get_result_file(JOB_TYPE_PAPERMILL))
+                TEST_JOB_OUTPUT, job_dir, "result.ipynb")
             self.assertTrue(os.path.exists(result_path))
 
         outputs = len(os.listdir(TEST_JOB_OUTPUT))
@@ -1761,7 +1759,7 @@ class MeowTests(unittest.TestCase):
             self.assertNotIn(JOB_ERROR, status)
 
             result_path = os.path.join(
-                TEST_JOB_OUTPUT, job_dir, get_result_file(JOB_TYPE_PAPERMILL))
+                TEST_JOB_OUTPUT, job_dir, "result.ipynb")
             self.assertTrue(os.path.exists(result_path))
 
         outputs = len(os.listdir(TEST_JOB_OUTPUT))
