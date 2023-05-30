@@ -8,6 +8,9 @@ from random import shuffle
 from shutil import copy
 from warnings import warn
 
+from visualizer.visualizer import Visualizer
+
+
 from meow_base.core.base_conductor import BaseConductor
 from meow_base.core.base_handler import BaseHandler
 from meow_base.core.base_monitor import BaseMonitor
@@ -1790,7 +1793,9 @@ class MeowTests(unittest.TestCase):
         conductor_two = LocalPythonConductor(name="c2")
         conductors = [ conductor_one, conductor_two ]
 
-        runner = MeowRunner(monitors, handlers, conductors)
+        ###Visualizer
+        visualizer = Visualizer("end")
+        runner = MeowRunner(monitors, handlers, conductors, visualizer)
 
         m1 = runner.get_monitor_by_name("m1")
         self.assertEqual(monitor_one, m1)

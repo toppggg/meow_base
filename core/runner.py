@@ -25,8 +25,8 @@ from meow_base.functionality.debug import setup_debugging, print_debug
 from meow_base.functionality.file_io import make_dir, threadsafe_read_status, \
     threadsafe_update_status
 from meow_base.functionality.process_io import wait
-from meow_base.core.visualizer.visualizer import Visualizer
-from meow_base.core.visualizer.to_visualizer import To_Visualizer
+from meow_base.visualizer_adapter.to_visualizer import To_Visualizer
+from visualizer.i_visualizer_receive_data import IVisualizerReceiveData
 
 
 class MeowRunner:
@@ -37,15 +37,13 @@ class MeowRunner:
     # A collection of all conductors in the runner
     conductors:List[BaseConductor]
     # A visualizer in the runner
-    visualizer: Visualizer
+    to_visualizer:To_Visualizer
     # A collection of all inputs for the event queue
     event_connections: List[Tuple[VALID_CHANNELS,Union[BaseMonitor,BaseHandler]]]
     # A collection of all inputs for the job queue
     job_connections: List[Tuple[VALID_CHANNELS,Union[BaseHandler,BaseConductor]]]
     # Directory where queued jobs are initially written to
     job_queue_dir:str
-    # Boolean to show if Visualizer is active
-    visualizer_active: bool
     # Directory where completed jobs are finally written to
     job_output_dir:str
     # A queue of all events found by monitors, awaiting handling by handlers
@@ -57,7 +55,7 @@ class MeowRunner:
             conductors:Union[BaseConductor,List[BaseConductor]],
             job_queue_dir:str=DEFAULT_JOB_QUEUE_DIR,
             job_output_dir:str=DEFAULT_JOB_OUTPUT_DIR,
-            visualizer=None,
+            visualizer:IVisualizerReceiveData = None,
             print:Any=sys.stdout, logging:int=0)->None:
             
         """MeowRunner constructor. This connects all provided monitors, 
@@ -127,6 +125,8 @@ class MeowRunner:
         # self.visualizer_active = visualizer_active
         if visualizer : 
             self.to_visualizer = To_Visualizer(visualizer)
+        else :
+            self.to_visualizer = None
         # Setup queues
         self.event_queue = []
         self.job_queue = []
@@ -152,9 +152,17 @@ class MeowRunner:
                     # Recieved an event
                     if isinstance(component, BaseMonitor):
                         self.event_queue.append(message)
+                        ### Add to event_queue. confirm vailid event It is internal, so trust assumed.
+                        ###Visualizer
+                        if self.to_visualizer is not None:
+                            #check if valid event, if not, send debug message to visualizer
+                            try:
+                                self.to_visualizer.to_event_queue(event)
+                            except:
+                                self.to_visualizer.debug_message("non-event received by runner from monitor" + str(message))
                         continue
                     # Recieved a request for an event
-                    if isinstance(component, BaseHandler):
+                    elif isinstance(component, BaseHandler):
                         valid = False
                         for event in self.event_queue:
                             try:
@@ -168,11 +176,20 @@ class MeowRunner:
                                     f"event for handler {component.name}. {e}", 
                                     DEBUG_INFO
                                 )
-                                # To_Visualizer.debug_message(msg)
+                                ###Debug event, since validation failed?
+                                ###Visualizer
+                                if self.to_visualizer is not None:
+                                    msg = "Could not determine validity of "
+                                    f"event for handler {component.name}. {e}"
+                                    To_Visualizer.debug_event(msg, event)
                             
                             if valid:
                                 self.event_queue.remove(event)
                                 connection.send(event)
+                                ###valid event send to handler
+                                ###Visualizer
+                                if self.to_visualizer is not None:
+                                    self.to_visualizer.to_handler(event)
                                 break
                         
                         # If nothing valid then send a message
@@ -207,6 +224,14 @@ class MeowRunner:
                             },
                             os.path.join(message, META_FILE)
                         )
+
+                        ###Add to job_queue. confirm vailid job It is internal, so trust assumed.
+                        ###Visualizer
+                        if self.to_visualizer is not None:
+                            try:
+                                self.to_visualizer.to_job_queue(message)
+                            except:
+                                self.to_visualizer.debug_message("non-event received by runner from handler" + str(message))
                         continue
                     # Recieved a request for a job
                     if isinstance(component, BaseConductor):
@@ -235,10 +260,25 @@ class MeowRunner:
                                     f"job for conductor {component.name}. {e}", 
                                     DEBUG_INFO
                                 )
+
+                                ###Debug job, since validity of conductor execute criteria failed
+                                ###Visualizer
+                                if self.to_visualizer is not None:
+                                    msg = "Could not determine validity of "
+                                    f"job for conductor {component.name}. {e}"
+                                    self.to_visualizer.debug_job(msg, job)
                             
+                            print("271")
                             if valid:
                                 self.job_queue.remove(job_dir)
                                 connection.send(job_dir)
+
+                                ###valid job send to conductor
+                                ###Visualizer
+                                print("278")
+                                if self.to_visualizer is not None:
+                                    print("280")
+                                    self.to_visualizer.to_conductor(job)
                                 break
 
                         # If nothing valid then send a message

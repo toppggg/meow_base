@@ -146,15 +146,6 @@ DEBUG_INFO = 3
 # Locking
 LOCK_EXT = ".lock"
 
-# Viszualizer Var
-TO_EVENT_QUEUE = "to_event_queue"
-TO_HANDLER = "to_handler"
-TO_JOB_QUEUE = "to_job_queue"
-TO_CONDUCTOR = "to_conductor"
-DEBUG = "debug"
-DEBUG_JOB = "debug_job"
-DEBUG_EVENT ="debug_event"
-
 # debug message functions
 def get_drt_imp_msg(base_class):
     return f"{base_class.__name__} may not be instantiated directly. " \
