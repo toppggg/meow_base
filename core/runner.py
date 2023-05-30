@@ -181,7 +181,7 @@ class MeowRunner:
                                 if self.to_visualizer is not None:
                                     msg = "Could not determine validity of "
                                     f"event for handler {component.name}. {e}"
-                                    To_Visualizer.debug_event(msg, event)
+                                    To_Visualizer.debug_message(str(msg) + str(event))
                             
                             if valid:
                                 self.event_queue.remove(event)
@@ -266,7 +266,7 @@ class MeowRunner:
                                 if self.to_visualizer is not None:
                                     msg = "Could not determine validity of "
                                     f"job for conductor {component.name}. {e}"
-                                    self.to_visualizer.debug_job(msg, job)
+                                    self.to_visualizer.debug_message(str(msg) + str(job))
                             
                             print("271")
                             if valid:
