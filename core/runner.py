@@ -15,7 +15,7 @@ from typing import Any, Union, Dict, List, Type, Tuple
 
 from meow_base.core.base_conductor import BaseConductor
 from meow_base.core.base_handler import BaseHandler
-from meow_base.core.base_monitor import BaseMonitor
+from meow_base.core.base_monitor import BaseMonitortext_area_state
 from meow_base.core.vars import DEBUG_WARNING, DEBUG_INFO, \
     VALID_CHANNELS, META_FILE, DEFAULT_JOB_OUTPUT_DIR, DEFAULT_JOB_QUEUE_DIR, \
     JOB_STATUS, STATUS_QUEUED
@@ -157,10 +157,8 @@ class MeowRunner:
                         if self.to_visualizer is not None:
                             #check if valid event, if not, send debug message to visualizer
                             try:
-                                # print("160")
                                 self.to_visualizer.from_monitor(message)
                             except:
-                                # print("163")
                                 self.to_visualizer.debug_message("non-event received by runner from monitor" + str(message))
                         continue
                     # Recieved a request for an event
@@ -230,15 +228,8 @@ class MeowRunner:
                         ###Add to job_queue. confirm vailid job It is internal, so trust assumed.
                         ###Visualizer
                         if self.to_visualizer is not None:
-                            print("runner 233")
+
                             self.to_visualizer.from_handler_path(message)
-                            # try:
-                            #     metafile = os.path.join(job_dir, META_FILE)
-                            #     job = threadsafe_read_status(metafile)
-                            #     self.to_visualizer.from_handler(message)
-                            # except:
-                            #     print("runner" + "236")
-                            #     self.to_visualizer.debug_message("non-event received by runner from handler" + str(message))
                         continue
                     # Recieved a request for a job
                     if isinstance(component, BaseConductor):
@@ -279,16 +270,14 @@ class MeowRunner:
                                     f"job for conductor {component.name}. {e}"
                                     self.to_visualizer.debug_message(str(msg) + str(job_dir))
                             
-                            print("271")
                             if valid:
                                 self.job_queue.remove(job_dir)
                                 connection.send(job_dir)
 
                                 ###valid job send to conductor
                                 ###Visualizer
-                                print("278")
+
                                 if self.to_visualizer is not None:
-                                    print("280")
                                     self.to_visualizer.to_conductor_path(job_dir)
                                 break
 

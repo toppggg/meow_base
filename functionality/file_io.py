@@ -3,11 +3,8 @@ This file contains functions for reading and writing different types of files.
 
 Author(s): David Marchant
 """
-import os
-# if os.name == 'nt':
-#     import win # Windows
-# else:
-#     import fcntl # other (unix)
+
+import fcntl
 import json
 import yaml
 
@@ -19,9 +16,6 @@ from meow_base.core.vars import JOB_END_TIME, JOB_ERROR, JOB_STATUS, \
     STATUS_FAILED, STATUS_DONE, JOB_CREATE_TIME, JOB_START_TIME, \
     STATUS_SKIPPED, LOCK_EXT
 from meow_base.functionality.validation import valid_path
-from meow_base.functionality.mutex import lock, unlock
-
-
 
 
 def make_dir(path:str, can_exist:bool=True, ensure_clean:bool=False):
@@ -107,51 +101,36 @@ def write_yaml(source:Any, filename:str):
 def threadsafe_read_status(filepath:str):
     lock_path = filepath + LOCK_EXT
     lock_handle = open(lock_path, 'a')
-    # fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
-    lock(lock_handle)
-    # print("locked112")
+    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+
     try:
         status = read_yaml(filepath)
     except Exception as e:
         lock_handle.close()
-        unlock(lock_handle)
-        # print("unlocked")
         raise e
 
     lock_handle.close()
-    unlock(lock_handle)
-    # print("unlocked")
+
     return status
 
 def threadsafe_write_status(source:dict[str,Any], filepath:str):
-
     lock_path = filepath + LOCK_EXT
     lock_handle = open(lock_path, 'a')
-    # fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
-    lock(lock_handle) 
-    # print("locked132")
+    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
 
     try:
-        # print("write135")
         write_yaml(source, filepath)
-        # print("write137")
     except Exception as e:
-        # print("write139")
-        unlock(filepath)
-        # print("unlocked141")
-        lock_handle.close()        
+        lock_handle.close()
         raise e
-    # print("unlock144")
-    unlock(lock_handle)
-    # print("unlocked146")
+
     lock_handle.close()
 
 def threadsafe_update_status(updates:dict[str,Any], filepath:str):
     lock_path = filepath + LOCK_EXT
     lock_handle = open(lock_path, 'a')
-    # fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
-    lock(lock_handle)
-    # print("locked154")
+    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+
     try:
         status = read_yaml(filepath)
 
@@ -176,12 +155,9 @@ def threadsafe_update_status(updates:dict[str,Any], filepath:str):
 
         write_yaml(status, filepath)
     except Exception as e:
-        unlock(lock_handle)
-        # print("unlocked180")
         lock_handle.close()
         raise e
-    unlock(lock_handle)
-    # print("unlocked184")
+
     lock_handle.close()
 
 def read_notebook(filepath:str):
