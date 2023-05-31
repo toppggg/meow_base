@@ -157,7 +157,7 @@ class MeowRunner:
                         if self.to_visualizer is not None:
                             #check if valid event, if not, send debug message to visualizer
                             try:
-                                self.to_visualizer.to_event_queue(event)
+                                self.to_visualizer.from_monitor(event)
                             except:
                                 self.to_visualizer.debug_message("non-event received by runner from monitor" + str(message))
                         continue
@@ -229,8 +229,11 @@ class MeowRunner:
                         ###Visualizer
                         if self.to_visualizer is not None:
                             try:
-                                self.to_visualizer.to_job_queue(message)
+                                metafile = os.path.join(job_dir, META_FILE)
+                                job = threadsafe_read_status(metafile)
+                                self.to_visualizer.from_handler(job)
                             except:
+                                print("runner" + "236")
                                 self.to_visualizer.debug_message("non-event received by runner from handler" + str(message))
                         continue
                     # Recieved a request for a job
@@ -249,6 +252,10 @@ class MeowRunner:
                                     f"for job at '{job_dir}'. {e}", 
                                     DEBUG_INFO
                                 )
+                                if self.to_visualizer is not None:
+                                    msg = "Could not determine validity of "
+                                    f"job for conductor {component.name}. {e}"
+                                    self.to_visualizer.debug_message(str(msg) + str(job_dir))
 
                             try:
                                 valid, _ = component.valid_execute_criteria(job)
@@ -266,7 +273,7 @@ class MeowRunner:
                                 if self.to_visualizer is not None:
                                     msg = "Could not determine validity of "
                                     f"job for conductor {component.name}. {e}"
-                                    self.to_visualizer.debug_message(str(msg) + str(job))
+                                    self.to_visualizer.debug_message(str(msg) + str(job_dir))
                             
                             print("271")
                             if valid:

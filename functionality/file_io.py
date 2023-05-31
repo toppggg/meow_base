@@ -109,17 +109,18 @@ def threadsafe_read_status(filepath:str):
     lock_handle = open(lock_path, 'a')
     # fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
     lock(lock_handle)
-
+    # print("locked112")
     try:
         status = read_yaml(filepath)
     except Exception as e:
         lock_handle.close()
         unlock(lock_handle)
+        # print("unlocked")
         raise e
 
     lock_handle.close()
     unlock(lock_handle)
-
+    # print("unlocked")
     return status
 
 def threadsafe_write_status(source:dict[str,Any], filepath:str):
@@ -128,14 +129,21 @@ def threadsafe_write_status(source:dict[str,Any], filepath:str):
     lock_handle = open(lock_path, 'a')
     # fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
     lock(lock_handle) 
+    # print("locked132")
 
     try:
+        # print("write135")
         write_yaml(source, filepath)
+        # print("write137")
     except Exception as e:
+        # print("write139")
         unlock(filepath)
+        # print("unlocked141")
         lock_handle.close()        
         raise e
-    unlock(filepath)
+    # print("unlock144")
+    unlock(lock_handle)
+    # print("unlocked146")
     lock_handle.close()
 
 def threadsafe_update_status(updates:dict[str,Any], filepath:str):
@@ -143,6 +151,7 @@ def threadsafe_update_status(updates:dict[str,Any], filepath:str):
     lock_handle = open(lock_path, 'a')
     # fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
     lock(lock_handle)
+    # print("locked154")
     try:
         status = read_yaml(filepath)
 
@@ -168,9 +177,11 @@ def threadsafe_update_status(updates:dict[str,Any], filepath:str):
         write_yaml(status, filepath)
     except Exception as e:
         unlock(lock_handle)
+        # print("unlocked180")
         lock_handle.close()
         raise e
     unlock(lock_handle)
+    # print("unlocked184")
     lock_handle.close()
 
 def read_notebook(filepath:str):
