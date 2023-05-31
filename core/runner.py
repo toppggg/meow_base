@@ -157,12 +157,14 @@ class MeowRunner:
                         if self.to_visualizer is not None:
                             #check if valid event, if not, send debug message to visualizer
                             try:
-                                self.to_visualizer.from_monitor(event)
+                                # print("160")
+                                self.to_visualizer.from_monitor(message)
                             except:
+                                # print("163")
                                 self.to_visualizer.debug_message("non-event received by runner from monitor" + str(message))
                         continue
                     # Recieved a request for an event
-                    elif isinstance(component, BaseHandler):
+                    if isinstance(component, BaseHandler):
                         valid = False
                         for event in self.event_queue:
                             try:
@@ -228,13 +230,15 @@ class MeowRunner:
                         ###Add to job_queue. confirm vailid job It is internal, so trust assumed.
                         ###Visualizer
                         if self.to_visualizer is not None:
-                            try:
-                                metafile = os.path.join(job_dir, META_FILE)
-                                job = threadsafe_read_status(metafile)
-                                self.to_visualizer.from_handler(job)
-                            except:
-                                print("runner" + "236")
-                                self.to_visualizer.debug_message("non-event received by runner from handler" + str(message))
+                            print("runner 233")
+                            self.to_visualizer.from_handler_path(message)
+                            # try:
+                            #     metafile = os.path.join(job_dir, META_FILE)
+                            #     job = threadsafe_read_status(metafile)
+                            #     self.to_visualizer.from_handler(message)
+                            # except:
+                            #     print("runner" + "236")
+                            #     self.to_visualizer.debug_message("non-event received by runner from handler" + str(message))
                         continue
                     # Recieved a request for a job
                     if isinstance(component, BaseConductor):
@@ -285,7 +289,7 @@ class MeowRunner:
                                 print("278")
                                 if self.to_visualizer is not None:
                                     print("280")
-                                    self.to_visualizer.to_conductor(job)
+                                    self.to_visualizer.to_conductor_path(job_dir)
                                 break
 
                         # If nothing valid then send a message

@@ -19,10 +19,10 @@ class ConvertMeowToVisualizer:
     
     def meow_job_to_visualizer_struct (self, job) -> VISUALIZER_STRUCT :
         event = job[JOB_EVENT]
-        print(event)
+        # print(event)
         result = self.event_to_base_struct(event)
-        print(result)
-        print("25")
+        # print(result)
+        # print("25")
         result.optional_info = job #this is too much info, meow should be queried for it, not the visualizer?
         result.event_origin_time = event[EVENT_TIME] # Is this set by meow?
         result.event_time = str(time.time())

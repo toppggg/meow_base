@@ -1,4 +1,5 @@
 from multiprocessing import Queue
+import os
 # import time
 
 from visualizer.i_visualizer_receive_data import IVisualizerReceiveData
@@ -7,6 +8,8 @@ from visualizer.visualizer_struct import VISUALIZER_STRUCT
 # from meow_base.core.vars import EVENT_RULE, EVENT_TYPE, EVENT_PATH, JOB_ID, JOB_EVENT
 from meow_base.visualizer_adapter.convert_meow_to_visualizer import ConvertMeowToVisualizer
 from meow_base.visualizer_adapter.vars import MONITOR, HANDLER_QUEUE, HANDLER, CONDUCTOR_QUEUE, CONDUCTOR, END
+from meow_base.functionality.file_io import threadsafe_read_status
+from meow_base.core.vars import META_FILE
 
 
 class To_Visualizer:
@@ -33,12 +36,24 @@ class To_Visualizer:
     
     def from_handler(self, job)->None:
         print("from_handler")
-        print(job)
+        # print(job)
         data = self.converter.meow_job_to_visualizer_struct(job)
         data.previous_state = HANDLER_QUEUE
         data.current_state = HANDLER
-        print(data)
+        # print(data)
         self.visualizer_channel.put(data)
+
+    def from_handler_path(self, path)->None:
+        print("from_handler_path 47")
+        try:
+            metafile = os.path.join(path, META_FILE)
+            job = threadsafe_read_status(metafile)
+            self.from_handler(job)
+        except: 
+            print("from_handler_path 52")
+            self.debug_message(path)
+        
+              
 
     def to_conductor(self, job)->None:
         print("to_conductor")
@@ -46,6 +61,16 @@ class To_Visualizer:
         data.previous_state = HANDLER
         data.current_state = CONDUCTOR_QUEUE
         self.visualizer_channel.put(data)
+
+    def to_conductor_path(self, path)->None:
+        print("from_conductor_path 66")
+        try:
+            metafile = os.path.join(path, META_FILE)
+            job = threadsafe_read_status(metafile)
+            self.to_conductor(job)
+        except: 
+            print("from_handler_path 52")
+            self.debug_message(path)        
 
     def conductor_finished(self, job)->None:
         data = self.converter.meow_job_to_visualizer_struct(job)
