@@ -1795,7 +1795,7 @@ class MeowTests(unittest.TestCase):
 
         ###Visualizer
         visualizer = Visualizer("end")
-        runner = MeowRunner(monitors, handlers, conductors, visualizer)
+        runner = MeowRunner(monitors, handlers, conductors, visualizer = visualizer)
 
         m1 = runner.get_monitor_by_name("m1")
         self.assertEqual(monitor_one, m1)

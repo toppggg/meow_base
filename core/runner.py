@@ -155,11 +155,7 @@ class MeowRunner:
                         ### Add to event_queue. confirm vailid event It is internal, so trust assumed.
                         ###Visualizer
                         if self.to_visualizer is not None:
-                            #check if valid event, if not, send debug message to visualizer
-                            try:
-                                self.to_visualizer.from_monitor(message)
-                            except:
-                                self.to_visualizer.debug_message("non-event received by runner from monitor" + str(message))
+                            self.to_visualizer.from_monitor_message(message)
                         continue
                     # Recieved a request for an event
                     if isinstance(component, BaseHandler):

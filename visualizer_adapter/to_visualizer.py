@@ -18,10 +18,16 @@ class To_Visualizer:
         self.visualizer_channel = visualizer.receive_channel 
         self.converter = ConvertMeowToVisualizer()  
 
-    def from_monitor(self, event)->None: 
-        data = self.converter.event_to_base_struct(event)
-        data.current_state = MONITOR
-        self.visualizer_channel.put(data)
+    def from_monitor_message(self, message)->None:
+        try:
+            data = self.converter.event_to_base_struct(message)
+            data.current_state = MONITOR
+            self.visualizer_channel.put(data)
+        except:
+            self.debug_message("non-event received by runner from monitor" + str(message))
+
+    # def from_monitor(self, event)->None: 
+        
 
     def to_handler(self, event)->None:
         data = self.converter.event_to_base_struct(event)
