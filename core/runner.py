@@ -25,7 +25,7 @@ from meow_base.functionality.debug import setup_debugging, print_debug
 from meow_base.functionality.file_io import make_dir, threadsafe_read_status, \
     threadsafe_update_status
 from meow_base.functionality.process_io import wait
-from meow_base.visualizer_adapter.to_visualizer import To_Visualizer
+from meow_base.visualizer_adapter.to_visualizer import ToVisualizer
 from visualizer.i_visualizer_receive_data import IVisualizerReceiveData
 
 
@@ -37,7 +37,7 @@ class MeowRunner:
     # A collection of all conductors in the runner
     conductors:List[BaseConductor]
     # A visualizer in the runner
-    to_visualizer:To_Visualizer
+    to_visualizer:ToVisualizer
     # A collection of all inputs for the event queue
     event_connections: List[Tuple[VALID_CHANNELS,Union[BaseMonitor,BaseHandler]]]
     # A collection of all inputs for the job queue
@@ -124,7 +124,7 @@ class MeowRunner:
 
         # self.visualizer_active = visualizer_active
         if visualizer : 
-            self.to_visualizer = To_Visualizer(visualizer)
+            self.to_visualizer = ToVisualizer(visualizer)
         else :
             self.to_visualizer = None
         # Setup queues
@@ -177,7 +177,7 @@ class MeowRunner:
                                 if self.to_visualizer is not None:
                                     msg = "Could not determine validity of "
                                     f"event for handler {component.name}. {e}"
-                                    To_Visualizer.debug_message(str(msg) + str(event))
+                                    ToVisualizer.debug_message(str(msg) + str(event))
                             
                             if valid:
                                 self.event_queue.remove(event)

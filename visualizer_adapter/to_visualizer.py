@@ -10,7 +10,7 @@ from meow_base.functionality.file_io import threadsafe_read_status
 from meow_base.core.vars import META_FILE
 
 
-class To_Visualizer:
+class ToVisualizer:
     visualizer_channel:Queue
     converter : ConvertMeowToVisualizer
 
